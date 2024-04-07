@@ -1,0 +1,75 @@
+syntax = "proto3";
+package types;
+option go_package = "github.com/itohio/dndm/router/pipe/types";
+
+enum Type {
+  UNSPECIFIED = 0;
+  MESSAGE = 1;
+  INTENT = 2;
+  INTEREST = 3;
+  NOTIFY_INTENT = 4;
+  PING = 6;
+  PONG = 7;
+  HANDSHAKE = 50;
+  PEERS = 51;
+  INTENTS = 52;
+  INTERESTS = 53;
+}
+
+message Header {
+  string id = 1;
+  Type type = 2;
+  string route = 10;
+}
+
+message Intents {
+  repeated Intent intents = 1;
+}
+
+message Interests {
+  repeated Interest interests = 1;
+}
+
+message Intent {
+  string id = 1;
+  uint64 hops = 2;
+  uint64 ttl = 3;
+  bool register = 4;
+}
+
+message NotifyIntent {
+  string id = 1;
+}
+
+message Interest {
+  string id = 1;
+  uint64 hops = 2;
+  uint64 ttl = 3;
+  bool register = 4;
+}
+
+message Handshake {
+  string id = 1;
+}
+
+message Ping {
+  uint64 id = 1;
+  uint64 timestamp = 2;
+  bytes payload = 3;
+}
+
+message Pong {
+  uint64 id = 1;
+  uint64 timestamp = 2;
+  uint64 ping_timestamp = 3;
+  bytes payload = 4;
+}
+
+message Peers {
+  repeated string ids = 1;
+}
+
+// Used for testing
+message TextMessage {
+  string text = 1;
+}
