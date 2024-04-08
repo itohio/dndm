@@ -1,0 +1,7 @@
+syntax = "proto3";
+package main;
+option go_package = "github.com/itohio/dndm/example/bench/main";
+
+message Foo {
+  string payload = 1;
+}

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package main;
+option go_package = "github.com/itohio/dndm/example/direct/main";
+
+message Foo {
+  string text = 1;
+}
+
+message Bar {
+  uint32 a = 1;
+  uint32 b = 2;
+}
