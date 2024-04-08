@@ -13,34 +13,17 @@ import (
 	"github.com/itohio/dndm/routers"
 	"github.com/itohio/dndm/routers/direct"
 	"github.com/itohio/dndm/routers/pipe/types"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ routers.Transport = (*Transport)(nil)
 
-type Dialer interface {
+type Remote interface {
 	io.Closer
-	Dial(id ...string) error
-	Undial(id ...string) error
-}
-
-type RemoteIntent struct {
-	*direct.Intent
-	remoteId string
-	reader   io.Reader
-}
-
-func (r *RemoteIntent) RemoteID() string { return r.remoteId }
-
-type RemoteInterest struct {
-	*direct.Interest
-	remoteId string
-	writer   io.Writer
-}
-
-func (r *RemoteInterest) RemoteID() string { return r.remoteId }
-
-type RemoteId interface {
-	RemoteID() string
+	AddPeers(id ...string) error
+	BlockPeers(id ...string) error
+	Read(ctx context.Context) (*types.Header, proto.Message, error)
+	Write(ctx context.Context, route routers.Route, msg proto.Message) error
 }
 
 type Transport struct {
@@ -49,39 +32,35 @@ type Transport struct {
 	wg             sync.WaitGroup
 	log            *slog.Logger
 	name           string
-	reader         io.Reader
-	writer         io.Writer
-	dialer         Dialer
+	dialer         Remote
 	addCallback    func(interest routers.Interest, t routers.Transport) error
 	removeCallback func(interest routers.Interest, t routers.Transport) error
 	size           int
 
 	mu        sync.Mutex
+	timeout   time.Duration
 	intents   map[string]routers.IntentInternal
 	interests map[string]routers.InterestInternal
 	links     map[string]*direct.Link
 
 	pingDuration time.Duration
-	pingNonce    atomic.Uint64
 	pingMu       sync.Mutex
 	pingRing     *ring.Ring
 	pongRing     *ring.Ring
 
-	messageQueue chan []byte
-	remote       *types.Handshake
+	nonce  atomic.Uint64
+	remote atomic.Pointer[types.Handshake]
 }
 
-func New(name string, r io.Reader, w io.Writer, d Dialer, size int) *Transport {
+func New(name string, remote Remote, size int, timeout time.Duration) *Transport {
 	return &Transport{
 		name:         name,
 		size:         size,
-		reader:       r,
-		writer:       w,
-		dialer:       d,
+		dialer:       remote,
 		pingDuration: time.Second * 3,
+		timeout:      timeout,
 		intents:      make(map[string]routers.IntentInternal),
 		interests:    make(map[string]routers.InterestInternal),
-		messageQueue: make(chan []byte, 1024),
 		pingRing:     ring.New(3),
 		pongRing:     ring.New(3),
 	}
@@ -117,8 +96,11 @@ func (t *Transport) Name() string {
 func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	return t.publish(route, nil)
+}
 
-	intent, err := t.setIntent(route, "")
+func (t *Transport) publish(route routers.Route, remote *types.Intent) (routers.Intent, error) {
+	intent, err := t.setIntent(route, remote)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +112,7 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setIntent(route routers.Route, remoteId string) (routers.IntentInternal, error) {
+func (t *Transport) setIntent(route routers.Route, remote *types.Intent) (routers.IntentInternal, error) {
 	if intent, ok := t.intents[route.String()]; ok {
 		return intent, nil
 	}
@@ -138,8 +120,8 @@ func (t *Transport) setIntent(route routers.Route, remoteId string) (routers.Int
 	// Do not allow local interests
 	// FIXME: do not allow remote intents and remote interests
 	if interest, ok := t.interests[route.String()]; ok {
-		if _, ok := interest.(*RemoteInterest); remoteId == "" && !ok {
-			return nil, errors.ErrLocalInterest
+		if _, ok := interest.(*RemoteInterest); remote == nil && !ok {
+			return nil, errors.ErrLocalIntent
 		}
 	}
 
@@ -151,21 +133,17 @@ func (t *Transport) setIntent(route routers.Route, remoteId string) (routers.Int
 		return nil
 	})
 
-	if remoteId == "" {
+	if remote == nil {
 		t.intents[route.String()] = pi
 		return pi, nil
 	}
 
-	ri := RemoteIntent{
-		Intent:   pi,
-		remoteId: remoteId,
-		reader:   t.reader,
-	}
+	ri := wrapIntent(pi, remote)
 	t.intents[route.String()] = ri
 	return ri, nil
 }
 
-func (t *Transport) setInterest(route routers.Route, remoteId string) (routers.InterestInternal, error) {
+func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (routers.InterestInternal, error) {
 	if interest, ok := t.interests[route.String()]; ok {
 		if link, ok := t.links[route.String()]; ok {
 			link.Notify()
@@ -176,7 +154,7 @@ func (t *Transport) setInterest(route routers.Route, remoteId string) (routers.I
 	// Do not allow local intents and local interests
 	// FIXME: do not allow remote intents and remote interests
 	if intent, ok := t.intents[route.String()]; ok {
-		if _, ok := intent.(*RemoteIntent); remoteId == "" && !ok {
+		if _, ok := intent.(*RemoteIntent); remote == nil && !ok {
 			return nil, errors.ErrLocalIntent
 		}
 	}
@@ -191,16 +169,12 @@ func (t *Transport) setInterest(route routers.Route, remoteId string) (routers.I
 	})
 	interest = pi
 
-	if remoteId == "" {
+	if remote == nil {
 		t.interests[route.String()] = pi
 		return pi, nil
 	}
 
-	ri := RemoteInterest{
-		Interest: pi,
-		remoteId: remoteId,
-		writer:   t.writer,
-	}
+	ri := wrapInterest(pi, remote)
 	interest = ri
 	t.interests[route.String()] = ri
 	return ri, nil
@@ -234,7 +208,7 @@ func (t *Transport) unlink(route routers.Route) {
 }
 
 func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
-	interest, err := t.subscribe(route)
+	interest, err := t.subscribe(route, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -242,11 +216,11 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) subscribe(route routers.Route) (routers.Interest, error) {
+func (t *Transport) subscribe(route routers.Route, remote *types.Interest) (routers.Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	interest, err := t.setInterest(route, "")
+	interest, err := t.setInterest(route, remote)
 	if err != nil {
 		return nil, err
 	}

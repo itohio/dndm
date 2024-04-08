@@ -6,6 +6,7 @@ import (
 	"io"
 	reflect "reflect"
 	sync "sync"
+	"time"
 
 	"github.com/itohio/dndm/errors"
 	routers "github.com/itohio/dndm/routers"
@@ -14,7 +15,9 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var buffers pool.BufferPool
+var (
+	buffers pool.BufferPool
+)
 
 // Size of the preamble: 4 bytes magic number, 4 bytes total message size, 4 bytes header size, 4 bytes message size
 const PreambleSize = 4 + 4 + 4 + 4
@@ -29,6 +32,7 @@ var (
 
 func init() {
 	RegisterType(types.Type_NOTIFY_INTENT, &types.NotifyIntent{})
+	RegisterType(types.Type_RESULT, &types.Result{})
 	RegisterType(types.Type_INTENT, &types.Intent{})
 	RegisterType(types.Type_INTENTS, &types.Intents{})
 	RegisterType(types.Type_INTEREST, &types.Interest{})
@@ -59,11 +63,11 @@ func resolveType(msg proto.Message) types.Type {
 }
 
 // EncodeMessage encodes any proto message into stream bytes. It adds a header and packet part sizes.
-func EncodeMessage(msg proto.Message, id string, route routers.Route) ([]byte, error) {
+func EncodeMessage(msg proto.Message, route routers.Route) ([]byte, error) {
 	h := &types.Header{
-		Id:    id,
-		Type:  resolveType(msg),
-		Route: route.String(),
+		Timestamp: uint64(time.Now().UnixNano()),
+		Type:      resolveType(msg),
+		Route:     route.String(),
 	}
 	return AppendMessageTo(nil, h, msg)
 }
@@ -113,30 +117,31 @@ func AppendMessageTo(buf []byte, hdr *types.Header, msg proto.Message) ([]byte, 
 	return buf, nil
 }
 
-func ReadMessage(r io.Reader) ([]byte, error) {
+func ReadMessage(r io.Reader) ([]byte, uint64, error) {
 	bufPreamble := [8]byte{}
 	n, err := r.Read(bufPreamble[:])
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+	now := uint64(time.Now().UnixNano())
 	if n != 8 {
-		return nil, errors.ErrNotEnoughBytes
+		return nil, 0, errors.ErrNotEnoughBytes
 	}
 	magic := int(binary.BigEndian.Uint32(bufPreamble[:]))
 	if magic != MagicNumber {
-		return nil, errors.ErrBadArgument
+		return nil, 0, errors.ErrBadArgument
 	}
 	size := int(binary.BigEndian.Uint32(bufPreamble[4:]))
 	buf := buffers.Get(size)
 	n, err = r.Read(buf)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if n != size {
-		return nil, errors.ErrNotEnoughBytes
+		return nil, 0, errors.ErrNotEnoughBytes
 	}
 
-	return buf, nil
+	return buf, now, nil
 }
 
 // DecodeMessage assumes the data array is already of correct size and preamble size field is removed

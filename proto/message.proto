@@ -8,6 +8,7 @@ enum Type {
   INTENT = 2;
   INTEREST = 3;
   NOTIFY_INTENT = 4;
+  RESULT = 5;
   PING = 6;
   PONG = 7;
   HANDSHAKE = 50;
@@ -17,9 +18,17 @@ enum Type {
 }
 
 message Header {
-  string id = 1;
-  Type type = 2;
+  uint64 receive_timestamp = 1; // Should not be set by remote. Is overwritten upon reception.
+  uint64 timestamp = 2;
+  Type type = 3;
+  bool want_result = 4;
   string route = 10;
+}
+
+message Result {
+  uint64 nonce = 1;
+  uint64 error = 2;
+  string description = 3;
 }
 
 message Intents {
@@ -31,18 +40,18 @@ message Interests {
 }
 
 message Intent {
-  string id = 1;
+  string route = 1;
   uint64 hops = 2;
   uint64 ttl = 3;
   bool register = 4;
 }
 
 message NotifyIntent {
-  string id = 1;
+  string route = 1;
 }
 
 message Interest {
-  string id = 1;
+  string route = 1;
   uint64 hops = 2;
   uint64 ttl = 3;
   bool register = 4;
@@ -53,15 +62,12 @@ message Handshake {
 }
 
 message Ping {
-  uint64 id = 1;
-  uint64 timestamp = 2;
   bytes payload = 3;
 }
 
 message Pong {
-  uint64 id = 1;
-  uint64 timestamp = 2;
-  uint64 ping_timestamp = 3;
+  uint64 receive_timestamp = 1; // local Timestamp when we received Ping message
+  uint64 ping_timestamp = 3;    // remote timestamp when Ping was sent
   bytes payload = 4;
 }
 

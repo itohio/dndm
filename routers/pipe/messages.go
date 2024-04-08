@@ -1,7 +1,9 @@
 package pipe
 
 import (
-	reflect "reflect"
+	"bytes"
+	"context"
+	"crypto/rand"
 	"time"
 
 	"github.com/itohio/dndm/errors"
@@ -9,6 +11,17 @@ import (
 	types "github.com/itohio/dndm/routers/pipe/types"
 	"google.golang.org/protobuf/proto"
 )
+
+type Ping struct {
+	timestamp uint64
+	payload   []byte
+}
+
+type Pong struct {
+	timestamp     uint64
+	pingTimestamp uint64
+	payload       []byte
+}
 
 func (t *Transport) messageHandler() {
 	defer t.wg.Done()
@@ -19,40 +32,37 @@ func (t *Transport) messageHandler() {
 		default:
 		}
 
-		hdr, msg, err := t.readAndParseMessage()
+		hdr, msg, err := t.dialer.Read(t.ctx)
 		if err != nil {
 			t.log.Error("decode failed", "err", err)
 			continue
 		}
+		prevNonce := t.nonce.Load()
+		if hdr.Timestamp < prevNonce {
+			t.log.Error("nonce", "prev", prevNonce, "got", hdr.Timestamp)
+			continue
+		}
+		t.nonce.Store(hdr.Timestamp)
 
 		err = t.handleMessage(hdr, msg)
 		if err != nil {
-			t.log.Error("handle failed", "err", err)
-			continue
+			t.log.Error("handleMessage", "err", err)
+		}
+		// TODO: Awkward if handler wants to override result they must set hdr.WantResult = false
+		if hdr.Type != types.Type_MESSAGE && hdr.WantResult {
+			result := &types.Result{
+				Nonce: hdr.Timestamp,
+			}
+			if err != nil {
+				result.Error = 1
+				result.Description = err.Error()
+			}
+			err := t.dialer.Write(t.ctx, routers.Route{}, result)
+			if err != nil {
+				t.log.Error("write result", "err", err, "result", result)
+			}
 		}
 	}
-}
-
-func (t *Transport) readAndParseMessage() (*types.Header, proto.Message, error) {
-	data, err := ReadMessage(t.reader)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer buffers.Put(data)
-
-	// TODO: optimize
-	t.mu.Lock()
-	interests := make(map[string]routers.Route, len(t.interests))
-	for k, v := range t.interests {
-		interests[k] = v.Route()
-	}
-	t.mu.Unlock()
-
-	hdr, msg, err := DecodeMessage(data, interests)
-	if err != nil {
-		return nil, nil, err
-	}
-	return hdr, msg, nil
 }
 
 func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
@@ -63,60 +73,86 @@ func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 		return t.handlePing(hdr, msg)
 	case types.Type_PONG:
 		return t.handlePong(hdr, msg)
+	case types.Type_INTENT:
+		if t.remote.Load() == nil {
+			return errors.ErrForbidden
+		}
+		return t.handleIntent(hdr, msg)
+	case types.Type_INTENTS:
+		if t.remote.Load() == nil {
+			return errors.ErrForbidden
+		}
+		return t.handleIntents(hdr, msg)
+	case types.Type_INTEREST:
+		if t.remote.Load() == nil {
+			return errors.ErrForbidden
+		}
+		return t.handleInterest(hdr, msg)
+	case types.Type_INTERESTS:
+		if t.remote.Load() == nil {
+			return errors.ErrForbidden
+		}
+		return t.handleInterests(hdr, msg)
+	case types.Type_MESSAGE:
+		if t.remote.Load() == nil {
+			return errors.ErrForbidden
+		}
+		return t.handleMsg(hdr, msg)
+	case types.Type_RESULT:
+		return t.handleResult(hdr, msg)
 	}
 	return errors.ErrInvalidRoute
-}
-
-func (t *Transport) sendMessage(msg proto.Message, route routers.Route) error {
-	buf, err := EncodeMessage(msg, t.name, route)
-	if err != nil {
-		t.log.Error("failed encoding", "what", reflect.TypeOf(msg), "err", err)
-		return err
-	}
-	defer buffers.Put(buf)
-	n, err := t.writer.Write(buf)
-	if n != len(buf) || err != nil {
-		t.log.Error("failed writing bytes", "what", reflect.TypeOf(msg), "err", err, "n", n, "len(buf)", len(buf))
-	}
-	return err
 }
 
 func (t *Transport) messageSender(d time.Duration) {
 	defer t.wg.Done()
 	ticker := time.NewTicker(d)
 
-	t.sendMessage(
+	t.dialer.Write(
+		t.ctx,
+		routers.Route{},
 		&types.Handshake{
 			Id: t.name,
 		},
-		routers.Route{},
 	)
 
 	for {
 		select {
 		case <-t.ctx.Done():
 			return
-		case buf := <-t.messageQueue:
-			n, err := t.writer.Write(buf)
-			if n != len(buf) || err != nil {
-				t.log.Error("failed writing bytes", "what", "msg", "err", err, "n", n, "len(buf)", len(buf))
-			}
-			buffers.Put(buf)
 		case <-ticker.C:
 			ping := &types.Ping{
-				Id:        t.pingNonce.Add(1),
-				Timestamp: uint64(time.Now().UnixNano()),
+				Payload: make([]byte, 1024),
 			}
-			t.sendMessage(
-				ping,
+			rand.Read(ping.Payload)
+			t.dialer.Write(
+				t.ctx,
 				routers.Route{},
+				ping,
 			)
 			t.pingMu.Lock()
-			t.pingRing.Value = ping
+			t.pingRing.Value = &Ping{
+				timestamp: uint64(time.Now().UnixNano()),
+				payload:   ping.Payload,
+			}
 			t.pingRing = t.pingRing.Next()
 			t.pingMu.Unlock()
 		}
 	}
+}
+
+func (t *Transport) handleResult(hdr *types.Header, m proto.Message) error {
+	msg, ok := m.(*types.Result)
+	if !ok {
+		return errors.ErrInvalidType
+	}
+
+	if msg.Error == 0 {
+		return nil
+	}
+
+	t.log.Error("Result", "err", msg.Error, "description", msg.Description)
+	return nil
 }
 
 func (t *Transport) handleHandshake(hdr *types.Header, m proto.Message) error {
@@ -125,14 +161,15 @@ func (t *Transport) handleHandshake(hdr *types.Header, m proto.Message) error {
 		return errors.ErrInvalidType
 	}
 
-	if t.remote == nil {
-		t.remote = msg
+	remote := t.remote.Load()
+	if remote == nil {
+		t.remote.Store(msg)
 		return nil
 	}
-	if t.remote.Id != msg.Id {
-		t.log.Error("bad handshake", "want", t.remote.Id, "got", msg.Id)
+	if remote.Id != msg.Id {
+		t.log.Error("bad handshake", "want", remote.Id, "got", msg.Id)
 	}
-	t.remote = msg
+	t.remote.Store(msg)
 	return nil
 }
 
@@ -150,20 +187,27 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return errors.ErrInvalidType
 	}
+	if len(msg.Payload) < 16 {
+		return errors.ErrNotEnoughBytes
+	}
 	pong := &types.Pong{
-		Id:            msg.Id,
-		PingTimestamp: msg.Timestamp,
-		Timestamp:     uint64(time.Now().UnixNano()),
-		Payload:       msg.Payload,
+		ReceiveTimestamp: hdr.ReceiveTimestamp,
+		PingTimestamp:    hdr.Timestamp,
+		Payload:          msg.Payload,
 	}
 
-	t.sendMessage(
-		pong,
+	t.dialer.Write(
+		t.ctx,
 		routers.Route{},
+		pong,
 	)
 	t.pingMu.Lock()
 	defer t.pingMu.Unlock()
-	t.pongRing.Value = pong
+	t.pongRing.Value = &Pong{
+		timestamp:     hdr.ReceiveTimestamp,
+		pingTimestamp: hdr.Timestamp,
+		payload:       msg.Payload,
+	}
 	t.pongRing = t.pingRing.Next()
 
 	return nil
@@ -174,23 +218,28 @@ func (t *Transport) handlePong(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return errors.ErrInvalidType
 	}
-	now := uint64(time.Now().UnixNano())
-
 	t.pingMu.Lock()
 	defer t.pingMu.Unlock()
 
 	t.pingRing.Do(func(a any) {
-		p, ok := a.(*types.Ping)
+		p, ok := a.(*Ping)
 		if !ok {
 			return
 		}
-		if p.Id != msg.Id {
+		if !bytes.Equal(p.payload, msg.Payload) {
 			return
 		}
 
-		// TODO
-		rtt := now - p.Timestamp
+		// TODO: now - when sent
+		rtt := hdr.ReceiveTimestamp - p.timestamp
+		// now - when sent as reported by remote
+		rtt1 := hdr.ReceiveTimestamp - msg.PingTimestamp
 		_ = rtt
+		_ = rtt1
+		// too much difference may indicate non-compliant remote
+		// also, msg.PingTimestamp, hdr.ReceiveTimestamp are local times
+		// while hdr.Timestamp, and msg.ReceiveTimestamp are remote times
+		// FIXME: this is utterly confusing. Need better names.
 	})
 
 	return nil
@@ -204,8 +253,58 @@ func (t *Transport) handleIntent(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return errors.ErrInvalidType
 	}
-	_ = msg
+	return t.handleRemoteIntent(msg)
+}
+
+func (t *Transport) handleIntents(hdr *types.Header, m proto.Message) error {
+	if m == nil {
+		return errors.ErrInvalidType
+	}
+	msg, ok := m.(*types.Intents)
+	if !ok {
+		return errors.ErrInvalidType
+	}
+	for _, i := range msg.Intents {
+		if err := t.handleRemoteIntent(i); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
+	route, err := routers.NewRouteFromRoute(msg.Route)
+	if err != nil {
+		return err
+	}
+
+	if !msg.Register {
+		return t.handleUnregisterIntent(route, msg)
+	}
+
+	_, err = t.publish(route, msg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	intent, ok := t.intents[route.String()]
+	if !ok {
+		return errors.ErrNoIntent
+	}
+
+	if intent, ok := intent.(*RemoteIntent); !ok {
+		return errors.ErrForbidden
+	} else if intent.remote == nil || intent.remote.Route != m.Route {
+		return errors.ErrForbidden
+	}
+
+	return intent.Close()
 }
 
 func (t *Transport) handleInterest(hdr *types.Header, m proto.Message) error {
@@ -216,6 +315,78 @@ func (t *Transport) handleInterest(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return errors.ErrInvalidType
 	}
-	_ = msg
+	return t.handleRemoteInterest(msg)
+}
+
+func (t *Transport) handleInterests(hdr *types.Header, m proto.Message) error {
+	if m == nil {
+		return errors.ErrInvalidType
+	}
+	msg, ok := m.(*types.Interests)
+	if !ok {
+		return errors.ErrInvalidType
+	}
+	for _, i := range msg.Interests {
+		if err := t.handleRemoteInterest(i); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
+	route, err := routers.NewRouteFromRoute(msg.Route)
+	if err != nil {
+		return err
+	}
+
+	if !msg.Register {
+		return t.handleUnregisterInterest(route, msg)
+	}
+
+	intent, err := t.subscribe(route, msg)
+	if err != nil {
+		return err
+	}
+	t.addCallback(intent, t)
+
+	return nil
+}
+
+func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Interest) error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	interest, ok := t.interests[route.String()]
+	if !ok {
+		return errors.ErrNoIntent
+	}
+
+	if interest, ok := interest.(*RemoteInterest); !ok {
+		return errors.ErrForbidden
+	} else if interest.remote == nil || interest.remote.Route != m.Route {
+		return errors.ErrForbidden
+	}
+
+	return interest.Close()
+}
+
+func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
+	route, err := routers.NewRouteFromRoute(hdr.Route)
+	if err != nil {
+		return err
+	}
+
+	// NOTE: Be aware of unreleased locks!
+	t.mu.Lock()
+	intent, ok := t.intents[route.String()]
+	if !ok {
+		t.mu.Unlock()
+		return errors.ErrNoIntent
+	}
+	t.mu.Unlock()
+
+	ctx, cancel := context.WithTimeout(t.ctx, t.timeout)
+	err = intent.Send(ctx, m)
+	cancel()
+	return err
 }

@@ -11,6 +11,8 @@ var (
 
 	ErrNotEnoughBytes  = errors.New("not enough bytes")
 	ErrNoInterest      = errors.New("no interest")
+	ErrNoIntent        = errors.New("no intent")
+	ErrForbidden       = errors.New("forbidden")
 	ErrInvalidRoute    = errors.New("invalid route")
 	ErrBadArgument     = errors.New("bad argument")
 	ErrDuplicate       = errors.New("duplicate interest")
