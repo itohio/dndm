@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -17,7 +17,7 @@ type Router struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	size            int
-	transports      []router.Transport
+	transports      []routers.Transport
 	intentRouters   map[string]*intentRouter
 	interestRouters map[string]*interestRouter
 }
@@ -33,7 +33,7 @@ func New(opts ...Option) (*Router, error) {
 		ctx:             ctx,
 		cancel:          cancel,
 		log:             opt.logger.With("module", "router"),
-		transports:      make([]router.Transport, len(opt.transports)),
+		transports:      make([]routers.Transport, len(opt.transports)),
 		intentRouters:   make(map[string]*intentRouter),
 		interestRouters: make(map[string]*interestRouter),
 		size:            opt.size,
@@ -50,7 +50,7 @@ func New(opts ...Option) (*Router, error) {
 	return ret, nil
 }
 
-func (d *Router) addInterest(interest router.Interest, t router.Transport) error {
+func (d *Router) addInterest(interest routers.Interest, t routers.Transport) error {
 	route := interest.Route()
 	go func() {
 		d.mu.Lock()
@@ -77,7 +77,7 @@ func (d *Router) addInterest(interest router.Interest, t router.Transport) error
 	return nil
 }
 
-func (d *Router) removeInterest(interest router.Interest, t router.Transport) error {
+func (d *Router) removeInterest(interest routers.Interest, t routers.Transport) error {
 	route := interest.Route()
 	go func() {
 		d.mu.Lock()
@@ -100,15 +100,15 @@ func closeAll[T io.Closer](closers ...T) error {
 }
 
 // Publish delivers data to an interested party. It may advertise the availability of the data if no interest is found.
-func (d *Router) Publish(path string, msg proto.Message, opt ...router.PubOpt) (router.Intent, error) {
-	route, err := router.NewRoute(path, msg)
+func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) (routers.Intent, error) {
+	route, err := routers.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	intents := make([]router.Intent, 0, len(d.transports))
+	intents := make([]routers.Intent, 0, len(d.transports))
 	// Advertise intents even if we are already publishing
 	for _, t := range d.transports {
 		intent, err := t.Publish(route)
@@ -139,8 +139,8 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...router.PubOpt) (
 }
 
 // Subscribe advertises an interest in a specific message type on particular path.
-func (d *Router) Subscribe(path string, msg proto.Message, opt ...router.SubOpt) (router.Interest, error) {
-	route, err := router.NewRoute(path, msg)
+func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt) (routers.Interest, error) {
+	route, err := routers.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...router.SubOpt)
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	// Advertise interests anyway (even if we are already subscribed)
-	interests := make([]router.Interest, 0, len(d.transports))
+	interests := make([]routers.Interest, 0, len(d.transports))
 	for _, t := range d.transports {
 		interest, err := t.Subscribe(route)
 		if err != nil {

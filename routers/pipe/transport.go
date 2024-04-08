@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
-	"github.com/itohio/dndm/router/direct"
-	"github.com/itohio/dndm/router/pipe/types"
+	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/routers/direct"
+	"github.com/itohio/dndm/routers/pipe/types"
 )
 
-var _ router.Transport = (*Transport)(nil)
+var _ routers.Transport = (*Transport)(nil)
 
 type Dialer interface {
 	io.Closer
@@ -52,13 +52,13 @@ type Transport struct {
 	reader         io.Reader
 	writer         io.Writer
 	dialer         Dialer
-	addCallback    func(interest router.Interest, t router.Transport) error
-	removeCallback func(interest router.Interest, t router.Transport) error
+	addCallback    func(interest routers.Interest, t routers.Transport) error
+	removeCallback func(interest routers.Interest, t routers.Transport) error
 	size           int
 
 	mu        sync.Mutex
-	intents   map[string]router.IntentInternal
-	interests map[string]router.InterestInternal
+	intents   map[string]routers.IntentInternal
+	interests map[string]routers.InterestInternal
 	links     map[string]*direct.Link
 
 	pingDuration time.Duration
@@ -79,15 +79,15 @@ func New(name string, r io.Reader, w io.Writer, d Dialer, size int) *Transport {
 		writer:       w,
 		dialer:       d,
 		pingDuration: time.Second * 3,
-		intents:      make(map[string]router.IntentInternal),
-		interests:    make(map[string]router.InterestInternal),
+		intents:      make(map[string]routers.IntentInternal),
+		interests:    make(map[string]routers.InterestInternal),
 		messageQueue: make(chan []byte, 1024),
 		pingRing:     ring.New(3),
 		pongRing:     ring.New(3),
 	}
 }
 
-func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Transport) error) error {
+func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
 	if logger == nil || add == nil || remove == nil {
 		return errors.ErrBadArgument
 	}
@@ -114,7 +114,7 @@ func (t *Transport) Name() string {
 	return t.name
 }
 
-func (t *Transport) Publish(route router.Route) (router.Intent, error) {
+func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -130,7 +130,7 @@ func (t *Transport) Publish(route router.Route) (router.Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setIntent(route router.Route, remoteId string) (router.IntentInternal, error) {
+func (t *Transport) setIntent(route routers.Route, remoteId string) (routers.IntentInternal, error) {
 	if intent, ok := t.intents[route.String()]; ok {
 		return intent, nil
 	}
@@ -165,7 +165,7 @@ func (t *Transport) setIntent(route router.Route, remoteId string) (router.Inten
 	return ri, nil
 }
 
-func (t *Transport) setInterest(route router.Route, remoteId string) (router.InterestInternal, error) {
+func (t *Transport) setInterest(route routers.Route, remoteId string) (routers.InterestInternal, error) {
 	if interest, ok := t.interests[route.String()]; ok {
 		if link, ok := t.links[route.String()]; ok {
 			link.Notify()
@@ -181,7 +181,7 @@ func (t *Transport) setInterest(route router.Route, remoteId string) (router.Int
 		}
 	}
 
-	var interest router.Interest
+	var interest routers.Interest
 	pi := direct.NewInterest(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		t.unlink(route)
@@ -206,7 +206,7 @@ func (t *Transport) setInterest(route router.Route, remoteId string) (router.Int
 	return ri, nil
 }
 
-func (t *Transport) link(route router.Route, intent router.IntentInternal, interest router.InterestInternal) {
+func (t *Transport) link(route routers.Route, intent routers.IntentInternal, interest routers.InterestInternal) {
 	_, localIntent := intent.(*direct.Intent)
 	_, localInterest := interest.(*direct.Interest)
 
@@ -224,7 +224,7 @@ func (t *Transport) link(route router.Route, intent router.IntentInternal, inter
 	link.Link()
 }
 
-func (t *Transport) unlink(route router.Route) {
+func (t *Transport) unlink(route routers.Route) {
 	link, ok := t.links[route.String()]
 	if !ok {
 		return
@@ -233,7 +233,7 @@ func (t *Transport) unlink(route router.Route) {
 	delete(t.links, route.String())
 }
 
-func (t *Transport) Subscribe(route router.Route) (router.Interest, error) {
+func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	interest, err := t.subscribe(route)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func (t *Transport) Subscribe(route router.Route) (router.Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) subscribe(route router.Route) (router.Interest, error) {
+func (t *Transport) subscribe(route routers.Route) (routers.Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 

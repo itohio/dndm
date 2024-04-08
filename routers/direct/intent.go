@@ -7,29 +7,29 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 	"google.golang.org/protobuf/proto"
 )
 
 type Intent struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	route  router.Route
+	route  routers.Route
 	// msgC    chan proto.Message
-	notifyC chan router.Route
+	notifyC chan routers.Route
 	closer  func() error
 
 	mu      sync.RWMutex
 	linkedC chan<- proto.Message
 }
 
-func NewIntent(ctx context.Context, route router.Route, size int, closer func() error) *Intent {
+func NewIntent(ctx context.Context, route routers.Route, size int, closer func() error) *Intent {
 	ctx, cancel := context.WithCancel(ctx)
 	intent := &Intent{
 		ctx:     ctx,
 		cancel:  cancel,
 		route:   route,
-		notifyC: make(chan router.Route, size),
+		notifyC: make(chan routers.Route, size),
 		closer:  closer,
 	}
 	return intent
@@ -49,11 +49,11 @@ func (i *Intent) Close() error {
 	return nil
 }
 
-func (i *Intent) Route() router.Route {
+func (i *Intent) Route() routers.Route {
 	return i.route
 }
 
-func (i *Intent) Interest() <-chan router.Route {
+func (i *Intent) Interest() <-chan routers.Route {
 	return i.notifyC
 }
 

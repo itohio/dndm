@@ -5,27 +5,27 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/itohio/dndm/router"
-	"github.com/itohio/dndm/router/pipe/types"
+	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/routers/pipe/types"
 	"google.golang.org/protobuf/proto"
 )
 
 func TestDecodeMessage(t *testing.T) {
 	tests := []struct {
 		name    string
-		init    func() ([]byte, map[string]router.Route)
+		init    func() ([]byte, map[string]routers.Route)
 		inspect func(t *testing.T, h *types.Header, m proto.Message)
 		wantErr bool
 	}{
 		{
 			name: "intent",
-			init: func() ([]byte, map[string]router.Route) {
+			init: func() ([]byte, map[string]routers.Route) {
 				i := &types.Intent{
 					Id:   "id",
 					Hops: 123,
 					Ttl:  456,
 				}
-				r, err := router.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &types.TextMessage{})
 				if err != nil {
 					panic(err)
 				}
@@ -33,7 +33,7 @@ func TestDecodeMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				return buf, map[string]router.Route{}
+				return buf, map[string]routers.Route{}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
 				if h.Type != types.Type_INTENT {
@@ -51,13 +51,13 @@ func TestDecodeMessage(t *testing.T) {
 		},
 		{
 			name: "interest",
-			init: func() ([]byte, map[string]router.Route) {
+			init: func() ([]byte, map[string]routers.Route) {
 				i := &types.Interest{
 					Id:   "id",
 					Hops: 123,
 					Ttl:  456,
 				}
-				r, err := router.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &types.TextMessage{})
 				if err != nil {
 					panic(err)
 				}
@@ -65,7 +65,7 @@ func TestDecodeMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				return buf, map[string]router.Route{}
+				return buf, map[string]routers.Route{}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
 				if h.Type != types.Type_INTEREST {
@@ -83,11 +83,11 @@ func TestDecodeMessage(t *testing.T) {
 		},
 		{
 			name: "ping",
-			init: func() ([]byte, map[string]router.Route) {
+			init: func() ([]byte, map[string]routers.Route) {
 				i := &types.TextMessage{
 					Text: "some-important-text",
 				}
-				r, err := router.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &types.TextMessage{})
 				if err != nil {
 					panic(err)
 				}
@@ -95,7 +95,7 @@ func TestDecodeMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				return buf, map[string]router.Route{r.String(): r}
+				return buf, map[string]routers.Route{r.String(): r}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
 				if h.Type != types.Type_MESSAGE {

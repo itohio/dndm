@@ -8,8 +8,8 @@ import (
 	sync "sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
-	types "github.com/itohio/dndm/router/pipe/types"
+	routers "github.com/itohio/dndm/routers"
+	types "github.com/itohio/dndm/routers/pipe/types"
 	pool "github.com/libp2p/go-buffer-pool"
 	"google.golang.org/protobuf/proto"
 )
@@ -59,7 +59,7 @@ func resolveType(msg proto.Message) types.Type {
 }
 
 // EncodeMessage encodes any proto message into stream bytes. It adds a header and packet part sizes.
-func EncodeMessage(msg proto.Message, id string, route router.Route) ([]byte, error) {
+func EncodeMessage(msg proto.Message, id string, route routers.Route) ([]byte, error) {
 	h := &types.Header{
 		Id:    id,
 		Type:  resolveType(msg),
@@ -97,12 +97,10 @@ func AppendMessageTo(buf []byte, hdr *types.Header, msg proto.Message) ([]byte, 
 	buf = binary.BigEndian.AppendUint32(buf, uint32(hSize))
 
 	var err error
-	if hdr != nil {
-		buf, err = proto.MarshalOptions{}.MarshalAppend(buf, hdr)
-		if err != nil {
-			buffers.Put(buf)
-			return nil, err
-		}
+	buf, err = proto.MarshalOptions{}.MarshalAppend(buf, hdr)
+	if err != nil {
+		buffers.Put(buf)
+		return nil, err
 	}
 
 	buf = binary.BigEndian.AppendUint32(buf, uint32(mSize))
@@ -142,7 +140,7 @@ func ReadMessage(r io.Reader) ([]byte, error) {
 }
 
 // DecodeMessage assumes the data array is already of correct size and preamble size field is removed
-func DecodeMessage(data []byte, interests map[string]router.Route) (*types.Header, proto.Message, error) {
+func DecodeMessage(data []byte, interests map[string]routers.Route) (*types.Header, proto.Message, error) {
 	var h types.Header
 
 	hSize := int(binary.BigEndian.Uint32(data))
@@ -187,8 +185,10 @@ func DecodeMessage(data []byte, interests map[string]router.Route) (*types.Heade
 	if !ok {
 		return &h, nil, fmt.Errorf("%w: %s", errors.ErrNoInterest, h.Route)
 	}
-
-	t := reflect.TypeOf(route.Type()).Elem()
+	if route.Type() == nil {
+		return &h, nil, fmt.Errorf("%w: %s type is nil", errors.ErrInvalidType, h.Route)
+	}
+	t := route.Type().Elem()
 
 	// Create a new instance of the appropriate type.
 	instance := reflect.New(t).Interface()

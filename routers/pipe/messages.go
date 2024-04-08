@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
-	types "github.com/itohio/dndm/router/pipe/types"
+	"github.com/itohio/dndm/routers"
+	types "github.com/itohio/dndm/routers/pipe/types"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -42,7 +42,7 @@ func (t *Transport) readAndParseMessage() (*types.Header, proto.Message, error) 
 
 	// TODO: optimize
 	t.mu.Lock()
-	interests := make(map[string]router.Route, len(t.interests))
+	interests := make(map[string]routers.Route, len(t.interests))
 	for k, v := range t.interests {
 		interests[k] = v.Route()
 	}
@@ -67,7 +67,7 @@ func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 	return errors.ErrInvalidRoute
 }
 
-func (t *Transport) sendMessage(msg proto.Message, route router.Route) error {
+func (t *Transport) sendMessage(msg proto.Message, route routers.Route) error {
 	buf, err := EncodeMessage(msg, t.name, route)
 	if err != nil {
 		t.log.Error("failed encoding", "what", reflect.TypeOf(msg), "err", err)
@@ -89,7 +89,7 @@ func (t *Transport) messageSender(d time.Duration) {
 		&types.Handshake{
 			Id: t.name,
 		},
-		router.Route{},
+		routers.Route{},
 	)
 
 	for {
@@ -109,7 +109,7 @@ func (t *Transport) messageSender(d time.Duration) {
 			}
 			t.sendMessage(
 				ping,
-				router.Route{},
+				routers.Route{},
 			)
 			t.pingMu.Lock()
 			t.pingRing.Value = ping
@@ -159,7 +159,7 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 
 	t.sendMessage(
 		pong,
-		router.Route{},
+		routers.Route{},
 	)
 	t.pingMu.Lock()
 	defer t.pingMu.Unlock()

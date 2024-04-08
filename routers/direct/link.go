@@ -3,19 +3,19 @@ package direct
 import (
 	"context"
 
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 )
 
 type Link struct {
 	ctx      context.Context
 	cancel   context.CancelFunc
-	intent   router.IntentInternal
-	interest router.InterestInternal
+	intent   routers.IntentInternal
+	interest routers.InterestInternal
 	closer   func() error
 	done     chan struct{}
 }
 
-func NewLink(ctx context.Context, intent router.IntentInternal, interest router.InterestInternal, closer func() error) *Link {
+func NewLink(ctx context.Context, intent routers.IntentInternal, interest routers.InterestInternal, closer func() error) *Link {
 	ctx, cancel := context.WithCancel(ctx)
 	ret := &Link{
 		ctx:      ctx,

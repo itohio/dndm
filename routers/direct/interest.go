@@ -3,19 +3,19 @@ package direct
 import (
 	"context"
 
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 	"google.golang.org/protobuf/proto"
 )
 
 type Interest struct {
 	ctx    context.Context
 	cancel context.CancelFunc
-	route  router.Route
+	route  routers.Route
 	msgC   chan proto.Message
 	closer func() error
 }
 
-func NewInterest(ctx context.Context, route router.Route, size int, closer func() error) *Interest {
+func NewInterest(ctx context.Context, route routers.Route, size int, closer func() error) *Interest {
 	ctx, cancel := context.WithCancel(ctx)
 	return &Interest{
 		ctx:    ctx,
@@ -40,7 +40,7 @@ func (i *Interest) Close() error {
 	return nil
 }
 
-func (i *Interest) Route() router.Route {
+func (i *Interest) Route() routers.Route {
 	return i.route
 }
 

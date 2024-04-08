@@ -6,17 +6,17 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 )
 
-var _ router.Transport = (*Transport)(nil)
+var _ routers.Transport = (*Transport)(nil)
 
 type Transport struct {
 	mu             sync.Mutex
 	ctx            context.Context
 	log            *slog.Logger
-	addCallback    func(interest router.Interest, t router.Transport) error
-	removeCallback func(interest router.Interest, t router.Transport) error
+	addCallback    func(interest routers.Interest, t routers.Transport) error
+	removeCallback func(interest routers.Interest, t routers.Transport) error
 	intents        map[string]*Intent
 	interests      map[string]*Interest
 	links          map[string]*Link
@@ -36,7 +36,7 @@ func (t *Transport) Close() error {
 	return nil
 }
 
-func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Transport) error) error {
+func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
 	if logger == nil || add == nil || remove == nil {
 		return errors.ErrBadArgument
 	}
@@ -51,7 +51,7 @@ func (t *Transport) Name() string {
 	return "pass-through"
 }
 
-func (t *Transport) Publish(route router.Route) (router.Intent, error) {
+func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -69,7 +69,7 @@ func (t *Transport) Publish(route router.Route) (router.Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setIntent(route router.Route) (*Intent, error) {
+func (t *Transport) setIntent(route routers.Route) (*Intent, error) {
 	intent, ok := t.intents[route.String()]
 	if ok {
 		return intent, nil
@@ -87,7 +87,7 @@ func (t *Transport) setIntent(route router.Route) (*Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setInterest(route router.Route) (*Interest, error) {
+func (t *Transport) setInterest(route routers.Route) (*Interest, error) {
 	interest, ok := t.interests[route.String()]
 	if ok {
 		if link, ok := t.links[route.String()]; ok {
@@ -108,7 +108,7 @@ func (t *Transport) setInterest(route router.Route) (*Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) link(route router.Route, intent *Intent, interest *Interest) error {
+func (t *Transport) link(route routers.Route, intent *Intent, interest *Interest) error {
 	if !route.Equal(intent.Route()) || !route.Equal(interest.Route()) {
 		t.log.Error("invalid route", "route", route.Route(), "intent", intent.Route(), "interest", interest.Route())
 		return errors.ErrInvalidRoute
@@ -126,7 +126,7 @@ func (t *Transport) link(route router.Route, intent *Intent, interest *Interest)
 	return nil
 }
 
-func (t *Transport) unlink(route router.Route) {
+func (t *Transport) unlink(route routers.Route) {
 	link, ok := t.links[route.String()]
 	if !ok {
 		return
@@ -135,7 +135,7 @@ func (t *Transport) unlink(route router.Route) {
 	delete(t.links, route.String())
 }
 
-func (t *Transport) Subscribe(route router.Route) (router.Interest, error) {
+func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	interest, err := t.subscribe(route)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,7 @@ func (t *Transport) Subscribe(route router.Route) (router.Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) subscribe(route router.Route) (router.Interest, error) {
+func (t *Transport) subscribe(route routers.Route) (routers.Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
