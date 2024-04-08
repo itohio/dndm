@@ -2,6 +2,8 @@ package direct
 
 import (
 	"context"
+	"log/slog"
+	"reflect"
 	"sync"
 
 	"github.com/itohio/dndm/errors"
@@ -10,14 +12,15 @@ import (
 )
 
 type Intent struct {
-	mu      sync.RWMutex
-	ctx     context.Context
-	cancel  context.CancelFunc
-	route   router.Route
-	msgC    chan proto.Message
+	ctx    context.Context
+	cancel context.CancelFunc
+	route  router.Route
+	// msgC    chan proto.Message
 	notifyC chan router.Route
 	closer  func() error
-	linked  bool
+
+	mu      sync.RWMutex
+	linkedC chan<- proto.Message
 }
 
 func NewIntent(ctx context.Context, route router.Route, size int, closer func() error) *Intent {
@@ -26,8 +29,7 @@ func NewIntent(ctx context.Context, route router.Route, size int, closer func() 
 		ctx:     ctx,
 		cancel:  cancel,
 		route:   route,
-		notifyC: make(chan router.Route),
-		msgC:    make(chan proto.Message, size),
+		notifyC: make(chan router.Route, size),
 		closer:  closer,
 	}
 	return intent
@@ -55,15 +57,15 @@ func (i *Intent) Interest() <-chan router.Route {
 	return i.notifyC
 }
 
-func (i *Intent) MsgC() chan proto.Message {
-	return i.msgC
-}
-
 func (i *Intent) Send(ctx context.Context, msg proto.Message) error {
 	i.mu.RLock()
-	defer i.mu.RUnlock()
-	if !i.linked {
+	linkedC := i.linkedC
+	i.mu.RUnlock()
+	if linkedC == nil {
 		return errors.ErrNoInterest
+	}
+	if reflect.TypeOf(msg) != i.route.Type() {
+		return errors.ErrInvalidType
 	}
 
 	select {
@@ -71,21 +73,23 @@ func (i *Intent) Send(ctx context.Context, msg proto.Message) error {
 		return ctx.Err()
 	case <-i.ctx.Done():
 		return i.ctx.Err()
-	case i.msgC <- msg:
+	case linkedC <- msg:
 	}
 
 	return nil
 }
 
-func (i *Intent) SetLinked(l bool) {
+func (i *Intent) Link(c chan<- proto.Message) {
 	i.mu.Lock()
-	defer i.mu.Unlock()
-	i.linked = l
+	i.linkedC = c
+	i.mu.Unlock()
 }
 
 func (i *Intent) Notify() {
 	select {
 	case i.notifyC <- i.route:
+		slog.Info("Intent.Notify SEND", "route", i.route)
 	default:
+		slog.Info("Intent.Notify SKIP", "route", i.route)
 	}
 }

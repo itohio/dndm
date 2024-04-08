@@ -11,20 +11,12 @@ import (
 )
 
 type Option func(*Options) error
-type SubOpt func(*subOpt) error
-type PubOpt func(*pubOpt) error
 
 type Options struct {
 	ctx        context.Context
 	logger     *slog.Logger
 	transports []router.Transport
 	size       int
-}
-
-type subOpt struct {
-}
-
-type pubOpt struct {
 }
 
 func defaultOptions() Options {

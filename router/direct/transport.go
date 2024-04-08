@@ -28,6 +28,7 @@ func New(size int) *Transport {
 		size:      size,
 		intents:   make(map[string]*Intent),
 		interests: make(map[string]*Interest),
+		links:     make(map[string]*Link),
 	}
 }
 
@@ -58,6 +59,8 @@ func (t *Transport) Publish(route router.Route) (router.Intent, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	t.log.Info("intent registered", "route", route.Route())
 
 	if interest, ok := t.interests[route.String()]; ok {
 		t.link(route, intent, interest)
@@ -105,7 +108,12 @@ func (t *Transport) setInterest(route router.Route) (*Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) link(route router.Route, intent *Intent, interest *Interest) {
+func (t *Transport) link(route router.Route, intent *Intent, interest *Interest) error {
+	if !route.Equal(intent.Route()) || !route.Equal(interest.Route()) {
+		t.log.Error("invalid route", "route", route.Route(), "intent", intent.Route(), "interest", interest.Route())
+		return errors.ErrInvalidRoute
+	}
+
 	link := NewLink(t.ctx, intent, interest, func() error {
 		t.mu.Lock()
 		defer t.mu.Unlock()
@@ -114,6 +122,8 @@ func (t *Transport) link(route router.Route, intent *Intent, interest *Interest)
 	})
 	t.links[route.String()] = link
 	link.Link()
+	t.log.Info("link created", "route", route.Route())
+	return nil
 }
 
 func (t *Transport) unlink(route router.Route) {
@@ -142,6 +152,7 @@ func (t *Transport) subscribe(route router.Route) (router.Interest, error) {
 	if err != nil {
 		return nil, err
 	}
+	t.log.Info("interest registered", "route", route.Route())
 
 	if intent, ok := t.intents[route.String()]; ok {
 		t.link(route, intent, interest)

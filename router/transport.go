@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"reflect"
 
 	"google.golang.org/protobuf/proto"
 )
 
 // Route describes named and typed data route that essentially consists of the path and data type.
 type Route struct {
-	route string
-	path  string
-	msg   proto.Message
+	route   string
+	path    string
+	msgType reflect.Type
 }
 
 func (r Route) Equal(route Route) bool {
-	return r.route == route.path
+	return r.route == route.route
 }
 
 func (r Route) String() string {
@@ -30,9 +31,15 @@ func (r Route) Bytes() []byte {
 
 func NewRoute(path string, msg proto.Message) (Route, error) {
 	return Route{
-		route: fmt.Sprintf("%s@%s", path, proto.MessageName(msg)),
-		path:  path,
-		msg:   msg,
+		route:   fmt.Sprintf("%s@%s", path, proto.MessageName(msg)),
+		path:    path,
+		msgType: reflect.TypeOf(msg),
+	}, nil
+}
+
+func NewRouteFromRoute(route string) (Route, error) {
+	return Route{
+		route: route,
 	}, nil
 }
 
@@ -44,8 +51,8 @@ func (r Route) Path() string {
 	return r.path
 }
 
-func (r Route) Type() proto.Message {
-	return r.msg
+func (r Route) Type() reflect.Type {
+	return r.msgType
 }
 
 type Router interface {
@@ -67,7 +74,7 @@ type Interest interface {
 type InterestInternal interface {
 	Interest
 	Ctx() context.Context
-	MsgC() chan proto.Message
+	MsgC() chan<- proto.Message
 }
 
 // Intent is an interface to describe an intent to provide named data.
@@ -83,10 +90,10 @@ type Intent interface {
 }
 type IntentInternal interface {
 	Intent
-	SetLinked(l bool)
+	Link(chan<- proto.Message)
 	Notify()
 	Ctx() context.Context
-	MsgC() chan proto.Message
+	// MsgC() <-chan proto.Message
 }
 
 // Transport is the interface that describes a End To End route.

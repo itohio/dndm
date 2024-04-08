@@ -2,14 +2,12 @@ package direct
 
 import (
 	"context"
-	"sync"
 
 	"github.com/itohio/dndm/router"
 	"google.golang.org/protobuf/proto"
 )
 
 type Interest struct {
-	mu     sync.RWMutex
 	ctx    context.Context
 	cancel context.CancelFunc
 	route  router.Route
@@ -33,12 +31,12 @@ func (i *Interest) Ctx() context.Context {
 }
 
 func (i *Interest) Close() error {
-	i.cancel()
 	err := i.closer()
 	if err != nil {
 		return err
 	}
-	close(i.msgC) // Might cause panic in `link`, however, it should have been unlinked by then
+	i.cancel()
+	close(i.msgC) // FIXME: Might cause panic in `link`, however, it should have been unlinked by then
 	return nil
 }
 
@@ -50,6 +48,6 @@ func (i *Interest) C() <-chan proto.Message {
 	return i.msgC
 }
 
-func (i *Interest) MsgC() chan proto.Message {
+func (i *Interest) MsgC() chan<- proto.Message {
 	return i.msgC
 }

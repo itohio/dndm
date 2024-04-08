@@ -2,6 +2,7 @@ package dndm
 
 import (
 	"context"
+	"reflect"
 	"slices"
 	"sync"
 
@@ -14,8 +15,8 @@ var _ router.Intent = (*intentWrapper)(nil)
 var _ router.Interest = (*interestWrapper)(nil)
 
 type intentWrapper struct {
-	router *intentRouter
-	c      chan router.Route
+	router  *intentRouter
+	notifyC chan router.Route
 }
 
 func (w *intentWrapper) Route() router.Route {
@@ -25,7 +26,7 @@ func (w *intentWrapper) Close() error {
 	return w.router.removeWrapper(w)
 }
 func (w *intentWrapper) Interest() <-chan router.Route {
-	return w.c
+	return w.notifyC
 }
 
 func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
@@ -52,6 +53,7 @@ func makeIntentRouter(ctx context.Context, route router.Route, closer func() err
 		cancel: cancel,
 		route:  route,
 		size:   size,
+		closer: closer,
 	}
 	for _, i := range intents {
 		ret.addIntent(i)
@@ -61,8 +63,8 @@ func makeIntentRouter(ctx context.Context, route router.Route, closer func() err
 
 func (i *intentRouter) wrap() *intentWrapper {
 	ret := &intentWrapper{
-		router: i,
-		c:      make(chan router.Route, i.size),
+		router:  i,
+		notifyC: make(chan router.Route, i.size),
 	}
 
 	i.addWrapper(ret)
@@ -85,7 +87,7 @@ func (i *intentRouter) removeWrapper(w *intentWrapper) error {
 	if idx >= 0 {
 		i.wrappers = slices.Delete(i.wrappers, idx, idx+1)
 	}
-	close(w.c)
+	close(w.notifyC)
 	if len(i.wrappers) > 0 {
 		return nil
 	}
@@ -99,11 +101,11 @@ func (i *intentRouter) addIntent(intent router.Intent) error {
 	if !i.route.Equal(intent.Route()) {
 		return errors.ErrInvalidRoute
 	}
-	i.intents = append(i.intents, intent)
 	ctx, cancel := context.WithCancel(i.ctx)
-	i.cancels = append(i.cancels, cancel)
 	i.wg.Add(1)
 	go i.notifyRunner(ctx, intent)
+	i.intents = append(i.intents, intent)
+	i.cancels = append(i.cancels, cancel)
 	return nil
 }
 
@@ -144,14 +146,17 @@ func (i *intentRouter) notifyWrappers(ctx context.Context, route router.Route) e
 			return ctx.Err()
 		case <-i.ctx.Done():
 			return i.ctx.Err()
-		case w.c <- route:
+		case w.notifyC <- route:
+			// slog.Info("SEND notify", "route", route)
 		default:
+			// slog.Info("SKIP notify", "route", route)
 		}
 	}
 	return nil
 }
 
 func (i *intentRouter) Close() error {
+	i.closer()
 	i.cancel()
 	errarr := make([]error, len(i.intents))
 	for i, intent := range i.intents {
@@ -166,16 +171,19 @@ func (i *intentRouter) Route() router.Route {
 }
 
 func (i *intentRouter) Send(ctx context.Context, msg proto.Message) error {
+	if reflect.TypeOf(msg) != i.route.Type() {
+		return errors.ErrInvalidType
+	}
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 	var wg sync.WaitGroup
 	errarr := make([]error, len(i.intents))
 	for i, intent := range i.intents {
 		wg.Add(1)
-		go func(i int) {
+		go func(i int, intent router.Intent) {
 			defer wg.Done()
 			errarr[i] = intent.Send(ctx, msg)
-		}(i)
+		}(i, intent)
 	}
 	wg.Wait()
 	noInterest := 0
@@ -329,6 +337,7 @@ func (i *interestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 		case <-i.ctx.Done():
 			return i.ctx.Err()
 		case w.c <- msg:
+		default:
 		}
 	}
 	return nil
