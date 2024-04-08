@@ -1,4 +1,4 @@
-package router
+package routers
 
 type SubOptStruct struct {
 }

@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
-	"github.com/itohio/dndm/router"
-	"github.com/itohio/dndm/router/direct"
+	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/routers/direct"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -136,12 +136,12 @@ func testDirect(size int, d time.Duration) {
 	defer cancel()
 
 	var t *Foo
-	route, err := router.NewRoute("path", t)
+	route, err := routers.NewRoute("path", t)
 	if err != nil {
 		panic(err)
 	}
 	rtr := direct.New(size)
-	err = rtr.Init(ctx, slog.Default(), func(interest router.Interest, t router.Transport) error { return nil }, func(interest router.Interest, t router.Transport) error { return nil })
+	err = rtr.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
 	if err != nil {
 		panic(err)
 	}
@@ -155,7 +155,7 @@ func testDirect(size int, d time.Duration) {
 		panic(err)
 	}
 
-	senderIntent(ctx, size, intent.(router.IntentInternal))
+	senderIntent(ctx, size, intent.(routers.IntentInternal))
 	go consumerInterest(interest)
 
 	sent.Store(0)
@@ -174,9 +174,9 @@ func testDirect(size int, d time.Duration) {
 	}
 }
 
-func senderIntent(ctx context.Context, size int, intent router.IntentInternal) <-chan proto.Message {
+func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) <-chan proto.Message {
 	var t *Foo
-	route, err := router.NewRoute("path", t)
+	route, err := routers.NewRoute("path", t)
 	if err != nil {
 		panic(err)
 	}
@@ -236,7 +236,7 @@ func consumer(c <-chan proto.Message) {
 	}
 }
 
-func consumerInterest(interest router.Interest) {
+func consumerInterest(interest routers.Interest) {
 	for m := range interest.C() {
 		msg := m.(*Foo)
 		_ = msg

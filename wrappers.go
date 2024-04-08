@@ -7,25 +7,25 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/routers"
 	"google.golang.org/protobuf/proto"
 )
 
-var _ router.Intent = (*intentWrapper)(nil)
-var _ router.Interest = (*interestWrapper)(nil)
+var _ routers.Intent = (*intentWrapper)(nil)
+var _ routers.Interest = (*interestWrapper)(nil)
 
 type intentWrapper struct {
 	router  *intentRouter
-	notifyC chan router.Route
+	notifyC chan routers.Route
 }
 
-func (w *intentWrapper) Route() router.Route {
+func (w *intentWrapper) Route() routers.Route {
 	return w.router.route
 }
 func (w *intentWrapper) Close() error {
 	return w.router.removeWrapper(w)
 }
-func (w *intentWrapper) Interest() <-chan router.Route {
+func (w *intentWrapper) Interest() <-chan routers.Route {
 	return w.notifyC
 }
 
@@ -37,16 +37,16 @@ type intentRouter struct {
 	mu       sync.RWMutex
 	wg       sync.WaitGroup
 	ctx      context.Context
-	route    router.Route
+	route    routers.Route
 	cancel   context.CancelFunc
 	closer   func() error
-	intents  []router.Intent
+	intents  []routers.Intent
 	cancels  []context.CancelFunc
 	wrappers []*intentWrapper
 	size     int
 }
 
-func makeIntentRouter(ctx context.Context, route router.Route, closer func() error, size int, intents ...router.Intent) *intentRouter {
+func makeIntentRouter(ctx context.Context, route routers.Route, closer func() error, size int, intents ...routers.Intent) *intentRouter {
 	ctx, cancel := context.WithCancel(ctx)
 	ret := &intentRouter{
 		ctx:    ctx,
@@ -64,7 +64,7 @@ func makeIntentRouter(ctx context.Context, route router.Route, closer func() err
 func (i *intentRouter) wrap() *intentWrapper {
 	ret := &intentWrapper{
 		router:  i,
-		notifyC: make(chan router.Route, i.size),
+		notifyC: make(chan routers.Route, i.size),
 	}
 
 	i.addWrapper(ret)
@@ -95,7 +95,7 @@ func (i *intentRouter) removeWrapper(w *intentWrapper) error {
 	return i.Close()
 }
 
-func (i *intentRouter) addIntent(intent router.Intent) error {
+func (i *intentRouter) addIntent(intent routers.Intent) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if !i.route.Equal(intent.Route()) {
@@ -109,7 +109,7 @@ func (i *intentRouter) addIntent(intent router.Intent) error {
 	return nil
 }
 
-func (i *intentRouter) removeIntent(intent router.Intent) {
+func (i *intentRouter) removeIntent(intent routers.Intent) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	idx := slices.Index(i.intents, intent)
@@ -121,7 +121,7 @@ func (i *intentRouter) removeIntent(intent router.Intent) {
 	i.cancels = slices.Delete(i.cancels, idx, idx+1)
 }
 
-func (i *intentRouter) notifyRunner(ctx context.Context, intent router.Intent) {
+func (i *intentRouter) notifyRunner(ctx context.Context, intent routers.Intent) {
 	defer i.wg.Done()
 	for {
 		select {
@@ -137,7 +137,7 @@ func (i *intentRouter) notifyRunner(ctx context.Context, intent router.Intent) {
 	}
 }
 
-func (i *intentRouter) notifyWrappers(ctx context.Context, route router.Route) error {
+func (i *intentRouter) notifyWrappers(ctx context.Context, route routers.Route) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	for _, w := range i.wrappers {
@@ -166,7 +166,7 @@ func (i *intentRouter) Close() error {
 	return errors.Join(errarr...)
 }
 
-func (i *intentRouter) Route() router.Route {
+func (i *intentRouter) Route() routers.Route {
 	return i.route
 }
 
@@ -180,7 +180,7 @@ func (i *intentRouter) Send(ctx context.Context, msg proto.Message) error {
 	errarr := make([]error, len(i.intents))
 	for i, intent := range i.intents {
 		wg.Add(1)
-		go func(i int, intent router.Intent) {
+		go func(i int, intent routers.Intent) {
 			defer wg.Done()
 			errarr[i] = intent.Send(ctx, msg)
 		}(i, intent)
@@ -207,7 +207,7 @@ type interestWrapper struct {
 func (w *interestWrapper) Close() error {
 	return w.router.removeWrapper(w)
 }
-func (w *interestWrapper) Route() router.Route {
+func (w *interestWrapper) Route() routers.Route {
 	return w.router.route
 }
 func (w *interestWrapper) C() <-chan proto.Message {
@@ -219,16 +219,16 @@ type interestRouter struct {
 	wg        sync.WaitGroup
 	ctx       context.Context
 	cancel    context.CancelFunc
-	route     router.Route
+	route     routers.Route
 	closer    func() error
 	c         chan proto.Message
-	interests []router.Interest
+	interests []routers.Interest
 	cancels   []context.CancelFunc
 	wrappers  []*interestWrapper
 	size      int
 }
 
-func makeInterestRouter(ctx context.Context, route router.Route, closer func() error, size int, interests ...router.Interest) *interestRouter {
+func makeInterestRouter(ctx context.Context, route routers.Route, closer func() error, size int, interests ...routers.Interest) *interestRouter {
 	ctx, cancel := context.WithCancel(ctx)
 	ret := &interestRouter{
 		ctx:    ctx,
@@ -281,7 +281,7 @@ func (i *interestRouter) removeWrapper(w *interestWrapper) error {
 	return i.Close()
 }
 
-func (i *interestRouter) addInterest(interest router.Interest) error {
+func (i *interestRouter) addInterest(interest routers.Interest) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if !i.route.Equal(interest.Route()) {
@@ -299,7 +299,7 @@ func (i *interestRouter) addInterest(interest router.Interest) error {
 	return nil
 }
 
-func (i *interestRouter) removeInterest(interest router.Interest) {
+func (i *interestRouter) removeInterest(interest routers.Interest) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	idx := slices.Index(i.interests, interest)
@@ -311,7 +311,7 @@ func (i *interestRouter) removeInterest(interest router.Interest) {
 	i.cancels = slices.Delete(i.cancels, idx, idx+1)
 }
 
-func (i *interestRouter) recvRunner(ctx context.Context, interest router.Interest) {
+func (i *interestRouter) recvRunner(ctx context.Context, interest routers.Interest) {
 	defer i.wg.Done()
 	for {
 		select {
@@ -353,7 +353,7 @@ func (i *interestRouter) Close() error {
 	return nil
 }
 
-func (i *interestRouter) Route() router.Route {
+func (i *interestRouter) Route() routers.Route {
 	return i.route
 }
 
