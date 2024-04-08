@@ -32,32 +32,19 @@ func NewLink(ctx context.Context, intent router.IntentInternal, interest router.
 func (l Link) Link() {
 	go func() {
 		defer func() {
-			l.intent.SetLinked(false)
+			l.intent.Link(nil)
 			l.closer()
 			l.done <- struct{}{}
 		}()
-		l.intent.SetLinked(true)
+		l.intent.Link(l.interest.MsgC())
 		l.intent.Notify()
-		for {
-			select {
-			case <-l.ctx.Done():
-				return
-			case <-l.intent.Ctx().Done():
-				return
-			case <-l.interest.Ctx().Done():
-				return
-			case msg := <-l.intent.MsgC():
-
-				select {
-				case <-l.ctx.Done():
-					return
-				case <-l.intent.Ctx().Done():
-					return
-				case <-l.interest.Ctx().Done():
-					return
-				case l.interest.MsgC() <- msg:
-				}
-			}
+		select {
+		case <-l.ctx.Done():
+			return
+		case <-l.intent.Ctx().Done():
+			return
+		case <-l.interest.Ctx().Done():
+			return
 		}
 	}()
 }

@@ -30,11 +30,13 @@ func New(opts ...Option) (*Router, error) {
 
 	ctx, cancel := context.WithCancel(opt.ctx)
 	ret := &Router{
-		ctx:        ctx,
-		cancel:     cancel,
-		log:        opt.logger.With("module", "router"),
-		transports: make([]router.Transport, len(opt.transports)),
-		size:       opt.size,
+		ctx:             ctx,
+		cancel:          cancel,
+		log:             opt.logger.With("module", "router"),
+		transports:      make([]router.Transport, len(opt.transports)),
+		intentRouters:   make(map[string]*intentRouter),
+		interestRouters: make(map[string]*interestRouter),
+		size:            opt.size,
 	}
 
 	for i, t := range opt.transports {
@@ -98,7 +100,7 @@ func closeAll[T io.Closer](closers ...T) error {
 }
 
 // Publish delivers data to an interested party. It may advertise the availability of the data if no interest is found.
-func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (router.Intent, error) {
+func (d *Router) Publish(path string, msg proto.Message, opt ...router.PubOpt) (router.Intent, error) {
 	route, err := router.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
@@ -107,6 +109,7 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (router.
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	intents := make([]router.Intent, 0, len(d.transports))
+	// Advertise intents even if we are already publishing
 	for _, t := range d.transports {
 		intent, err := t.Publish(route)
 		if err != nil {
@@ -117,24 +120,26 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (router.
 	}
 
 	ir, ok := d.intentRouters[route.String()]
-	if !ok {
-		ir = makeIntentRouter(d.ctx, route,
-			func() error {
-				d.mu.Lock()
-				defer d.mu.Unlock()
-				delete(d.intentRouters, route.String())
-				return nil
-			},
-			d.size,
-			intents...,
-		)
-		d.intentRouters[route.String()] = ir
+	if ok {
+		return ir.wrap(), nil
 	}
+
+	ir = makeIntentRouter(d.ctx, route,
+		func() error {
+			d.mu.Lock()
+			defer d.mu.Unlock()
+			delete(d.intentRouters, route.String())
+			return nil
+		},
+		d.size,
+		intents...,
+	)
+	d.intentRouters[route.String()] = ir
 	return ir.wrap(), nil
 }
 
 // Subscribe advertises an interest in a specific message type on particular path.
-func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (router.Interest, error) {
+func (d *Router) Subscribe(path string, msg proto.Message, opt ...router.SubOpt) (router.Interest, error) {
 	route, err := router.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
@@ -142,6 +147,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (route
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	// Advertise interests anyway (even if we are already subscribed)
 	interests := make([]router.Interest, 0, len(d.transports))
 	for _, t := range d.transports {
 		interest, err := t.Subscribe(route)
@@ -153,18 +159,20 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (route
 	}
 
 	ir, ok := d.interestRouters[route.String()]
-	if !ok {
-		ir = makeInterestRouter(d.ctx, route,
-			func() error {
-				d.mu.Lock()
-				defer d.mu.Unlock()
-				delete(d.interestRouters, route.String())
-				return nil
-			},
-			d.size,
-			interests...,
-		)
-		d.interestRouters[route.String()] = ir
+	if ok {
+		return ir.wrap(), nil
 	}
+
+	ir = makeInterestRouter(d.ctx, route,
+		func() error {
+			d.mu.Lock()
+			defer d.mu.Unlock()
+			delete(d.interestRouters, route.String())
+			return nil
+		},
+		d.size,
+		interests...,
+	)
+	d.interestRouters[route.String()] = ir
 	return ir.wrap(), nil
 }
