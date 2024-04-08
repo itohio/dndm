@@ -21,15 +21,15 @@ func TestDecodeMessage(t *testing.T) {
 			name: "intent",
 			init: func() ([]byte, map[string]routers.Route) {
 				i := &types.Intent{
-					Id:   "id",
-					Hops: 123,
-					Ttl:  456,
+					Route: "id",
+					Hops:  123,
+					Ttl:   456,
 				}
 				r, err := routers.NewRoute("my-route", &types.TextMessage{})
 				if err != nil {
 					panic(err)
 				}
-				buf, err := EncodeMessage(i, "my-id", r)
+				buf, err := EncodeMessage(i, r)
 				if err != nil {
 					panic(err)
 				}
@@ -43,7 +43,7 @@ func TestDecodeMessage(t *testing.T) {
 				if !ok {
 					t.Errorf("DecodeMessage() != Intent")
 				}
-				if mm.Id != "id" || mm.Hops != 123 || mm.Ttl != 456 {
+				if mm.Route != "id" || mm.Hops != 123 || mm.Ttl != 456 {
 					t.Errorf("DecodeMessage() = %v", mm)
 				}
 			},
@@ -53,15 +53,15 @@ func TestDecodeMessage(t *testing.T) {
 			name: "interest",
 			init: func() ([]byte, map[string]routers.Route) {
 				i := &types.Interest{
-					Id:   "id",
-					Hops: 123,
-					Ttl:  456,
+					Route: "id",
+					Hops:  123,
+					Ttl:   456,
 				}
 				r, err := routers.NewRoute("my-route", &types.TextMessage{})
 				if err != nil {
 					panic(err)
 				}
-				buf, err := EncodeMessage(i, "my-id", r)
+				buf, err := EncodeMessage(i, r)
 				if err != nil {
 					panic(err)
 				}
@@ -75,7 +75,7 @@ func TestDecodeMessage(t *testing.T) {
 				if !ok {
 					t.Errorf("DecodeMessage() != Interest")
 				}
-				if mm.Id != "id" || mm.Hops != 123 || mm.Ttl != 456 {
+				if mm.Route != "id" || mm.Hops != 123 || mm.Ttl != 456 {
 					t.Errorf("DecodeMessage() = %v", mm)
 				}
 			},
@@ -91,7 +91,7 @@ func TestDecodeMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				buf, err := EncodeMessage(i, "my-id", r)
+				buf, err := EncodeMessage(i, r)
 				if err != nil {
 					panic(err)
 				}
@@ -128,7 +128,7 @@ func TestDecodeMessage(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(append(data, make([]byte, 1024)...))
-			data, err := ReadMessage(buf)
+			data, _, err := ReadMessage(buf)
 			if err != nil {
 				t.Errorf("ReadMessage() error = %v", err)
 				buffers.Put(data)
