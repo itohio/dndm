@@ -1,0 +1,44 @@
+syntax = "proto3";
+package types.core;
+option go_package = "github.com/itohio/dndm/types/core/types";
+
+enum Type {
+  UNSPECIFIED_TYPE = 0;
+  MESSAGE = 1;
+  INTENT = 2;
+  INTENTS = 3;
+  INTEREST = 4;
+  INTERESTS = 5;
+  NOTIFY_INTENT = 6;
+  RESULT = 7;
+  PING = 8;
+  PONG = 9;
+  HANDSHAKE = 50;
+  PEERS = 51;
+  USER_TYPES = 1000;
+}
+
+message Header {
+  uint64 receive_timestamp = 1; // Should not be set by remote. Is overwritten upon reception.
+  uint64 timestamp = 2;
+  Type type = 3;
+  bool want_result = 4;
+  bytes signature = 5;
+  string route = 6;
+}
+
+message Result {
+  uint64 nonce = 1;
+  uint64 error = 2;
+  string description = 3;
+}
+
+message Ping {
+  bytes payload = 3;
+}
+
+message Pong {
+  uint64 receive_timestamp = 1; // local Timestamp when we received Ping message
+  uint64 ping_timestamp = 3;    // remote timestamp when Ping was sent
+  bytes payload = 4;
+}

@@ -1,4 +1,4 @@
-package pipe
+package p2p
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
-	types "github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -94,14 +94,6 @@ func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 func (t *Transport) messageSender(d time.Duration) {
 	defer t.wg.Done()
 	ticker := time.NewTicker(d)
-
-	t.dialer.Write(
-		t.ctx,
-		routers.Route{},
-		&types.Handshake{
-			Id: t.name,
-		},
-	)
 
 	for {
 		select {

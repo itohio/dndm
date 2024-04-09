@@ -1,0 +1,14 @@
+syntax = "proto3";
+package types.test;
+option go_package = "github.com/itohio/dndm/types/test/types";
+
+// Foo is for creating foo test messages
+message Foo {
+  string text = 1;
+}
+
+// Bar is for creating Bar test messages
+message Bar {
+  uint32 a = 1;
+  uint32 b = 2;
+}

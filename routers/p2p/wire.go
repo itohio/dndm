@@ -1,4 +1,4 @@
-package pipe
+package p2p
 
 import (
 	"context"
@@ -6,9 +6,10 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/itohio/dndm/codec"
 	"github.com/itohio/dndm/errors"
 	routers "github.com/itohio/dndm/routers"
-	types "github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -138,16 +139,16 @@ func (w *wireRemote) Close() error {
 }
 
 func (w *wireRemote) Read(ctx context.Context) (*types.Header, proto.Message, error) {
-	buf, ts, err := ReadMessage(w.Reader(ctx))
+	buf, ts, err := codec.ReadMessage(w.Reader(ctx))
 	if err != nil {
 		return nil, nil, err
 	}
-	hdr, msg, err := DecodeMessage(buf, w.routes)
+	hdr, msg, err := codec.DecodeMessage(buf, w.routes)
 	if err != nil {
-		buffers.Put(buf)
+		codec.Release(buf)
 		return hdr, msg, err
 	}
-	buffers.Put(buf)
+	codec.Release(buf)
 	hdr.ReceiveTimestamp = ts
 
 	if w.handlers == nil {
@@ -168,7 +169,7 @@ func (w *wireRemote) Read(ctx context.Context) (*types.Header, proto.Message, er
 }
 
 func (w *wireRemote) Write(ctx context.Context, route routers.Route, msg proto.Message) error {
-	buf, err := EncodeMessage(msg, route)
+	buf, err := codec.EncodeMessage(msg, route)
 	if err != nil {
 		return err
 	}
@@ -176,7 +177,7 @@ func (w *wireRemote) Write(ctx context.Context, route routers.Route, msg proto.M
 	if n != len(buf) {
 		err = errors.ErrNotEnoughBytes
 	}
-	buffers.Put(buf)
+	codec.Release(buf)
 	return err
 }
 

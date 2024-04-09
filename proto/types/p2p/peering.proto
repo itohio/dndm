@@ -1,0 +1,21 @@
+syntax = "proto3";
+package types.p2p;
+option go_package = "github.com/itohio/dndm/types/p2p/types";
+
+enum HandshakeStage {
+  UNSPECIFIED_HANDSHAKE = 0;
+  INITIAL = 1;
+  FINAL = 2;
+}
+
+message Handshake {
+  string id = 1;
+  HandshakeStage stage = 2;
+  bytes public_key = 3;
+}
+
+message Peers {
+  repeated string ids = 1;
+  bool remove = 2;
+}
+

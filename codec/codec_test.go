@@ -1,4 +1,4 @@
-package pipe
+package codec
 
 import (
 	"bytes"
@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
+	testtypes "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -25,7 +26,7 @@ func TestDecodeMessage(t *testing.T) {
 					Hops:  123,
 					Ttl:   456,
 				}
-				r, err := routers.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &testtypes.Foo{})
 				if err != nil {
 					panic(err)
 				}
@@ -57,7 +58,7 @@ func TestDecodeMessage(t *testing.T) {
 					Hops:  123,
 					Ttl:   456,
 				}
-				r, err := routers.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &testtypes.Foo{})
 				if err != nil {
 					panic(err)
 				}
@@ -84,10 +85,10 @@ func TestDecodeMessage(t *testing.T) {
 		{
 			name: "ping",
 			init: func() ([]byte, map[string]routers.Route) {
-				i := &types.TextMessage{
+				i := &testtypes.Foo{
 					Text: "some-important-text",
 				}
-				r, err := routers.NewRoute("my-route", &types.TextMessage{})
+				r, err := routers.NewRoute("my-route", &testtypes.Foo{})
 				if err != nil {
 					panic(err)
 				}
@@ -101,7 +102,7 @@ func TestDecodeMessage(t *testing.T) {
 				if h.Type != types.Type_MESSAGE {
 					t.Errorf("DecodeMessage() type != Message")
 				}
-				mm, ok := m.(*types.TextMessage)
+				mm, ok := m.(*testtypes.Foo)
 				if !ok {
 					t.Errorf("DecodeMessage() != TextMessage")
 				}
