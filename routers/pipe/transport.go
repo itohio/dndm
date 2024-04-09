@@ -52,6 +52,7 @@ type Transport struct {
 	remote atomic.Pointer[types.Handshake]
 }
 
+// New creates a transport that communicates with a remote via Remote interface.
 func New(name string, remote Remote, size int, timeout time.Duration) *Transport {
 	return &Transport{
 		name:         name,
