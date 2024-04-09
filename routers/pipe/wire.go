@@ -1,7 +1,6 @@
 package pipe
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"log/slog"
@@ -15,6 +14,11 @@ import (
 
 var _ Remote = (*wireRemote)(nil)
 var _ routers.Transport = (*Wire)(nil)
+
+type ReadWriter interface {
+	io.Reader
+	io.Writer
+}
 
 type MessageHandler func(hdr *types.Header, msg proto.Message, remote Remote) (pass bool, err error)
 
@@ -31,7 +35,7 @@ type Wire struct {
 // However, handlers must be careful not to introduce infinite loops by e.g. capturing Pong message and sending Ping back.
 //
 // Handlers are invoked inside Read message and if it returns true the message will be passed to the original Read caller, otherwise it will attempt to read more messages recursively.
-func NewWire(id, name string, size int, timeout time.Duration, rw bufio.ReadWriter, handlers map[types.Type]MessageHandler) *Wire {
+func NewWire(id, name string, size int, timeout time.Duration, rw ReadWriter, handlers map[types.Type]MessageHandler) *Wire {
 	wireRemote := &wireRemote{
 		id:       id,
 		rw:       rw,
@@ -96,7 +100,7 @@ type wireRemote struct {
 	id       string
 	handlers map[types.Type]MessageHandler
 	routes   map[string]routers.Route
-	rw       bufio.ReadWriter
+	rw       ReadWriter
 	cancel   context.CancelFunc
 	read     contextRW
 	write    contextRW

@@ -14,6 +14,7 @@ import (
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/routers"
 	"github.com/itohio/dndm/routers/direct"
+	"github.com/itohio/dndm/routers/pipe"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -29,7 +30,7 @@ func main() {
 	n := flag.Int("N", 1, "Number of receivers")
 	m := flag.Int("M", 1, "Number of senders")
 	size := flag.Int("size", 3, "size of the buffers")
-	t := flag.String("what", "channel", "One of channel, dndm, intent, direct")
+	t := flag.String("what", "channel", "One of channel, dndm, intent, direct, wire")
 	flag.Parse()
 
 	switch *t {
@@ -41,6 +42,8 @@ func main() {
 		testIntent(*size, *d)
 	case "direct":
 		testDirect(*size, *d)
+	case "wire":
+		testWire(*size, *d)
 	case "all":
 	default:
 		panic("Unknown")
@@ -174,6 +177,57 @@ func testDirect(size int, d time.Duration) {
 	}
 }
 
+func testWire(size int, d time.Duration) {
+	fmt.Println("----------------[ testWire ]-----------")
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	var t *Foo
+	route, err := routers.NewRoute("path", t)
+	if err != nil {
+		panic(err)
+	}
+	bridge := makeBridge(ctx)
+	remoteA := pipe.NewWire("remoteA", "pipe-name", size, time.Second, bridge.A(), nil)
+	remoteB := pipe.NewWire("remoteB", "pipe-name", size, time.Second, bridge.B(), nil)
+
+	err = remoteA.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
+	if err != nil {
+		panic(err)
+	}
+	err = remoteB.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
+	if err != nil {
+		panic(err)
+	}
+
+	intent, err := remoteA.Publish(route)
+	if err != nil {
+		panic(err)
+	}
+	interest, err := remoteB.Subscribe(route)
+	if err != nil {
+		panic(err)
+	}
+
+	senderIntent(ctx, size, intent.(routers.IntentInternal))
+	go consumerInterest(interest)
+
+	sent.Store(0)
+	recv.Store(0)
+	now := time.Now()
+	timer := time.NewTimer(d)
+	select {
+	case <-timer.C:
+		cancel()
+		time.Sleep(time.Second)
+		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
+		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
+		fmt.Println()
+	case <-ctx.Done():
+		slog.Info("Stopped", "reason", ctx.Err())
+	}
+}
+
 func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) <-chan proto.Message {
 	var t *Foo
 	route, err := routers.NewRoute("path", t)
@@ -181,7 +235,7 @@ func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) 
 		panic(err)
 	}
 	if intent == nil {
-		intent = direct.NewIntent(ctx, route, size, func() error { return nil })
+		intent = routers.NewIntent(ctx, route, size, func() error { return nil })
 	}
 	c := make(chan proto.Message, size)
 	intent.Link(c)

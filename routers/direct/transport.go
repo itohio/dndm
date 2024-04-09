@@ -17,18 +17,18 @@ type Transport struct {
 	log            *slog.Logger
 	addCallback    func(interest routers.Interest, t routers.Transport) error
 	removeCallback func(interest routers.Interest, t routers.Transport) error
-	intents        map[string]*Intent
-	interests      map[string]*Interest
-	links          map[string]*Link
+	intents        map[string]routers.IntentInternal
+	interests      map[string]routers.InterestInternal
+	links          map[string]*routers.Link
 	size           int
 }
 
 func New(size int) *Transport {
 	return &Transport{
 		size:      size,
-		intents:   make(map[string]*Intent),
-		interests: make(map[string]*Interest),
-		links:     make(map[string]*Link),
+		intents:   make(map[string]routers.IntentInternal),
+		interests: make(map[string]routers.InterestInternal),
+		links:     make(map[string]*routers.Link),
 	}
 }
 
@@ -69,13 +69,13 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setIntent(route routers.Route) (*Intent, error) {
+func (t *Transport) setIntent(route routers.Route) (routers.IntentInternal, error) {
 	intent, ok := t.intents[route.String()]
 	if ok {
 		return intent, nil
 	}
 
-	intent = NewIntent(t.ctx, route, t.size, func() error {
+	intent = routers.NewIntent(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
@@ -87,7 +87,7 @@ func (t *Transport) setIntent(route routers.Route) (*Intent, error) {
 	return intent, nil
 }
 
-func (t *Transport) setInterest(route routers.Route) (*Interest, error) {
+func (t *Transport) setInterest(route routers.Route) (routers.InterestInternal, error) {
 	interest, ok := t.interests[route.String()]
 	if ok {
 		if link, ok := t.links[route.String()]; ok {
@@ -96,7 +96,7 @@ func (t *Transport) setInterest(route routers.Route) (*Interest, error) {
 		return interest, nil
 	}
 
-	interest = NewInterest(t.ctx, route, t.size, func() error {
+	interest = routers.NewInterest(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		t.unlink(route)
 		delete(t.interests, route.String())
@@ -108,13 +108,13 @@ func (t *Transport) setInterest(route routers.Route) (*Interest, error) {
 	return interest, nil
 }
 
-func (t *Transport) link(route routers.Route, intent *Intent, interest *Interest) error {
+func (t *Transport) link(route routers.Route, intent routers.IntentInternal, interest routers.InterestInternal) error {
 	if !route.Equal(intent.Route()) || !route.Equal(interest.Route()) {
 		t.log.Error("invalid route", "route", route.Route(), "intent", intent.Route(), "interest", interest.Route())
 		return errors.ErrInvalidRoute
 	}
 
-	link := NewLink(t.ctx, intent, interest, func() error {
+	link := routers.NewLink(t.ctx, intent, interest, func() error {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
