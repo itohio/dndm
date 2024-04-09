@@ -68,35 +68,22 @@ func (t *Transport) messageHandler() {
 func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 	switch hdr.Type {
 	case types.Type_HANDSHAKE:
-		return t.handleHandshake(hdr, msg)
+		return nil
+	case types.Type_PEERS:
+		return nil
 	case types.Type_PING:
 		return t.handlePing(hdr, msg)
 	case types.Type_PONG:
 		return t.handlePong(hdr, msg)
 	case types.Type_INTENT:
-		if t.remote.Load() == nil {
-			return errors.ErrForbidden
-		}
 		return t.handleIntent(hdr, msg)
 	case types.Type_INTENTS:
-		if t.remote.Load() == nil {
-			return errors.ErrForbidden
-		}
 		return t.handleIntents(hdr, msg)
 	case types.Type_INTEREST:
-		if t.remote.Load() == nil {
-			return errors.ErrForbidden
-		}
 		return t.handleInterest(hdr, msg)
 	case types.Type_INTERESTS:
-		if t.remote.Load() == nil {
-			return errors.ErrForbidden
-		}
 		return t.handleInterests(hdr, msg)
 	case types.Type_MESSAGE:
-		if t.remote.Load() == nil {
-			return errors.ErrForbidden
-		}
 		return t.handleMsg(hdr, msg)
 	case types.Type_RESULT:
 		return t.handleResult(hdr, msg)
@@ -152,33 +139,6 @@ func (t *Transport) handleResult(hdr *types.Header, m proto.Message) error {
 	}
 
 	t.log.Error("Result", "err", msg.Error, "description", msg.Description)
-	return nil
-}
-
-func (t *Transport) handleHandshake(hdr *types.Header, m proto.Message) error {
-	msg, ok := m.(*types.Handshake)
-	if !ok {
-		return errors.ErrInvalidType
-	}
-
-	remote := t.remote.Load()
-	if remote == nil {
-		t.remote.Store(msg)
-		return nil
-	}
-	if remote.Id != msg.Id {
-		t.log.Error("bad handshake", "want", remote.Id, "got", msg.Id)
-	}
-	t.remote.Store(msg)
-	return nil
-}
-
-func (t *Transport) handlePeers(hdr *types.Header, m proto.Message) error {
-	msg, ok := m.(*types.Peers)
-	if !ok {
-		return errors.ErrInvalidType
-	}
-	_ = msg
 	return nil
 }
 

@@ -16,6 +16,8 @@ import (
 var _ Remote = (*wireRemote)(nil)
 var _ routers.Transport = (*Wire)(nil)
 
+type MessageHandler func(hdr *types.Header, msg proto.Message, remote Remote) (pass bool, err error)
+
 // Wire is a Transport that communicates with another remote Transport connected by bufio.ReaderWriter.
 type Wire struct {
 	*Transport
@@ -28,9 +30,10 @@ type Wire struct {
 // Handlers are provided with a pointer to Remote that may reuse Read and Write thus creating communication loops (e.g. handshake).
 // However, handlers must be careful not to introduce infinite loops by e.g. capturing Pong message and sending Ping back.
 //
-// Handlers are invoked inside Read message and regardless of the outcome the message will be passed to the original Read caller.
-func NewWire(name string, size int, timeout time.Duration, rw bufio.ReadWriter, handlers map[types.Type]func(*types.Header, proto.Message, Remote)) *Wire {
+// Handlers are invoked inside Read message and if it returns true the message will be passed to the original Read caller, otherwise it will attempt to read more messages recursively.
+func NewWire(id, name string, size int, timeout time.Duration, rw bufio.ReadWriter, handlers map[types.Type]MessageHandler) *Wire {
 	wireRemote := &wireRemote{
+		id:       id,
 		rw:       rw,
 		handlers: handlers,
 		routes:   make(map[string]routers.Route),
@@ -90,7 +93,8 @@ func (w *Wire) Init(ctx context.Context, log *slog.Logger, add, remove func(rout
 // - Write will encode the message
 // - Write will set header Timestamp to the time when the header is constructed, so it will include the overhead of marshaling the message
 type wireRemote struct {
-	handlers map[types.Type]func(*types.Header, proto.Message, Remote)
+	id       string
+	handlers map[types.Type]MessageHandler
 	routes   map[string]routers.Route
 	rw       bufio.ReadWriter
 	cancel   context.CancelFunc
@@ -116,6 +120,10 @@ func (c *wireRemote) Reader(ctx context.Context) io.Reader {
 	}
 }
 
+func (w *wireRemote) Id() string {
+	return w.id
+}
+
 func (w *wireRemote) Close() error {
 	w.cancel()
 	close(w.read.request)
@@ -125,9 +133,6 @@ func (w *wireRemote) Close() error {
 	return nil
 }
 
-func (w *wireRemote) AddPeers(id ...string) error   { return nil }
-func (w *wireRemote) BlockPeers(id ...string) error { return nil }
-
 func (w *wireRemote) Read(ctx context.Context) (*types.Header, proto.Message, error) {
 	buf, ts, err := ReadMessage(w.Reader(ctx))
 	if err != nil {
@@ -135,12 +140,24 @@ func (w *wireRemote) Read(ctx context.Context) (*types.Header, proto.Message, er
 	}
 	hdr, msg, err := DecodeMessage(buf, w.routes)
 	if err != nil {
+		buffers.Put(buf)
 		return hdr, msg, err
 	}
+	buffers.Put(buf)
 	hdr.ReceiveTimestamp = ts
 
+	if w.handlers == nil {
+		return hdr, msg, err
+	}
+
 	if handler, found := w.handlers[hdr.Type]; found {
-		handler(hdr, msg, w)
+		pass, err := handler(hdr, msg, w)
+		if err != nil {
+			return hdr, msg, err
+		}
+		if !pass {
+			return w.Read(ctx)
+		}
 	}
 
 	return hdr, msg, err
