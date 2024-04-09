@@ -55,7 +55,7 @@ func (d *Router) addInterest(interest routers.Interest, t routers.Transport) err
 	go func() {
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		ir, ok := d.interestRouters[route.String()]
+		ir, ok := d.interestRouters[route.ID()]
 		if ok {
 			ir.AddInterest(interest)
 			return
@@ -65,13 +65,13 @@ func (d *Router) addInterest(interest routers.Interest, t routers.Transport) err
 			func() error {
 				d.mu.Lock()
 				defer d.mu.Unlock()
-				delete(d.interestRouters, route.String())
+				delete(d.interestRouters, route.ID())
 				return nil
 			},
 			d.size,
 			interest,
 		)
-		d.interestRouters[route.String()] = ir
+		d.interestRouters[route.ID()] = ir
 	}()
 
 	return nil
@@ -82,7 +82,7 @@ func (d *Router) removeInterest(interest routers.Interest, t routers.Transport) 
 	go func() {
 		d.mu.Lock()
 		defer d.mu.Unlock()
-		ir, ok := d.interestRouters[route.String()]
+		ir, ok := d.interestRouters[route.ID()]
 		if !ok {
 			return
 		}
@@ -119,7 +119,7 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 		intents = append(intents, intent)
 	}
 
-	ir, ok := d.intentRouters[route.String()]
+	ir, ok := d.intentRouters[route.ID()]
 	if ok {
 		return ir.Wrap(), nil
 	}
@@ -128,13 +128,13 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
-			delete(d.intentRouters, route.String())
+			delete(d.intentRouters, route.ID())
 			return nil
 		},
 		d.size,
 		intents...,
 	)
-	d.intentRouters[route.String()] = ir
+	d.intentRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
 
@@ -158,7 +158,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 		interests = append(interests, interest)
 	}
 
-	ir, ok := d.interestRouters[route.String()]
+	ir, ok := d.interestRouters[route.ID()]
 	if ok {
 		return ir.Wrap(), nil
 	}
@@ -167,12 +167,12 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
-			delete(d.interestRouters, route.String())
+			delete(d.interestRouters, route.ID())
 			return nil
 		},
 		d.size,
 		interests...,
 	)
-	d.interestRouters[route.String()] = ir
+	d.interestRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }

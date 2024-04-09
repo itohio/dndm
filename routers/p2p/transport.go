@@ -50,12 +50,12 @@ type Transport struct {
 }
 
 // New creates a transport that communicates with a remote via Remote interface.
-func New(name string, remote Remote, size int, timeout time.Duration) *Transport {
+func New(name string, remote Remote, size int, timeout, pingDuration time.Duration) *Transport {
 	return &Transport{
 		name:         name,
 		size:         size,
 		dialer:       remote,
-		pingDuration: time.Second * 3,
+		pingDuration: pingDuration,
 		timeout:      timeout,
 		intents:      make(map[string]routers.IntentInternal),
 		interests:    make(map[string]routers.InterestInternal),
@@ -75,9 +75,12 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	t.ctx = ctx
 	t.cancel = cancel
 
-	t.wg.Add(2)
+	t.wg.Add(1)
 	go t.messageHandler()
-	go t.messageSender(t.pingDuration)
+	if t.pingDuration >= time.Millisecond*100 {
+		t.wg.Add(1)
+		go t.messageSender(t.pingDuration)
+	}
 	return nil
 }
 
@@ -103,7 +106,7 @@ func (t *Transport) publish(route routers.Route, remote *types.Intent) (routers.
 		return nil, err
 	}
 
-	if interest, ok := t.interests[route.String()]; ok {
+	if interest, ok := t.interests[route.ID()]; ok {
 		t.link(route, intent, interest)
 	}
 
@@ -111,13 +114,13 @@ func (t *Transport) publish(route routers.Route, remote *types.Intent) (routers.
 }
 
 func (t *Transport) setIntent(route routers.Route, remote *types.Intent) (routers.IntentInternal, error) {
-	if intent, ok := t.intents[route.String()]; ok {
+	if intent, ok := t.intents[route.ID()]; ok {
 		return intent, nil
 	}
 
 	// Do not allow local interests
 	// FIXME: do not allow remote intents and remote interests
-	if interest, ok := t.interests[route.String()]; ok {
+	if interest, ok := t.interests[route.ID()]; ok {
 		if _, ok := interest.(*RemoteInterest); remote == nil && !ok {
 			return nil, errors.ErrLocalIntent
 		}
@@ -127,23 +130,23 @@ func (t *Transport) setIntent(route routers.Route, remote *types.Intent) (router
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
-		delete(t.intents, route.String())
+		delete(t.intents, route.ID())
 		return nil
 	})
 
 	if remote == nil {
-		t.intents[route.String()] = pi
+		t.intents[route.ID()] = pi
 		return pi, nil
 	}
 
 	ri := wrapIntent(pi, remote)
-	t.intents[route.String()] = ri
+	t.intents[route.ID()] = ri
 	return ri, nil
 }
 
 func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (routers.InterestInternal, error) {
-	if interest, ok := t.interests[route.String()]; ok {
-		if link, ok := t.links[route.String()]; ok {
+	if interest, ok := t.interests[route.ID()]; ok {
+		if link, ok := t.links[route.ID()]; ok {
 			link.Notify()
 		}
 		return interest, nil
@@ -151,7 +154,7 @@ func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (ro
 
 	// Do not allow local intents and local interests
 	// FIXME: do not allow remote intents and remote interests
-	if intent, ok := t.intents[route.String()]; ok {
+	if intent, ok := t.intents[route.ID()]; ok {
 		if _, ok := intent.(*RemoteIntent); remote == nil && !ok {
 			return nil, errors.ErrLocalIntent
 		}
@@ -161,20 +164,20 @@ func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (ro
 	pi := routers.NewInterest(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		t.unlink(route)
-		delete(t.interests, route.String())
+		delete(t.interests, route.ID())
 		t.mu.Unlock()
 		return t.removeCallback(interest, t)
 	})
 	interest = pi
 
 	if remote == nil {
-		t.interests[route.String()] = pi
+		t.interests[route.ID()] = pi
 		return pi, nil
 	}
 
 	ri := wrapInterest(pi, remote)
 	interest = ri
-	t.interests[route.String()] = ri
+	t.interests[route.ID()] = ri
 	return ri, nil
 }
 
@@ -192,17 +195,17 @@ func (t *Transport) link(route routers.Route, intent routers.IntentInternal, int
 		t.unlink(route)
 		return nil
 	})
-	t.links[route.String()] = link
+	t.links[route.ID()] = link
 	link.Link()
 }
 
 func (t *Transport) unlink(route routers.Route) {
-	link, ok := t.links[route.String()]
+	link, ok := t.links[route.ID()]
 	if !ok {
 		return
 	}
 	link.Unlink()
-	delete(t.links, route.String())
+	delete(t.links, route.ID())
 }
 
 func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
@@ -223,7 +226,7 @@ func (t *Transport) subscribe(route routers.Route, remote *types.Interest) (rout
 		return nil, err
 	}
 
-	if intent, ok := t.intents[route.String()]; ok {
+	if intent, ok := t.intents[route.ID()]; ok {
 		t.link(route, intent, interest)
 	}
 

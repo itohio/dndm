@@ -27,6 +27,10 @@ func NewLink(ctx context.Context, intent IntentInternal, interest InterestIntern
 	return ret
 }
 
+// Link links intent with interest by configuring the intent to
+// send messages to interest's MsgC channel.
+//
+// Link notifies intent.
 func (l Link) Link() {
 	go func() {
 		defer func() {

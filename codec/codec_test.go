@@ -96,7 +96,7 @@ func TestDecodeMessage(t *testing.T) {
 				if err != nil {
 					panic(err)
 				}
-				return buf, map[string]routers.Route{r.String(): r}
+				return buf, map[string]routers.Route{r.ID(): r}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
 				if h.Type != types.Type_MESSAGE {
