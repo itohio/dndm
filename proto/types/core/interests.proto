@@ -1,0 +1,14 @@
+syntax = "proto3";
+package types.core;
+option go_package = "github.com/itohio/dndm/types/core/types";
+
+message Interests {
+  repeated Interest interests = 1;
+}
+
+message Interest {
+  string route = 1;
+  uint64 hops = 2;
+  uint64 ttl = 3;
+  bool register = 4;
+}

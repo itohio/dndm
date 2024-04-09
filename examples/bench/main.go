@@ -14,7 +14,8 @@ import (
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/routers"
 	"github.com/itohio/dndm/routers/direct"
-	"github.com/itohio/dndm/routers/pipe"
+	"github.com/itohio/dndm/routers/p2p"
+	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -63,7 +64,7 @@ func testDNDM(size, n, m int, d time.Duration) {
 		go generate(ctx, node)
 	}
 	for i := 0; i < m; i++ {
-		go consume[*Foo](ctx, node)
+		go consume[*types.Foo](ctx, node)
 	}
 
 	c := sender(ctx, size)
@@ -138,7 +139,7 @@ func testDirect(size int, d time.Duration) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	var t *Foo
+	var t *types.Foo
 	route, err := routers.NewRoute("path", t)
 	if err != nil {
 		panic(err)
@@ -182,14 +183,14 @@ func testWire(size int, d time.Duration) {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	var t *Foo
+	var t *types.Foo
 	route, err := routers.NewRoute("path", t)
 	if err != nil {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	remoteA := pipe.NewWire("remoteA", "pipe-name", size, time.Second, bridge.A(), nil)
-	remoteB := pipe.NewWire("remoteB", "pipe-name", size, time.Second, bridge.B(), nil)
+	remoteA := p2p.NewWire("remoteA", "pipe-name", size, time.Second, bridge.A(), nil)
+	remoteB := p2p.NewWire("remoteB", "pipe-name", size, time.Second, bridge.B(), nil)
 
 	err = remoteA.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
 	if err != nil {
@@ -229,7 +230,7 @@ func testWire(size int, d time.Duration) {
 }
 
 func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) <-chan proto.Message {
-	var t *Foo
+	var t *types.Foo
 	route, err := routers.NewRoute("path", t)
 	if err != nil {
 		panic(err)
@@ -252,7 +253,7 @@ func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) 
 			}
 
 			text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
-			err := intent.Send(ctx, &Foo{Payload: text})
+			err := intent.Send(ctx, &types.Foo{Text: text})
 			if err != nil {
 				slog.Error("send failed", "err", err)
 			}
@@ -263,7 +264,7 @@ func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) 
 
 func sender(ctx context.Context, size int) <-chan proto.Message {
 	c := make(chan proto.Message, size)
-	var t *Foo
+	var t *types.Foo
 
 	go func() {
 		defer close(c)
@@ -275,7 +276,7 @@ func sender(ctx context.Context, size int) <-chan proto.Message {
 			}
 
 			text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
-			c <- &Foo{Payload: text}
+			c <- &types.Foo{Text: text}
 		}
 	}()
 
@@ -284,7 +285,7 @@ func sender(ctx context.Context, size int) <-chan proto.Message {
 
 func consumer(c <-chan proto.Message) {
 	for m := range c {
-		msg := m.(*Foo)
+		msg := m.(*types.Foo)
 		_ = msg
 		recv.Add(1)
 	}
@@ -292,14 +293,14 @@ func consumer(c <-chan proto.Message) {
 
 func consumerInterest(interest routers.Interest) {
 	for m := range interest.C() {
-		msg := m.(*Foo)
+		msg := m.(*types.Foo)
 		_ = msg
 		recv.Add(1)
 	}
 }
 
 func generate(ctx context.Context, node *dndm.Router) {
-	var t *Foo
+	var t *types.Foo
 	intent, err := node.Publish("example.foobar", t)
 	if err != nil {
 		panic(err)
@@ -323,8 +324,8 @@ func generate(ctx context.Context, node *dndm.Router) {
 
 				text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				err := intent.Send(c, &Foo{
-					Payload: text,
+				err := intent.Send(c, &types.Foo{
+					Text: text,
 				})
 				cancel()
 				if err != nil {

@@ -1,4 +1,4 @@
-package pipe
+package p2p
 
 import (
 	"container/ring"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 

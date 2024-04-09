@@ -1,0 +1,18 @@
+syntax = "proto3";
+package types.core;
+option go_package = "github.com/itohio/dndm/types/core/types";
+
+message Intents {
+  repeated Intent intents = 1;
+}
+
+message Intent {
+  string route = 1;
+  uint64 hops = 2;
+  uint64 ttl = 3;
+  bool register = 4;
+}
+
+message NotifyIntent {
+  string route = 1;
+}

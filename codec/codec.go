@@ -1,16 +1,15 @@
-package pipe
+package codec
 
 import (
 	"encoding/binary"
 	"fmt"
 	"io"
 	reflect "reflect"
-	sync "sync"
 	"time"
 
 	"github.com/itohio/dndm/errors"
 	routers "github.com/itohio/dndm/routers"
-	types "github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
 	pool "github.com/libp2p/go-buffer-pool"
 	"google.golang.org/protobuf/proto"
 )
@@ -19,48 +18,14 @@ var (
 	buffers pool.BufferPool
 )
 
+func Release(b []byte) {
+	buffers.Put(b)
+}
+
 // Size of the preamble: 4 bytes magic number, 4 bytes total message size, 4 bytes header size, 4 bytes message size
 const PreambleSize = 4 + 4 + 4 + 4
 const MagicNumber = 0xFADABEDA
 const MagicNumberHeaderless = 0xCEBAFE4A
-
-var (
-	knownTypes         = map[types.Type]reflect.Type{}
-	knownTypesReversed = map[reflect.Type]types.Type{}
-	mu                 sync.Mutex
-)
-
-func init() {
-	RegisterType(types.Type_NOTIFY_INTENT, &types.NotifyIntent{})
-	RegisterType(types.Type_RESULT, &types.Result{})
-	RegisterType(types.Type_INTENT, &types.Intent{})
-	RegisterType(types.Type_INTENTS, &types.Intents{})
-	RegisterType(types.Type_INTEREST, &types.Interest{})
-	RegisterType(types.Type_INTERESTS, &types.Interests{})
-	RegisterType(types.Type_HANDSHAKE, &types.Handshake{})
-	RegisterType(types.Type_PEERS, &types.Peers{})
-	RegisterType(types.Type_PING, &types.Ping{})
-	RegisterType(types.Type_PONG, &types.Pong{})
-}
-
-func RegisterType(t types.Type, msg proto.Message) {
-	mu.Lock()
-	defer mu.Unlock()
-	if _, ok := knownTypes[t]; ok {
-		panic(fmt.Errorf("type already registered: %v", t))
-	}
-	tt := reflect.TypeOf(msg).Elem()
-	knownTypes[t] = tt
-	knownTypesReversed[tt] = t
-}
-
-func resolveType(msg proto.Message) types.Type {
-	tt := reflect.TypeOf(msg).Elem()
-	if t, ok := knownTypesReversed[tt]; ok {
-		return t
-	}
-	return types.Type_MESSAGE
-}
 
 // EncodeMessage encodes any proto message into stream bytes. It adds a header and packet part sizes.
 func EncodeMessage(msg proto.Message, route routers.Route) ([]byte, error) {

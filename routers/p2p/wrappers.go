@@ -1,8 +1,8 @@
-package pipe
+package p2p
 
 import (
 	routers "github.com/itohio/dndm/routers"
-	types "github.com/itohio/dndm/routers/pipe/types"
+	types "github.com/itohio/dndm/types/core"
 )
 
 type RemoteIntent struct {

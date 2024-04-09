@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
+	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,10 +28,10 @@ func main() {
 
 	go generateFoo(ctx, node)
 	time.Sleep(time.Millisecond)
-	go consume[*Foo](ctx, node)
+	go consume[*types.Foo](ctx, node)
 	time.Sleep(time.Millisecond)
 	go monitorFoo(ctx, node)
-	go consume[*Bar](ctx, node)
+	go consume[*types.Bar](ctx, node)
 	slog.Info("waiting for 5s...")
 	time.Sleep(time.Second * 5)
 	go generateBar(ctx, node)
@@ -42,7 +43,7 @@ func main() {
 }
 
 func generateFoo(ctx context.Context, node *dndm.Router) {
-	var t *Foo
+	var t *types.Foo
 	intent, err := node.Publish("example.foobar", t)
 	if err != nil {
 		panic(err)
@@ -71,7 +72,7 @@ func generateFoo(ctx context.Context, node *dndm.Router) {
 					text = "This is the last message"
 				}
 				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				err := intent.Send(c, &Foo{
+				err := intent.Send(c, &types.Foo{
 					Text: text,
 				})
 				i++
@@ -85,7 +86,7 @@ func generateFoo(ctx context.Context, node *dndm.Router) {
 }
 
 func generateBar(ctx context.Context, node *dndm.Router) {
-	var t *Bar
+	var t *types.Bar
 	intent, err := node.Publish("example.foobar", t)
 	if err != nil {
 		panic(err)
@@ -110,7 +111,7 @@ func generateBar(ctx context.Context, node *dndm.Router) {
 				default:
 				}
 				c, cancel := context.WithTimeout(ctx, time.Millisecond)
-				err := intent.Send(c, &Bar{
+				err := intent.Send(c, &types.Bar{
 					A: i,
 					B: j,
 				})
@@ -155,7 +156,7 @@ func consume[T proto.Message](ctx context.Context, node *dndm.Router) {
 
 // monitorFoo will receive messages on Foo interest and will restart Foo once after 3 seconds of no messages
 func monitorFoo(ctx context.Context, node *dndm.Router) {
-	var t *Foo
+	var t *types.Foo
 	interest, err := node.Subscribe("example.foobar", t)
 	if err != nil {
 		panic(err)
@@ -172,7 +173,7 @@ func monitorFoo(ctx context.Context, node *dndm.Router) {
 			go generateFoo(ctx, node)
 			return
 		case msg := <-interest.C():
-			m := msg.(*Foo)
+			m := msg.(*types.Foo)
 			_ = m
 			timer.Reset(time.Second * 10)
 			slog.Info("Monitor", "type", reflect.TypeOf(msg))
