@@ -1,32 +1,32 @@
 package pipe
 
 import (
-	"github.com/itohio/dndm/routers/direct"
+	routers "github.com/itohio/dndm/routers"
 	types "github.com/itohio/dndm/routers/pipe/types"
 )
 
 type RemoteIntent struct {
-	*direct.Intent
+	*routers.LocalIntent
 	remote *types.Intent
 }
 
-func wrapIntent(pi *direct.Intent, remote *types.Intent) *RemoteIntent {
+func wrapIntent(pi *routers.LocalIntent, remote *types.Intent) *RemoteIntent {
 	ret := &RemoteIntent{
-		Intent: pi,
-		remote: remote,
+		LocalIntent: pi,
+		remote:      remote,
 	}
 	return ret
 }
 
 type RemoteInterest struct {
-	*direct.Interest
+	*routers.LocalInterest
 	remote *types.Interest
 }
 
-func wrapInterest(pi *direct.Interest, remote *types.Interest) *RemoteInterest {
+func wrapInterest(pi *routers.LocalInterest, remote *types.Interest) *RemoteInterest {
 	ret := &RemoteInterest{
-		Interest: pi,
-		remote:   remote,
+		LocalInterest: pi,
+		remote:        remote,
 	}
 
 	// TODO: run a message loop

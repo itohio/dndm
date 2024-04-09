@@ -18,8 +18,8 @@ type Router struct {
 	cancel          context.CancelFunc
 	size            int
 	transports      []routers.Transport
-	intentRouters   map[string]*intentRouter
-	interestRouters map[string]*interestRouter
+	intentRouters   map[string]*routers.IntentRouter
+	interestRouters map[string]*routers.InterestRouter
 }
 
 func New(opts ...Option) (*Router, error) {
@@ -34,8 +34,8 @@ func New(opts ...Option) (*Router, error) {
 		cancel:          cancel,
 		log:             opt.logger.With("module", "router"),
 		transports:      make([]routers.Transport, len(opt.transports)),
-		intentRouters:   make(map[string]*intentRouter),
-		interestRouters: make(map[string]*interestRouter),
+		intentRouters:   make(map[string]*routers.IntentRouter),
+		interestRouters: make(map[string]*routers.InterestRouter),
 		size:            opt.size,
 	}
 
@@ -57,11 +57,11 @@ func (d *Router) addInterest(interest routers.Interest, t routers.Transport) err
 		defer d.mu.Unlock()
 		ir, ok := d.interestRouters[route.String()]
 		if ok {
-			ir.addInterest(interest)
+			ir.AddInterest(interest)
 			return
 		}
 
-		ir = makeInterestRouter(d.ctx, route,
+		ir = routers.NewInterestRouter(d.ctx, route,
 			func() error {
 				d.mu.Lock()
 				defer d.mu.Unlock()
@@ -86,7 +86,7 @@ func (d *Router) removeInterest(interest routers.Interest, t routers.Transport) 
 		if !ok {
 			return
 		}
-		ir.removeInterest(interest)
+		ir.RemoveInterest(interest)
 	}()
 	return nil
 }
@@ -121,10 +121,10 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 
 	ir, ok := d.intentRouters[route.String()]
 	if ok {
-		return ir.wrap(), nil
+		return ir.Wrap(), nil
 	}
 
-	ir = makeIntentRouter(d.ctx, route,
+	ir = routers.NewIntentRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
@@ -135,7 +135,7 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 		intents...,
 	)
 	d.intentRouters[route.String()] = ir
-	return ir.wrap(), nil
+	return ir.Wrap(), nil
 }
 
 // Subscribe advertises an interest in a specific message type on particular path.
@@ -160,10 +160,10 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 
 	ir, ok := d.interestRouters[route.String()]
 	if ok {
-		return ir.wrap(), nil
+		return ir.Wrap(), nil
 	}
 
-	ir = makeInterestRouter(d.ctx, route,
+	ir = routers.NewInterestRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
@@ -174,5 +174,5 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 		interests...,
 	)
 	d.interestRouters[route.String()] = ir
-	return ir.wrap(), nil
+	return ir.Wrap(), nil
 }

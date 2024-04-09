@@ -11,7 +11,6 @@ import (
 
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/direct"
 	"github.com/itohio/dndm/routers/pipe/types"
 	"google.golang.org/protobuf/proto"
 )
@@ -40,7 +39,7 @@ type Transport struct {
 	timeout   time.Duration
 	intents   map[string]routers.IntentInternal
 	interests map[string]routers.InterestInternal
-	links     map[string]*direct.Link
+	links     map[string]*routers.Link
 
 	pingDuration time.Duration
 	pingMu       sync.Mutex
@@ -124,7 +123,7 @@ func (t *Transport) setIntent(route routers.Route, remote *types.Intent) (router
 		}
 	}
 
-	pi := direct.NewIntent(t.ctx, route, t.size, func() error {
+	pi := routers.NewIntent(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
@@ -159,7 +158,7 @@ func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (ro
 	}
 
 	var interest routers.Interest
-	pi := direct.NewInterest(t.ctx, route, t.size, func() error {
+	pi := routers.NewInterest(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		t.unlink(route)
 		delete(t.interests, route.String())
@@ -180,14 +179,14 @@ func (t *Transport) setInterest(route routers.Route, remote *types.Interest) (ro
 }
 
 func (t *Transport) link(route routers.Route, intent routers.IntentInternal, interest routers.InterestInternal) {
-	_, localIntent := intent.(*direct.Intent)
-	_, localInterest := interest.(*direct.Interest)
+	_, localIntent := intent.(*routers.LocalIntent)
+	_, localInterest := interest.(*routers.LocalInterest)
 
 	// Do not link local&local and remote&remote
 	if localIntent == localInterest {
 		return
 	}
-	link := direct.NewLink(t.ctx, intent, interest, func() error {
+	link := routers.NewLink(t.ctx, intent, interest, func() error {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
