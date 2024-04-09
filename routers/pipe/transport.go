@@ -20,8 +20,7 @@ var _ routers.Transport = (*Transport)(nil)
 
 type Remote interface {
 	io.Closer
-	AddPeers(id ...string) error
-	BlockPeers(id ...string) error
+	Id() string
 	Read(ctx context.Context) (*types.Header, proto.Message, error)
 	Write(ctx context.Context, route routers.Route, msg proto.Message) error
 }
@@ -48,8 +47,7 @@ type Transport struct {
 	pingRing     *ring.Ring
 	pongRing     *ring.Ring
 
-	nonce  atomic.Uint64
-	remote atomic.Pointer[types.Handshake]
+	nonce atomic.Uint64
 }
 
 // New creates a transport that communicates with a remote via Remote interface.

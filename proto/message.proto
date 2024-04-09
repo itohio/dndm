@@ -3,7 +3,7 @@ package types;
 option go_package = "github.com/itohio/dndm/router/pipe/types";
 
 enum Type {
-  UNSPECIFIED = 0;
+  UNSPECIFIED_TYPE = 0;
   MESSAGE = 1;
   INTENT = 2;
   INTEREST = 3;
@@ -15,6 +15,12 @@ enum Type {
   PEERS = 51;
   INTENTS = 52;
   INTERESTS = 53;
+}
+
+enum HandshakeStage {
+  UNSPECIFIED_HANDSHAKE = 0;
+  INITIAL = 1;
+  FINAL = 2;
 }
 
 message Header {
@@ -59,6 +65,7 @@ message Interest {
 
 message Handshake {
   string id = 1;
+  HandshakeStage stage = 2;
 }
 
 message Ping {
