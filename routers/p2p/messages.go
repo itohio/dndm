@@ -245,7 +245,7 @@ func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
 func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	intent, ok := t.intents[route.String()]
+	intent, ok := t.intents[route.ID()]
 	if !ok {
 		return errors.ErrNoIntent
 	}
@@ -308,7 +308,7 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Interest) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	interest, ok := t.interests[route.String()]
+	interest, ok := t.interests[route.ID()]
 	if !ok {
 		return errors.ErrNoIntent
 	}
@@ -330,7 +330,7 @@ func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
 
 	// NOTE: Be aware of unreleased locks!
 	t.mu.Lock()
-	intent, ok := t.intents[route.String()]
+	intent, ok := t.intents[route.ID()]
 	if !ok {
 		t.mu.Unlock()
 		return errors.ErrNoIntent

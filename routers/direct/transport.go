@@ -62,7 +62,7 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 
 	t.log.Info("intent registered", "route", route.Route())
 
-	if interest, ok := t.interests[route.String()]; ok {
+	if interest, ok := t.interests[route.ID()]; ok {
 		t.link(route, intent, interest)
 	}
 
@@ -70,7 +70,7 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 }
 
 func (t *Transport) setIntent(route routers.Route) (routers.IntentInternal, error) {
-	intent, ok := t.intents[route.String()]
+	intent, ok := t.intents[route.ID()]
 	if ok {
 		return intent, nil
 	}
@@ -79,18 +79,18 @@ func (t *Transport) setIntent(route routers.Route) (routers.IntentInternal, erro
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		t.unlink(route)
-		delete(t.intents, route.String())
+		delete(t.intents, route.ID())
 		return nil
 	})
 
-	t.intents[route.String()] = intent
+	t.intents[route.ID()] = intent
 	return intent, nil
 }
 
 func (t *Transport) setInterest(route routers.Route) (routers.InterestInternal, error) {
-	interest, ok := t.interests[route.String()]
+	interest, ok := t.interests[route.ID()]
 	if ok {
-		if link, ok := t.links[route.String()]; ok {
+		if link, ok := t.links[route.ID()]; ok {
 			link.Notify()
 		}
 		return interest, nil
@@ -99,12 +99,12 @@ func (t *Transport) setInterest(route routers.Route) (routers.InterestInternal, 
 	interest = routers.NewInterest(t.ctx, route, t.size, func() error {
 		t.mu.Lock()
 		t.unlink(route)
-		delete(t.interests, route.String())
+		delete(t.interests, route.ID())
 		t.mu.Unlock()
 		return t.removeCallback(interest, t)
 	})
 
-	t.interests[route.String()] = interest
+	t.interests[route.ID()] = interest
 	return interest, nil
 }
 
@@ -120,19 +120,19 @@ func (t *Transport) link(route routers.Route, intent routers.IntentInternal, int
 		t.unlink(route)
 		return nil
 	})
-	t.links[route.String()] = link
+	t.links[route.ID()] = link
 	link.Link()
 	t.log.Info("link created", "route", route.Route())
 	return nil
 }
 
 func (t *Transport) unlink(route routers.Route) {
-	link, ok := t.links[route.String()]
+	link, ok := t.links[route.ID()]
 	if !ok {
 		return
 	}
 	link.Unlink()
-	delete(t.links, route.String())
+	delete(t.links, route.ID())
 }
 
 func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
@@ -154,7 +154,7 @@ func (t *Transport) subscribe(route routers.Route) (routers.Interest, error) {
 	}
 	t.log.Info("interest registered", "route", route.Route())
 
-	if intent, ok := t.intents[route.String()]; ok {
+	if intent, ok := t.intents[route.ID()]; ok {
 		t.link(route, intent, interest)
 	}
 

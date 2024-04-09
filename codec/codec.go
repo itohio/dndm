@@ -32,7 +32,7 @@ func EncodeMessage(msg proto.Message, route routers.Route) ([]byte, error) {
 	h := &types.Header{
 		Timestamp: uint64(time.Now().UnixNano()),
 		Type:      resolveType(msg),
-		Route:     route.String(),
+		Route:     route.ID(),
 	}
 	return AppendMessageTo(nil, h, msg)
 }

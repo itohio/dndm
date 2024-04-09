@@ -36,7 +36,7 @@ type Wire struct {
 // However, handlers must be careful not to introduce infinite loops by e.g. capturing Pong message and sending Ping back.
 //
 // Handlers are invoked inside Read message and if it returns true the message will be passed to the original Read caller, otherwise it will attempt to read more messages recursively.
-func NewWire(id, name string, size int, timeout time.Duration, rw ReadWriter, handlers map[types.Type]MessageHandler) *Wire {
+func NewWire(id, name string, size int, timeout, pingDuration time.Duration, rw ReadWriter, handlers map[types.Type]MessageHandler) *Wire {
 	wireRemote := &wireRemote{
 		id:       id,
 		rw:       rw,
@@ -52,7 +52,7 @@ func NewWire(id, name string, size int, timeout time.Duration, rw ReadWriter, ha
 		},
 	}
 
-	transport := New(name, wireRemote, size, timeout)
+	transport := New(name, wireRemote, size, timeout, pingDuration)
 	return &Wire{
 		Transport: transport,
 		remote:    wireRemote,
@@ -70,7 +70,7 @@ func (w *Wire) Init(ctx context.Context, log *slog.Logger, add, remove func(rout
 		}
 		// Nil Type indicates remote interest
 		if i.Route().Type() != nil {
-			w.remote.routes[i.Route().String()] = i.Route()
+			w.remote.routes[i.Route().ID()] = i.Route()
 		}
 		return nil
 	}
@@ -81,7 +81,7 @@ func (w *Wire) Init(ctx context.Context, log *slog.Logger, add, remove func(rout
 		}
 		// Nil Type indicates remote interest
 		if i.Route().Type() != nil {
-			delete(w.remote.routes, i.Route().String())
+			delete(w.remote.routes, i.Route().ID())
 		}
 		return nil
 	}
