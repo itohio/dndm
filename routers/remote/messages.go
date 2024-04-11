@@ -1,4 +1,4 @@
-package p2p
+package remote
 
 import (
 	"bytes"
@@ -32,7 +32,7 @@ func (t *Transport) messageHandler() {
 		default:
 		}
 
-		hdr, msg, err := t.dialer.Read(t.ctx)
+		hdr, msg, err := t.remote.Read(t.ctx)
 		if err != nil {
 			t.log.Error("decode failed", "err", err)
 			continue
@@ -57,7 +57,7 @@ func (t *Transport) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.dialer.Write(t.ctx, routers.Route{}, result)
+			err := t.remote.Write(t.ctx, routers.Route{}, result)
 			if err != nil {
 				t.log.Error("write result", "err", err, "result", result)
 			}
@@ -104,7 +104,7 @@ func (t *Transport) messageSender(d time.Duration) {
 				Payload: make([]byte, 1024),
 			}
 			rand.Read(ping.Payload)
-			t.dialer.Write(
+			t.remote.Write(
 				t.ctx,
 				routers.Route{},
 				ping,
@@ -148,7 +148,7 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 		Payload:          msg.Payload,
 	}
 
-	t.dialer.Write(
+	t.remote.Write(
 		t.ctx,
 		routers.Route{},
 		pong,
@@ -245,7 +245,7 @@ func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
 func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	intent, ok := t.intents[route.ID()]
+	intent, ok := t.linker.Intent(route)
 	if !ok {
 		return errors.ErrNoIntent
 	}
@@ -308,7 +308,7 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Interest) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	interest, ok := t.interests[route.ID()]
+	interest, ok := t.linker.Interest(route)
 	if !ok {
 		return errors.ErrNoIntent
 	}
@@ -330,7 +330,7 @@ func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
 
 	// NOTE: Be aware of unreleased locks!
 	t.mu.Lock()
-	intent, ok := t.intents[route.ID()]
+	intent, ok := t.linker.Intent(route)
 	if !ok {
 		t.mu.Unlock()
 		return errors.ErrNoIntent

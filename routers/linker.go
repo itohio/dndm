@@ -8,6 +8,8 @@ import (
 )
 
 type InterestCallback func(interest Interest) error
+type IntentWrapperFunc func(IntentInternal) (IntentInternal, error)
+type InterestWrapperFunc func(InterestInternal) (InterestInternal, error)
 
 type Linker struct {
 	ctx            context.Context
@@ -34,10 +36,50 @@ func NewLinker(ctx context.Context, size int, add, remove InterestCallback, befo
 	}
 }
 
+func (t *Linker) Close() error {
+	errarr := make([]error, 0, len(t.links))
+	for _, i := range t.interests {
+		err := i.Close()
+		if err != nil {
+			errarr = append(errarr, err)
+		}
+	}
+	for _, i := range t.intents {
+		err := i.Close()
+		if err != nil {
+			errarr = append(errarr, err)
+		}
+	}
+
+	t.mu.Lock()
+	t.intents = nil
+	t.interests = nil
+	t.links = nil
+	t.mu.Unlock()
+
+	return errors.Join(errarr...)
+}
+
+func (t *Linker) Intent(route Route) (Intent, bool) {
+	t.mu.Lock()
+	intent, ok := t.intents[route.ID()]
+	t.mu.Unlock()
+	return intent, ok
+}
+
 func (t *Linker) AddIntent(route Route) (Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	return t.addIntentLocked(route, func(ii IntentInternal) (IntentInternal, error) { return ii, nil })
+}
 
+func (t *Linker) AddIntentWithWrapper(route Route, wrapper IntentWrapperFunc) (Intent, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.addIntentLocked(route, wrapper)
+}
+
+func (t *Linker) addIntentLocked(route Route, wrapper IntentWrapperFunc) (Intent, error) {
 	intent, ok := t.intents[route.ID()]
 	if ok {
 		return intent, nil
@@ -46,6 +88,10 @@ func (t *Linker) AddIntent(route Route) (Intent, error) {
 	intent = NewIntent(t.ctx, route, t.size, func() error {
 		return t.RemoveIntent(route)
 	})
+	intent, err := wrapper(intent)
+	if err != nil {
+		return nil, err
+	}
 
 	t.intents[route.ID()] = intent
 
@@ -65,10 +111,26 @@ func (t *Linker) RemoveIntent(route Route) error {
 	return nil
 }
 
-func (t *Linker) NewInterest(route Route) (Interest, error) {
+func (t *Linker) Interest(route Route) (Interest, bool) {
+	t.mu.Lock()
+	interest, ok := t.interests[route.ID()]
+	t.mu.Unlock()
+	return interest, ok
+}
+
+func (t *Linker) AddInterest(route Route) (Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	return t.addInterestLocked(route, func(ii InterestInternal) (InterestInternal, error) { return ii, nil })
+}
 
+func (t *Linker) AddInterestWithWrapper(route Route, wrapper InterestWrapperFunc) (Interest, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.addInterestLocked(route, wrapper)
+}
+
+func (t *Linker) addInterestLocked(route Route, wrapper InterestWrapperFunc) (Interest, error) {
 	interest, ok := t.interests[route.ID()]
 	if ok {
 		if link, ok := t.links[route.ID()]; ok {
@@ -81,6 +143,10 @@ func (t *Linker) NewInterest(route Route) (Interest, error) {
 		t.RemoveInterest(route)
 		return t.removeCallback(interest)
 	})
+	interest, err := wrapper(interest)
+	if err != nil {
+		return nil, err
+	}
 
 	t.interests[route.ID()] = interest
 
@@ -101,7 +167,6 @@ func (t *Linker) RemoveInterest(route Route) error {
 
 func (t *Linker) link(route Route, intent IntentInternal, interest InterestInternal) error {
 	if !route.Equal(intent.Route()) || !route.Equal(interest.Route()) {
-		// t.log.Error("invalid route", "route", route.Route(), "intent", intent.Route(), "interest", interest.Route())
 		return errors.ErrInvalidRoute
 	}
 
@@ -118,7 +183,6 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 	})
 	t.links[route.ID()] = link
 	link.Link()
-	// t.log.Info("link created", "route", route.Route())
 	return nil
 }
 
