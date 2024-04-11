@@ -107,14 +107,6 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(t.ctx, time.Second)
-	defer cancel()
-	err = t.remote.Write(ctx, route, &types.Intent{
-		Route:    route.ID(),
-		Ttl:      uint64(time.Minute),
-		Register: true,
-	})
-
 	t.log.Info("intent registered", "route", route.Route())
 	return intent, err
 }
@@ -135,13 +127,6 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(t.ctx, time.Second)
-	defer cancel()
-	err = t.remote.Write(ctx, route, &types.Interest{
-		Route:    route.ID(),
-		Ttl:      uint64(time.Minute),
-		Register: true,
-	})
 
 	t.addCallback(interest, t)
 	t.log.Info("interest registered", "route", route.Route())

@@ -36,6 +36,7 @@ func (wd *Watchdog) Reset() {
 
 type RemoteIntent struct {
 	*routers.LocalIntent
+	log    *slog.Logger
 	remote Remote
 	cfg    *types.Intent
 	wd     *Watchdog
@@ -43,6 +44,7 @@ type RemoteIntent struct {
 
 type LocalIntent struct {
 	*routers.LocalIntent
+	log    *slog.Logger
 	remote Remote
 }
 
@@ -55,9 +57,19 @@ func wrapLocalIntent(log *slog.Logger, remote Remote) routers.IntentWrapperFunc 
 
 		ret := &LocalIntent{
 			LocalIntent: li,
+			log:         log,
 			remote:      remote,
 		}
-		return ret, nil
+
+		ctx, cancel := context.WithTimeout(li.Ctx(), time.Second)
+		defer cancel()
+		err := remote.Write(ctx, li.Route(), &types.Intent{
+			Route:    li.Route().ID(),
+			Ttl:      uint64(time.Minute),
+			Register: true,
+		})
+		log.Info("LocalIntent", "send", "Intent.Register", "err", err)
+		return ret, err
 	}
 }
 
@@ -68,6 +80,7 @@ func (i *LocalIntent) Close() error {
 		Route:    i.LocalIntent.Route().ID(),
 		Register: false,
 	})
+	i.log.Info("LocalIntent", "send", "Intent.Close", "err", werr)
 	cerr := i.LocalIntent.Close()
 	return errors.Join(werr, cerr)
 }
@@ -84,6 +97,7 @@ func wrapRemoteIntent(log *slog.Logger, remote Remote, ri *types.Intent) routers
 
 		ret := &RemoteIntent{
 			LocalIntent: li,
+			log:         log,
 			remote:      remote,
 			cfg:         ri,
 			wd:          newWatchdog(ri.Ttl),
@@ -112,6 +126,7 @@ func (i *RemoteIntent) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (i *RemoteIntent) Close() error {
+	i.log.Info("RemoteIntent close")
 	i.wd.Reset()
 	return i.LocalIntent.Close()
 }
@@ -123,6 +138,7 @@ func (i *RemoteIntent) Link(c chan<- protoreflect.ProtoMessage) {
 
 type RemoteInterest struct {
 	*routers.LocalInterest
+	log    *slog.Logger
 	remote Remote
 	cfg    *types.Interest
 	wd     *Watchdog
@@ -130,6 +146,7 @@ type RemoteInterest struct {
 
 type LocalInterest struct {
 	*routers.LocalInterest
+	log    *slog.Logger
 	remote Remote
 }
 
@@ -141,19 +158,31 @@ func wrapLocalInterest(log *slog.Logger, remote Remote) routers.InterestWrapperF
 		}
 		ret := &LocalInterest{
 			LocalInterest: li,
+			log:           log,
 			remote:        remote,
 		}
-		return ret, nil
+
+		ctx, cancel := context.WithTimeout(li.Ctx(), time.Second)
+		defer cancel()
+		err := remote.Write(ctx, li.Route(), &types.Interest{
+			Route:    li.Route().ID(),
+			Ttl:      uint64(time.Minute),
+			Register: true,
+		})
+		log.Info("LocalInterest", "send", "Intent.Register", "err", err)
+
+		return ret, err
 	}
 }
 
 func (i *LocalInterest) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	werr := i.remote.Write(ctx, i.LocalInterest.Route(), &types.Intent{
+	werr := i.remote.Write(ctx, i.LocalInterest.Route(), &types.Interest{
 		Route:    i.LocalInterest.Route().ID(),
 		Register: false,
 	})
+	i.log.Info("LocalInterest", "send", "Intent.Register", "err", werr)
 	cerr := i.LocalInterest.Close()
 	return errors.Join(werr, cerr)
 }
@@ -166,6 +195,7 @@ func wrapRemoteInterest(log *slog.Logger, remote Remote, ri *types.Interest) rou
 		}
 		ret := &RemoteInterest{
 			LocalInterest: li,
+			log:           log,
 			remote:        remote,
 			cfg:           ri,
 			wd:            newWatchdog(ri.Ttl),
@@ -194,6 +224,7 @@ func wrapRemoteInterest(log *slog.Logger, remote Remote, ri *types.Interest) rou
 }
 
 func (i *RemoteInterest) Close() error {
+	i.log.Info("RemoteInterest close")
 	i.wd.Reset()
 	return i.LocalInterest.Close()
 }
