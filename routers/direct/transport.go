@@ -12,28 +12,27 @@ import (
 var _ routers.Transport = (*Transport)(nil)
 
 type Transport struct {
-	mu             sync.Mutex
 	ctx            context.Context
 	log            *slog.Logger
 	addCallback    func(interest routers.Interest, t routers.Transport) error
 	removeCallback func(interest routers.Interest, t routers.Transport) error
-	intents        map[string]routers.IntentInternal
-	interests      map[string]routers.InterestInternal
-	links          map[string]*routers.Link
 	size           int
+
+	mu     sync.Mutex
+	linker *routers.Linker
 }
 
 func New(size int) *Transport {
 	return &Transport{
-		size:      size,
-		intents:   make(map[string]routers.IntentInternal),
-		interests: make(map[string]routers.InterestInternal),
-		links:     make(map[string]*routers.Link),
+		size: size,
 	}
 }
 
 func (t *Transport) Close() error {
-	return nil
+	if t.linker == nil {
+		return nil
+	}
+	return t.linker.Close()
 }
 
 func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
@@ -44,6 +43,17 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	t.addCallback = add
 	t.removeCallback = remove
 	t.ctx = ctx
+
+	t.linker = routers.NewLinker(
+		ctx, t.size,
+		func(interest routers.Interest) error {
+			return add(interest, t)
+		},
+		func(interest routers.Interest) error {
+			return remove(interest, t)
+		},
+		nil,
+	)
 	return nil
 }
 
@@ -55,108 +65,20 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	intent, err := t.setIntent(route)
+	intent, err := t.linker.AddIntent(route)
 	if err != nil {
 		return nil, err
 	}
 
 	t.log.Info("intent registered", "route", route.Route())
-
-	if interest, ok := t.interests[route.ID()]; ok {
-		t.link(route, intent, interest)
-	}
-
 	return intent, nil
-}
-
-func (t *Transport) setIntent(route routers.Route) (routers.IntentInternal, error) {
-	intent, ok := t.intents[route.ID()]
-	if ok {
-		return intent, nil
-	}
-
-	intent = routers.NewIntent(t.ctx, route, t.size, func() error {
-		t.mu.Lock()
-		defer t.mu.Unlock()
-		t.unlink(route)
-		delete(t.intents, route.ID())
-		return nil
-	})
-
-	t.intents[route.ID()] = intent
-	return intent, nil
-}
-
-func (t *Transport) setInterest(route routers.Route) (routers.InterestInternal, error) {
-	interest, ok := t.interests[route.ID()]
-	if ok {
-		if link, ok := t.links[route.ID()]; ok {
-			link.Notify()
-		}
-		return interest, nil
-	}
-
-	interest = routers.NewInterest(t.ctx, route, t.size, func() error {
-		t.mu.Lock()
-		t.unlink(route)
-		delete(t.interests, route.ID())
-		t.mu.Unlock()
-		return t.removeCallback(interest, t)
-	})
-
-	t.interests[route.ID()] = interest
-	return interest, nil
-}
-
-func (t *Transport) link(route routers.Route, intent routers.IntentInternal, interest routers.InterestInternal) error {
-	if !route.Equal(intent.Route()) || !route.Equal(interest.Route()) {
-		t.log.Error("invalid route", "route", route.Route(), "intent", intent.Route(), "interest", interest.Route())
-		return errors.ErrInvalidRoute
-	}
-
-	link := routers.NewLink(t.ctx, intent, interest, func() error {
-		t.mu.Lock()
-		defer t.mu.Unlock()
-		t.unlink(route)
-		return nil
-	})
-	t.links[route.ID()] = link
-	link.Link()
-	t.log.Info("link created", "route", route.Route())
-	return nil
-}
-
-func (t *Transport) unlink(route routers.Route) {
-	link, ok := t.links[route.ID()]
-	if !ok {
-		return
-	}
-	link.Unlink()
-	delete(t.links, route.ID())
 }
 
 func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
-	interest, err := t.subscribe(route)
+	interest, err := t.linker.AddInterest(route)
 	if err != nil {
 		return nil, err
 	}
 	t.addCallback(interest, t)
-	return interest, nil
-}
-
-func (t *Transport) subscribe(route routers.Route) (routers.Interest, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	interest, err := t.setInterest(route)
-	if err != nil {
-		return nil, err
-	}
-	t.log.Info("interest registered", "route", route.Route())
-
-	if intent, ok := t.intents[route.ID()]; ok {
-		t.link(route, intent, interest)
-	}
-
 	return interest, nil
 }

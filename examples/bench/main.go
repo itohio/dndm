@@ -14,7 +14,7 @@ import (
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/routers"
 	"github.com/itohio/dndm/routers/direct"
-	"github.com/itohio/dndm/routers/p2p"
+	"github.com/itohio/dndm/routers/remote"
 	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
@@ -31,7 +31,7 @@ func main() {
 	n := flag.Int("N", 1, "Number of receivers")
 	m := flag.Int("M", 1, "Number of senders")
 	size := flag.Int("size", 3, "size of the buffers")
-	t := flag.String("what", "channel", "One of channel, dndm, intent, direct, p2p")
+	t := flag.String("what", "channel", "One of channel, dndm, intent, direct, remote, mesh")
 	flag.Parse()
 
 	switch *t {
@@ -43,8 +43,8 @@ func main() {
 		testIntent(*size, *d)
 	case "direct":
 		testDirect(*size, *d)
-	case "p2p":
-		testP2P(*size, *d)
+	case "remote":
+		testRemote(*size, *d)
 	case "all":
 	default:
 		panic("Unknown")
@@ -178,8 +178,8 @@ func testDirect(size int, d time.Duration) {
 	}
 }
 
-func testP2P(size int, d time.Duration) {
-	fmt.Println("----------------[ testP2P ]-----------")
+func testRemote(size int, d time.Duration) {
+	fmt.Println("----------------[ testRemote ]-----------")
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -189,8 +189,8 @@ func testP2P(size int, d time.Duration) {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	remoteA := p2p.NewWire("remoteA", "pipe-name-a", size, time.Second, 0, bridge.A(), nil)
-	remoteB := p2p.NewWire("remoteB", "pipe-name-b", size, time.Second, 0, bridge.B(), nil)
+	remoteA := remote.NewWire("remoteA", "pipe-name-a", size, time.Second, 0, bridge.A(), nil)
+	remoteB := remote.NewWire("remoteB", "pipe-name-b", size, time.Second, 0, bridge.B(), nil)
 
 	err = remoteA.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
 	if err != nil {
