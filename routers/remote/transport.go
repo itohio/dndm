@@ -116,7 +116,7 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 func (t *Transport) publish(route routers.Route, m *types.Intent) (routers.Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	intent, err := t.linker.AddIntentWithWrapper(route, wrapIntent(m))
+	intent, err := t.linker.AddIntentWithWrapper(route, wrapIntent(t.log, m))
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 }
 
 func (t *Transport) subscribe(route routers.Route, m *types.Interest) (routers.Interest, error) {
-	interest, err := t.linker.AddInterestWithWrapper(route, wrapInterest(m))
+	interest, err := t.linker.AddInterestWithWrapper(route, wrapInterest(t.log, t.remote, m))
 	if err != nil {
 		return nil, err
 	}
