@@ -2,6 +2,8 @@ package routers
 
 import (
 	"context"
+	"log/slog"
+	"reflect"
 	"sync"
 
 	"github.com/itohio/dndm/errors"
@@ -13,6 +15,7 @@ type InterestWrapperFunc func(InterestInternal) (InterestInternal, error)
 
 type Linker struct {
 	ctx            context.Context
+	log            *slog.Logger
 	size           int
 	mu             sync.Mutex
 	intents        map[string]IntentInternal
@@ -23,9 +26,15 @@ type Linker struct {
 	links          map[string]*Link
 }
 
-func NewLinker(ctx context.Context, size int, add, remove InterestCallback, beforeLink func(Intent, Interest) error) *Linker {
+func NewLinker(ctx context.Context, log *slog.Logger, size int, add, remove InterestCallback, beforeLink func(Intent, Interest) error) *Linker {
+	if beforeLink == nil {
+		beforeLink = func(i1 Intent, i2 Interest) error {
+			return nil
+		}
+	}
 	return &Linker{
 		ctx:            ctx,
+		log:            log,
 		size:           size,
 		intents:        make(map[string]IntentInternal),
 		interests:      make(map[string]InterestInternal),
@@ -183,6 +192,7 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 	})
 	t.links[route.ID()] = link
 	link.Link()
+	t.log.Info("linked", "route", intent.Route(), "intent", reflect.TypeOf(intent), "interest", reflect.TypeOf(interest))
 	return nil
 }
 
@@ -193,4 +203,5 @@ func (t *Linker) unlink(route Route) {
 	}
 	link.Unlink()
 	delete(t.links, route.ID())
+	t.log.Info("unlinked", "route", route)
 }

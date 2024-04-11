@@ -72,7 +72,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	t.cancel = cancel
 
 	t.linker = routers.NewLinker(
-		ctx, t.size,
+		ctx, logger, t.size,
 		func(interest routers.Interest) error {
 			return add(interest, t)
 		},

@@ -45,7 +45,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	t.ctx = ctx
 
 	t.linker = routers.NewLinker(
-		ctx, t.size,
+		ctx, logger, t.size,
 		func(interest routers.Interest) error {
 			return add(interest, t)
 		},
@@ -58,7 +58,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 }
 
 func (t *Transport) Name() string {
-	return "pass-through"
+	return "direct"
 }
 
 func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
@@ -69,8 +69,7 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	t.log.Info("intent registered", "route", route.Route())
+	t.log.Info("intent registered", "intent", route.Route())
 	return intent, nil
 }
 
@@ -80,5 +79,6 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 		return nil, err
 	}
 	t.addCallback(interest, t)
+	t.log.Info("registered", "interest", route.Route())
 	return interest, nil
 }
