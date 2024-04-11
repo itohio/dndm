@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"reflect"
 	"time"
 
 	"github.com/itohio/dndm/errors"
@@ -24,6 +25,9 @@ type Pong struct {
 }
 
 func (t *Transport) messageHandler() {
+	t.log.Info("messageHandler", "loop", "START")
+	defer t.log.Info("messageHandler", "loop", "STOP")
+
 	defer t.wg.Done()
 	for {
 		select {
@@ -37,6 +41,7 @@ func (t *Transport) messageHandler() {
 			t.log.Error("decode failed", "err", err)
 			continue
 		}
+		t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))
 		prevNonce := t.nonce.Load()
 		if hdr.Timestamp < prevNonce {
 			t.log.Error("nonce", "prev", prevNonce, "got", hdr.Timestamp)
@@ -243,8 +248,6 @@ func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
 }
 
 func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	intent, ok := t.linker.Intent(route)
 	if !ok {
 		return errors.ErrNoIntent
@@ -252,7 +255,7 @@ func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent)
 
 	if intent, ok := intent.(*RemoteIntent); !ok {
 		return errors.ErrForbidden
-	} else if intent.remote == nil || intent.remote.Route != m.Route {
+	} else if intent.cfg == nil || intent.cfg.Route != m.Route {
 		return errors.ErrForbidden
 	}
 
@@ -306,8 +309,6 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 }
 
 func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Interest) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	interest, ok := t.linker.Interest(route)
 	if !ok {
 		return errors.ErrNoIntent
@@ -315,7 +316,7 @@ func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Inter
 
 	if interest, ok := interest.(*RemoteInterest); !ok {
 		return errors.ErrForbidden
-	} else if interest.remote == nil || interest.remote.Route != m.Route {
+	} else if interest.cfg == nil || interest.cfg.Route != m.Route {
 		return errors.ErrForbidden
 	}
 
@@ -328,14 +329,10 @@ func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
 		return err
 	}
 
-	// NOTE: Be aware of unreleased locks!
-	t.mu.Lock()
 	intent, ok := t.linker.Intent(route)
 	if !ok {
-		t.mu.Unlock()
 		return errors.ErrNoIntent
 	}
-	t.mu.Unlock()
 
 	ctx, cancel := context.WithTimeout(t.ctx, t.timeout)
 	err = intent.Send(ctx, m)

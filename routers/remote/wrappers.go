@@ -36,14 +36,46 @@ func (wd *Watchdog) Reset() {
 
 type RemoteIntent struct {
 	*routers.LocalIntent
-	remote *types.Intent
+	remote Remote
+	cfg    *types.Intent
 	wd     *Watchdog
 }
 
-// wrapIntent returns an intent wrapper that embeds remote
+type LocalIntent struct {
+	*routers.LocalIntent
+	remote Remote
+}
+
+func wrapLocalIntent(log *slog.Logger, remote Remote) routers.IntentWrapperFunc {
+	return func(ii routers.IntentInternal) (routers.IntentInternal, error) {
+		li, ok := ii.(*routers.LocalIntent)
+		if !ok {
+			return nil, errors.ErrLocalIntent
+		}
+
+		ret := &LocalIntent{
+			LocalIntent: li,
+			remote:      remote,
+		}
+		return ret, nil
+	}
+}
+
+func (i *LocalIntent) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	werr := i.remote.Write(ctx, i.LocalIntent.Route(), &types.Intent{
+		Route:    i.LocalIntent.Route().ID(),
+		Register: false,
+	})
+	cerr := i.LocalIntent.Close()
+	return errors.Join(werr, cerr)
+}
+
+// wrapRemoteIntent returns an intent wrapper that embeds remote
 // wrap command and local intent into a RemoteIntent. It will start a watchdog timer
 // that when expired will close the intent.
-func wrapIntent(log *slog.Logger, ri *types.Intent) routers.IntentWrapperFunc {
+func wrapRemoteIntent(log *slog.Logger, remote Remote, ri *types.Intent) routers.IntentWrapperFunc {
 	return func(ii routers.IntentInternal) (routers.IntentInternal, error) {
 		li, ok := ii.(*routers.LocalIntent)
 		if !ok {
@@ -52,7 +84,8 @@ func wrapIntent(log *slog.Logger, ri *types.Intent) routers.IntentWrapperFunc {
 
 		ret := &RemoteIntent{
 			LocalIntent: li,
-			remote:      ri,
+			remote:      remote,
+			cfg:         ri,
 			wd:          newWatchdog(ri.Ttl),
 		}
 
@@ -90,11 +123,42 @@ func (i *RemoteIntent) Link(c chan<- protoreflect.ProtoMessage) {
 
 type RemoteInterest struct {
 	*routers.LocalInterest
-	remote *types.Interest
+	remote Remote
+	cfg    *types.Interest
 	wd     *Watchdog
 }
 
-func wrapInterest(log *slog.Logger, remote Remote, ri *types.Interest) routers.InterestWrapperFunc {
+type LocalInterest struct {
+	*routers.LocalInterest
+	remote Remote
+}
+
+func wrapLocalInterest(log *slog.Logger, remote Remote) routers.InterestWrapperFunc {
+	return func(ii routers.InterestInternal) (routers.InterestInternal, error) {
+		li, ok := ii.(*routers.LocalInterest)
+		if !ok {
+			return nil, errors.ErrLocalIntent
+		}
+		ret := &LocalInterest{
+			LocalInterest: li,
+			remote:        remote,
+		}
+		return ret, nil
+	}
+}
+
+func (i *LocalInterest) Close() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	werr := i.remote.Write(ctx, i.LocalInterest.Route(), &types.Intent{
+		Route:    i.LocalInterest.Route().ID(),
+		Register: false,
+	})
+	cerr := i.LocalInterest.Close()
+	return errors.Join(werr, cerr)
+}
+
+func wrapRemoteInterest(log *slog.Logger, remote Remote, ri *types.Interest) routers.InterestWrapperFunc {
 	return func(ii routers.InterestInternal) (routers.InterestInternal, error) {
 		li, ok := ii.(*routers.LocalInterest)
 		if !ok {
@@ -102,7 +166,8 @@ func wrapInterest(log *slog.Logger, remote Remote, ri *types.Interest) routers.I
 		}
 		ret := &RemoteInterest{
 			LocalInterest: li,
-			remote:        ri,
+			remote:        remote,
+			cfg:           ri,
 			wd:            newWatchdog(ri.Ttl),
 		}
 

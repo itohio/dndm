@@ -35,7 +35,6 @@ type Transport struct {
 	removeCallback func(interest routers.Interest, t routers.Transport) error
 	size           int
 
-	mu      sync.Mutex
 	timeout time.Duration
 	linker  *routers.Linker
 
@@ -102,21 +101,26 @@ func (t *Transport) Name() string {
 }
 
 func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	intent, err := t.linker.AddIntent(route)
+	// TODO: LocalWrapped intent
+	intent, err := t.linker.AddIntentWithWrapper(route, wrapLocalIntent(t.log, t.remote))
 	if err != nil {
 		return nil, err
 	}
 
+	ctx, cancel := context.WithTimeout(t.ctx, time.Second)
+	defer cancel()
+	err = t.remote.Write(ctx, route, &types.Intent{
+		Route:    route.ID(),
+		Ttl:      uint64(time.Minute),
+		Register: true,
+	})
+
 	t.log.Info("intent registered", "route", route.Route())
-	return intent, nil
+	return intent, err
 }
 
 func (t *Transport) publish(route routers.Route, m *types.Intent) (routers.Intent, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	intent, err := t.linker.AddIntentWithWrapper(route, wrapIntent(t.log, m))
+	intent, err := t.linker.AddIntentWithWrapper(route, wrapRemoteIntent(t.log, t.remote, m))
 	if err != nil {
 		return nil, err
 	}
@@ -126,17 +130,26 @@ func (t *Transport) publish(route routers.Route, m *types.Intent) (routers.Inten
 }
 
 func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
-	interest, err := t.linker.AddInterest(route)
+	// TODO: LocalWrapped intent
+	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.log, t.remote))
 	if err != nil {
 		return nil, err
 	}
+	ctx, cancel := context.WithTimeout(t.ctx, time.Second)
+	defer cancel()
+	err = t.remote.Write(ctx, route, &types.Interest{
+		Route:    route.ID(),
+		Ttl:      uint64(time.Minute),
+		Register: true,
+	})
+
 	t.addCallback(interest, t)
 	t.log.Info("interest registered", "route", route.Route())
-	return interest, nil
+	return interest, err
 }
 
 func (t *Transport) subscribe(route routers.Route, m *types.Interest) (routers.Interest, error) {
-	interest, err := t.linker.AddInterestWithWrapper(route, wrapInterest(t.log, t.remote, m))
+	interest, err := t.linker.AddInterestWithWrapper(route, wrapRemoteInterest(t.log, t.remote, m))
 	if err != nil {
 		return nil, err
 	}
