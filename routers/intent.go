@@ -45,6 +45,7 @@ func (i *LocalIntent) Close() error {
 	}
 	i.cancel()
 	close(i.notifyC)
+	i.linkedC = nil
 	return nil
 }
 
@@ -56,6 +57,14 @@ func (i *LocalIntent) Interest() <-chan Route {
 	return i.notifyC
 }
 
+// LinkedC is used for internal debugging and race condition hunting
+func (i *LocalIntent) LinkedC() chan<- proto.Message {
+	i.mu.RLock()
+	linkedC := i.linkedC
+	i.mu.RUnlock()
+	return linkedC
+}
+
 func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 	i.mu.RLock()
 	linkedC := i.linkedC
@@ -63,8 +72,10 @@ func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 	if linkedC == nil {
 		return errors.ErrNoInterest
 	}
-	if reflect.TypeOf(msg) != i.route.Type() {
-		return errors.ErrInvalidType
+	if i.route.Type() != nil {
+		if reflect.TypeOf(msg) != i.route.Type() {
+			return errors.ErrInvalidType
+		}
 	}
 
 	select {
@@ -80,12 +91,17 @@ func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 
 func (i *LocalIntent) Link(c chan<- proto.Message) {
 	i.mu.Lock()
+	if i.linkedC != nil && c != nil && i.linkedC != c {
+		panic("Link called multiple times illegally")
+	}
 	i.linkedC = c
 	i.mu.Unlock()
 }
 
 func (i *LocalIntent) Notify() {
 	select {
+	case <-i.ctx.Done():
+		return
 	case i.notifyC <- i.route:
 	default:
 	}

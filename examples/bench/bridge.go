@@ -1,10 +1,30 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"io"
+
+	"github.com/itohio/dndm/routers/remote"
 )
+
+// ReadWriter stores pointers to a Reader and a Writer.
+// It implements io.ReadWriter.
+type ReadWriter struct {
+	r io.Reader
+	w io.Writer
+}
+
+func (rw ReadWriter) Read(p []byte) (n int, err error) {
+	return rw.r.Read(p)
+}
+func (rw ReadWriter) Write(p []byte) (n int, err error) {
+	return rw.w.Write(p)
+}
+
+// NewReadWriter allocates a new ReadWriter that dispatches to r and w.
+func NewReadWriter(r io.Reader, w io.Writer) *ReadWriter {
+	return &ReadWriter{r, w}
+}
 
 type bridge struct {
 	// pipe A
@@ -27,10 +47,10 @@ func makeBridge(ctx context.Context) *bridge {
 	}
 }
 
-func (b bridge) A() *bufio.ReadWriter {
-	return bufio.NewReadWriter(bufio.NewReader(b.rA), bufio.NewWriter(b.wB))
+func (b bridge) A() remote.ReadWriter {
+	return NewReadWriter(b.rA, b.wB)
 }
 
-func (b bridge) B() *bufio.ReadWriter {
-	return bufio.NewReadWriter(bufio.NewReader(b.rB), bufio.NewWriter(b.wA))
+func (b bridge) B() remote.ReadWriter {
+	return NewReadWriter(b.rB, b.wA)
 }

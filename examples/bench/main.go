@@ -34,111 +34,77 @@ func main() {
 	t := flag.String("what", "channel", "One of channel, dndm, intent, direct, remote, mesh")
 	flag.Parse()
 
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
 	switch *t {
 	case "dndm":
-		testDNDM(*size, *n, *m, *d)
+		testDNDM(ctx, *size, *n, *m)
 	case "channel":
-		testChannel(*size, *d)
+		testChannel(ctx, *size)
 	case "intent":
-		testIntent(*size, *d)
+		testIntent(ctx, *size)
 	case "direct":
-		testDirect(*size, *d)
+		testDirect(ctx, *size)
 	case "remote":
-		testRemote(*size, *d)
-	case "all":
+		testRemote(ctx, *size)
 	default:
 		panic("Unknown")
 	}
+
+	sent.Store(0)
+	recv.Store(0)
+	now := time.Now()
+	timer := time.NewTimer(*d)
+	var duration time.Duration
+	select {
+	case <-timer.C:
+		cancel()
+		duration = time.Since(now)
+		time.Sleep(time.Second)
+	case <-ctx.Done():
+		duration = time.Since(now)
+		slog.Info("Stopped", "reason", ctx.Err())
+	}
+
+	fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/duration.Seconds())
+	fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/duration.Seconds())
+	fmt.Println("Duration: ", duration)
+	fmt.Println()
 }
 
-func testDNDM(size, n, m int, d time.Duration) {
+func testDNDM(ctx context.Context, size, n, m int) {
 	fmt.Println("----------------[ testDNDM ]-----------")
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
 	node, err := dndm.New(dndm.WithContext(ctx), dndm.WithQueueSize(size))
 	if err != nil {
 		panic(err)
 	}
 
 	for i := 0; i < n; i++ {
-		go generate(ctx, node)
+		go generate(ctx, node, "example.path")
 	}
 	for i := 0; i < m; i++ {
-		go consume[*types.Foo](ctx, node)
+		go consume[*types.Foo](ctx, node, "example.path")
 	}
 
 	c := sender(ctx, size)
 	go consumer(c)
-
-	sent.Store(0)
-	recv.Store(0)
-	now := time.Now()
-	timer := time.NewTimer(d)
-	select {
-	case <-timer.C:
-		cancel()
-		time.Sleep(time.Second)
-		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
-		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
-		fmt.Println()
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
 }
 
-func testChannel(size int, d time.Duration) {
+func testChannel(ctx context.Context, size int) {
 	fmt.Println("----------------[ testChannel ]-----------")
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
 	c := sender(ctx, size)
 	go consumer(c)
-
-	sent.Store(0)
-	recv.Store(0)
-	now := time.Now()
-	timer := time.NewTimer(d)
-	select {
-	case <-timer.C:
-		cancel()
-		time.Sleep(time.Second)
-		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
-		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
-		fmt.Println()
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
 }
 
-func testIntent(size int, d time.Duration) {
+func testIntent(ctx context.Context, size int) {
 	fmt.Println("----------------[ testIntent ]-----------")
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
-	c := senderIntent(ctx, size, nil)
+	c := senderIntent(ctx, size, "path", nil)
 	go consumer(c)
-
-	sent.Store(0)
-	recv.Store(0)
-	now := time.Now()
-	timer := time.NewTimer(d)
-	select {
-	case <-timer.C:
-		cancel()
-		time.Sleep(time.Second)
-		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
-		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
-		fmt.Println()
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
 }
 
-func testDirect(size int, d time.Duration) {
+func testDirect(ctx context.Context, size int) {
 	fmt.Println("----------------[ testDirect ]-----------")
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
 	var t *types.Foo
 	route, err := routers.NewRoute("path", t)
 	if err != nil {
@@ -159,30 +125,13 @@ func testDirect(size int, d time.Duration) {
 		panic(err)
 	}
 
-	senderIntent(ctx, size, intent.(routers.IntentInternal))
+	senderIntent(ctx, size, "path", intent.(routers.IntentInternal))
 	go consumerInterest(interest)
-
-	sent.Store(0)
-	recv.Store(0)
-	now := time.Now()
-	timer := time.NewTimer(d)
-	select {
-	case <-timer.C:
-		cancel()
-		time.Sleep(time.Second)
-		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
-		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
-		fmt.Println()
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
+	slog.Info("testDirect", "interest", interest.C())
 }
 
-func testRemote(size int, d time.Duration) {
+func testRemote(ctx context.Context, size int) {
 	fmt.Println("----------------[ testRemote ]-----------")
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
 	var t *types.Foo
 	route, err := routers.NewRoute("path", t)
 	if err != nil {
@@ -210,53 +159,34 @@ func testRemote(size int, d time.Duration) {
 		panic(err)
 	}
 
-	senderIntent(ctx, size, intent.(routers.IntentInternal))
+	senderIntent(ctx, size, "path", intent.(routers.IntentInternal))
 	go consumerInterest(interest)
-
-	sent.Store(0)
-	recv.Store(0)
-	now := time.Now()
-	timer := time.NewTimer(d)
-	select {
-	case <-timer.C:
-		cancel()
-		time.Sleep(time.Second)
-		fmt.Printf("Sent: %d, %.2f msgs/s\n", sent.Load(), float64(sent.Load())/time.Since(now).Seconds())
-		fmt.Printf("Recv: %d, %.2f msgs/s\n", recv.Load(), float64(recv.Load())/time.Since(now).Seconds())
-		fmt.Println()
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
 }
 
-func senderIntent(ctx context.Context, size int, intent routers.IntentInternal) <-chan proto.Message {
+func senderIntent(ctx context.Context, size int, path string, intent routers.IntentInternal) <-chan proto.Message {
 	var t *types.Foo
-	route, err := routers.NewRoute("path", t)
+	route, err := routers.NewRoute(path, t)
 	if err != nil {
 		panic(err)
 	}
+	localC := false
+	var c chan proto.Message
 	if intent == nil {
 		intent = routers.NewIntent(ctx, route, size, func() error { return nil })
+		c = make(chan proto.Message, size)
+		intent.Link(c)
+		localC = true
 	}
-	c := make(chan proto.Message, size)
-	intent.Link(c)
 
 	go func() {
 		defer intent.Link(nil)
 		defer intent.Close()
-		defer close(c)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
+		if localC {
+			defer close(c)
+		}
 
-			text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
-			err := intent.Send(ctx, &types.Foo{Text: text})
-			if err != nil {
-				slog.Error("send failed", "err", err)
-			}
+		if err := generateFoo(ctx, path, intent.Route(), intent); err != nil {
+			return
 		}
 	}()
 	return c
@@ -268,6 +198,7 @@ func sender(ctx context.Context, size int) <-chan proto.Message {
 
 	go func() {
 		defer close(c)
+		slog.Info("sender", "loop", "start", "C", c)
 		for {
 			select {
 			case <-ctx.Done():
@@ -276,7 +207,11 @@ func sender(ctx context.Context, size int) <-chan proto.Message {
 			}
 
 			text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
-			c <- &types.Foo{Text: text}
+			select {
+			case <-ctx.Done():
+				return
+			case c <- &types.Foo{Text: text}:
+			}
 		}
 	}()
 
@@ -284,6 +219,7 @@ func sender(ctx context.Context, size int) <-chan proto.Message {
 }
 
 func consumer(c <-chan proto.Message) {
+	slog.Info("consumer", "loop", "start", "C", c)
 	for m := range c {
 		msg := m.(*types.Foo)
 		_ = msg
@@ -292,6 +228,7 @@ func consumer(c <-chan proto.Message) {
 }
 
 func consumerInterest(interest routers.Interest) {
+	slog.Info("consumerInterest", "loop", "start", "C", interest.C())
 	for m := range interest.C() {
 		msg := m.(*types.Foo)
 		_ = msg
@@ -299,51 +236,52 @@ func consumerInterest(interest routers.Interest) {
 	}
 }
 
-func generate(ctx context.Context, node *dndm.Router) {
+func generate(ctx context.Context, node *dndm.Router, path string) {
 	var t *types.Foo
-	intent, err := node.Publish("example.foobar", t)
+	intent, err := node.Publish(path, t)
 	if err != nil {
 		panic(err)
 	}
 	defer intent.Close()
-	slog.Info("Publishing to example.foobar", "type", reflect.TypeOf(t))
+	slog.Info("generate", "loop", "start", "path", path, "type", reflect.TypeOf(t))
 	for {
 		select {
 		case <-ctx.Done():
 			slog.Info("generate foo ctx", "err", ctx.Err())
 			return
 		case route := <-intent.Interest():
-			slog.Info("Received interest", "route", route)
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-				}
-
-				text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
-				c, cancel := context.WithTimeout(ctx, time.Second*10)
-				err := intent.Send(c, &types.Foo{
-					Text: text,
-				})
-				cancel()
-				if err != nil {
-					slog.Error("Failed sending Foo", "err", err)
-				}
+			if err := generateFoo(ctx, path, route, intent); err != nil {
+				return
 			}
 		}
 	}
 }
 
-func consume[T proto.Message](ctx context.Context, node *dndm.Router) {
+func generateFoo(ctx context.Context, path string, route routers.Route, intent routers.Intent) error {
+	var t *types.Foo
+	slog.Info("generateFoo", "loop", "start", "path", path, "type", reflect.TypeOf(t), "route", route)
+	for {
+		text := fmt.Sprintf("Message: %d for %v", sent.Add(1), reflect.TypeOf(t))
+		// c, cancel := context.WithTimeout(ctx, time.Second*1)
+		err := intent.Send(ctx, &types.Foo{
+			Text: text,
+		})
+		// cancel()
+		if err != nil {
+			slog.Error("Failed sending Foo", "err", err)
+			return err
+		}
+	}
+}
+
+func consume[T proto.Message](ctx context.Context, node *dndm.Router, path string) {
 	var t T
-	interest, err := node.Subscribe("example.foobar", t)
+	interest, err := node.Subscribe(path, t)
 	if err != nil {
 		panic(err)
 	}
 	defer interest.Close()
-	slog.Info("Subscribing to example.foobar", "type", reflect.TypeOf(t))
+	slog.Info("Subscribing", "loop", "start", "path", path, "type", reflect.TypeOf(t), "C", interest.C())
 	for {
 		select {
 		case <-ctx.Done():

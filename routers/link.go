@@ -21,7 +21,7 @@ func NewLink(ctx context.Context, intent IntentInternal, interest InterestIntern
 		intent:   intent,
 		interest: interest,
 		closer:   closer,
-		done:     make(chan struct{}),
+		done:     make(chan struct{}, 1),
 	}
 
 	return ret

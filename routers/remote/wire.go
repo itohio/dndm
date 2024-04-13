@@ -110,12 +110,8 @@ type wireRemote struct {
 func (c *wireRemote) run(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	c.cancel = cancel
-	go c.read.Run(ctx, func(b []byte) (int, error) {
-		return c.rw.Read(b)
-	})
-	go c.write.Run(ctx, func(b []byte) (int, error) {
-		return c.rw.Write(b)
-	})
+	go c.read.Run(ctx, c.rw.Read)
+	go c.write.Run(ctx, c.rw.Write)
 }
 
 func (c *wireRemote) Reader(ctx context.Context) io.Reader {
@@ -193,7 +189,9 @@ type contextRW struct {
 
 func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 	for r := range c.request {
+		// fmt.Println(reflect.TypeOf(f), "len", len(r))
 		n, err := f(r)
+		// fmt.Println(reflect.TypeOf(f), "result", n, err)
 		select {
 		case <-ctx.Done():
 			return

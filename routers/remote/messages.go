@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"reflect"
 	"time"
 
 	"github.com/itohio/dndm/errors"
@@ -38,16 +37,17 @@ func (t *Transport) messageHandler() {
 
 		hdr, msg, err := t.remote.Read(t.ctx)
 		if err != nil {
-			t.log.Error("decode failed", "err", err)
+			t.log.Error("remote.Read", "err", err)
 			continue
 		}
-		t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))
+		// t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))
 		prevNonce := t.nonce.Load()
-		if hdr.Timestamp < prevNonce {
-			t.log.Error("nonce", "prev", prevNonce, "got", hdr.Timestamp)
-			continue
+		duration := time.Duration(hdr.Timestamp) - time.Duration(prevNonce)
+		if duration <= 0 {
+			t.log.Warn("hdr.Timestamp", "hdr", hdr.Timestamp, "nonce", prevNonce, "duration", duration)
+		} else {
+			t.nonce.Store(hdr.Timestamp)
 		}
-		t.nonce.Store(hdr.Timestamp)
 
 		err = t.handleMessage(hdr, msg)
 		if err != nil {
@@ -239,9 +239,12 @@ func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
 		return t.handleUnregisterIntent(route, msg)
 	}
 
-	_, err = t.publish(route, msg)
+	intent, err := t.publish(route, msg)
 	if err != nil {
 		return err
+	}
+	if _, ok := intent.(*LocalIntent); ok {
+		return errors.ErrLocalIntent
 	}
 
 	return nil
@@ -299,11 +302,16 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 		return t.handleUnregisterInterest(route, msg)
 	}
 
-	intent, err := t.subscribe(route, msg)
+	interest, err := t.subscribe(route, msg)
 	if err != nil {
 		return err
 	}
-	t.addCallback(intent, t)
+
+	if _, ok := interest.(*LocalInterest); ok {
+		return errors.ErrLocalInterest
+	}
+
+	t.addCallback(interest, t)
 
 	return nil
 }
