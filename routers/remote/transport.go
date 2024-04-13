@@ -107,6 +107,10 @@ func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
 		return nil, err
 	}
 
+	if _, ok := intent.(*RemoteIntent); ok {
+		return nil, errors.ErrRemoteIntent
+	}
+
 	t.log.Info("intent registered", "route", route.Route())
 	return intent, err
 }
@@ -126,6 +130,10 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.log, t.remote))
 	if err != nil {
 		return nil, err
+	}
+
+	if _, ok := interest.(*RemoteInterest); ok {
+		return nil, errors.ErrRemoteInterest
 	}
 
 	t.addCallback(interest, t)

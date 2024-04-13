@@ -39,6 +39,7 @@ func (i *LocalInterest) Close() error {
 	}
 	i.cancel()
 	close(i.msgC) // FIXME: Might cause panic in `link`, however, it should have been unlinked by then
+	i.msgC = nil
 	return nil
 }
 

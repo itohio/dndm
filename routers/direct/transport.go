@@ -3,7 +3,6 @@ package direct
 import (
 	"context"
 	"log/slog"
-	"sync"
 
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
@@ -17,9 +16,7 @@ type Transport struct {
 	addCallback    func(interest routers.Interest, t routers.Transport) error
 	removeCallback func(interest routers.Interest, t routers.Transport) error
 	size           int
-
-	mu     sync.Mutex
-	linker *routers.Linker
+	linker         *routers.Linker
 }
 
 func New(size int) *Transport {
@@ -62,9 +59,6 @@ func (t *Transport) Name() string {
 }
 
 func (t *Transport) Publish(route routers.Route) (routers.Intent, error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
 	intent, err := t.linker.AddIntent(route)
 	if err != nil {
 		return nil, err
@@ -78,7 +72,6 @@ func (t *Transport) Subscribe(route routers.Route) (routers.Interest, error) {
 	if err != nil {
 		return nil, err
 	}
-	t.addCallback(interest, t)
 	t.log.Info("registered", "interest", route.Route())
 	return interest, nil
 }

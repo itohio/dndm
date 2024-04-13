@@ -9,7 +9,6 @@ import (
 	routers "github.com/itohio/dndm/routers"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const DefaultTimeToLive = time.Hour * 24 * 30 * 365
@@ -62,12 +61,12 @@ func wrapLocalIntent(log *slog.Logger, remote Remote) routers.IntentWrapperFunc 
 		}
 
 		ctx, cancel := context.WithTimeout(li.Ctx(), time.Second)
-		defer cancel()
 		err := remote.Write(ctx, li.Route(), &types.Intent{
 			Route:    li.Route().ID(),
 			Ttl:      uint64(time.Minute),
 			Register: true,
 		})
+		cancel()
 		log.Info("LocalIntent", "send", "Intent.Register", "err", err)
 		return ret, err
 	}
@@ -75,14 +74,21 @@ func wrapLocalIntent(log *slog.Logger, remote Remote) routers.IntentWrapperFunc 
 
 func (i *LocalIntent) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 	werr := i.remote.Write(ctx, i.LocalIntent.Route(), &types.Intent{
 		Route:    i.LocalIntent.Route().ID(),
 		Register: false,
 	})
+	cancel()
 	i.log.Info("LocalIntent", "send", "Intent.Close", "err", werr)
 	cerr := i.LocalIntent.Close()
 	return errors.Join(werr, cerr)
+}
+
+func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
+	return i.LocalIntent.Send(ctx, msg)
+}
+func (i *LocalIntent) Link(c chan<- proto.Message) {
+	i.LocalIntent.Link(c)
 }
 
 // wrapRemoteIntent returns an intent wrapper that embeds remote
@@ -131,7 +137,7 @@ func (i *RemoteIntent) Close() error {
 	return i.LocalIntent.Close()
 }
 
-func (i *RemoteIntent) Link(c chan<- protoreflect.ProtoMessage) {
+func (i *RemoteIntent) Link(c chan<- proto.Message) {
 	i.wd.Reset()
 	i.LocalIntent.Link(c)
 }
@@ -163,12 +169,12 @@ func wrapLocalInterest(log *slog.Logger, remote Remote) routers.InterestWrapperF
 		}
 
 		ctx, cancel := context.WithTimeout(li.Ctx(), time.Second)
-		defer cancel()
 		err := remote.Write(ctx, li.Route(), &types.Interest{
 			Route:    li.Route().ID(),
 			Ttl:      uint64(time.Minute),
 			Register: true,
 		})
+		cancel()
 		log.Info("LocalInterest", "send", "Intent.Register", "err", err)
 
 		return ret, err
@@ -177,11 +183,11 @@ func wrapLocalInterest(log *slog.Logger, remote Remote) routers.InterestWrapperF
 
 func (i *LocalInterest) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
 	werr := i.remote.Write(ctx, i.LocalInterest.Route(), &types.Interest{
 		Route:    i.LocalInterest.Route().ID(),
 		Register: false,
 	})
+	cancel()
 	i.log.Info("LocalInterest", "send", "Intent.Register", "err", werr)
 	cerr := i.LocalInterest.Close()
 	return errors.Join(werr, cerr)

@@ -11,6 +11,52 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+func BenchmarkEncodeMessage(b *testing.B) {
+	msg := &testtypes.Foo{Text: "This is a test message"}
+	route, _ := routers.NewRoute("path.somewhat.long", msg)
+
+	// Run the benchmark
+	for i := 0; i < b.N; i++ {
+		_, err := EncodeMessage(msg, route)
+		if err != nil {
+			b.Fatal("EncodeMessage failed:", err)
+		}
+	}
+}
+
+func BenchmarkDecodeMessage(b *testing.B) {
+	msg := &testtypes.Foo{Text: "This is a test message"}
+	route, _ := routers.NewRoute("path.somewhat.long", msg)
+
+	datas := make([][]byte, 0, 1024)
+	for i := 0; i < 10240; i++ {
+		data, _ := EncodeMessage(msg, route)
+		datas = append(datas, data[8:])
+	}
+
+	// Prepare the interests map
+	interests := make(map[string]routers.Route)
+	interests[route.ID()] = route
+
+	// Preparing the benchmark
+	b.ResetTimer()
+	j := 1
+	for i := 0; i < b.N; i++ {
+		header, message, err := DecodeMessage(datas[j], interests)
+		if err != nil {
+			b.Fatal("DecodeMessage failed:", err)
+		}
+		j *= 3
+		if j >= len(datas) {
+			j = j % (len(datas))
+		}
+		// Optionally use header and message to ensure they are correctly processed,
+		// but be mindful not to include heavy operations here
+		_ = header
+		_ = message
+	}
+}
+
 func TestDecodeMessage(t *testing.T) {
 	tests := []struct {
 		name    string

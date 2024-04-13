@@ -89,7 +89,8 @@ func (t *Linker) AddIntentWithWrapper(route Route, wrapper IntentWrapperFunc) (I
 }
 
 func (t *Linker) addIntentLocked(route Route, wrapper IntentWrapperFunc) (Intent, error) {
-	intent, ok := t.intents[route.ID()]
+	id := route.ID()
+	intent, ok := t.intents[id]
 	if ok {
 		return intent, nil
 	}
@@ -102,9 +103,8 @@ func (t *Linker) addIntentLocked(route Route, wrapper IntentWrapperFunc) (Intent
 		return nil, err
 	}
 
-	t.intents[route.ID()] = intent
-
-	if interest, ok := t.interests[route.ID()]; ok {
+	t.intents[id] = intent
+	if interest, ok := t.interests[id]; ok {
 		t.link(route, intent, interest)
 	}
 
@@ -140,26 +140,31 @@ func (t *Linker) AddInterestWithWrapper(route Route, wrapper InterestWrapperFunc
 }
 
 func (t *Linker) addInterestLocked(route Route, wrapper InterestWrapperFunc) (Interest, error) {
-	interest, ok := t.interests[route.ID()]
+	id := route.ID()
+	interest, ok := t.interests[id]
 	if ok {
-		if link, ok := t.links[route.ID()]; ok {
+		if link, ok := t.links[id]; ok {
 			link.Notify()
 		}
 		return interest, nil
 	}
 
 	interest = NewInterest(t.ctx, route, t.size, func() error {
-		t.RemoveInterest(route)
-		return t.removeCallback(interest)
+		riErr := t.RemoveInterest(route)
+		rcErr := t.removeCallback(interest)
+		return errors.Join(riErr, rcErr)
 	})
 	interest, err := wrapper(interest)
 	if err != nil {
 		return nil, err
 	}
 
-	t.interests[route.ID()] = interest
+	if err := t.addCallback(interest); err != nil {
+		return nil, err
+	}
 
-	if intent, ok := t.intents[route.ID()]; ok {
+	t.interests[id] = interest
+	if intent, ok := t.intents[id]; ok {
 		t.link(route, intent, interest)
 	}
 
@@ -179,6 +184,10 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 		return errors.ErrInvalidRoute
 	}
 
+	if _, ok := t.links[route.ID()]; ok {
+		return nil
+	}
+
 	err := t.beforeLink(intent, interest)
 	if err != nil {
 		return err
@@ -192,7 +201,7 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 	})
 	t.links[route.ID()] = link
 	link.Link()
-	t.log.Info("linked", "route", intent.Route(), "intent", reflect.TypeOf(intent), "interest", reflect.TypeOf(interest))
+	t.log.Info("linked", "route", intent.Route(), "intent", reflect.TypeOf(intent), "interest", reflect.TypeOf(interest), "C", interest.C())
 	return nil
 }
 

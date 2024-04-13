@@ -21,4 +21,6 @@ var (
 	ErrTooFast         = errors.New("too fast")
 	ErrLocalInterest   = errors.New("local interest")
 	ErrLocalIntent     = errors.New("local intent")
+	ErrRemoteInterest  = errors.New("remote interest")
+	ErrRemoteIntent    = errors.New("remote intent")
 )
