@@ -65,6 +65,7 @@ func NewHandshaker(size int, timeout, pingDuration time.Duration, c Container, r
 }
 
 func (h *Handshaker) Close() error {
+	h.log.Info("Handshaker.Close")
 	errarr := []error{h.remote.Close()}
 	if closer, ok := h.rw.(io.Closer); ok {
 		errarr = append(errarr, closer.Close())
@@ -115,6 +116,11 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 		panic("h.transport != nil")
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	h.ctx = ctx
+	h.cancel = cancel
+	h.log = logger
+
 	h.remote = stream.NewWithContext(ctx, h.peer, h.rw, map[types.Type]dialers.MessageHandler{
 		types.Type_HANDSHAKE: h.handshake,
 		types.Type_ADDRBOOK:  h.addrbook,
@@ -141,7 +147,6 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 
 	go func() {
 		<-ctx.Done()
-		h.log.Info("Handshake.Close", "state", h.state, "peer", h.peer)
 		h.Close()
 	}()
 	return nil
@@ -184,6 +189,7 @@ func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote dial
 
 func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
+		h.cancel()
 		return false, errors.ErrForbidden
 	}
 
@@ -200,6 +206,7 @@ func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote dialers.
 
 func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
+		h.cancel()
 		return false, errors.ErrForbidden
 	}
 
@@ -216,6 +223,7 @@ func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote diale
 
 func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
+		h.cancel()
 		return false, errors.ErrForbidden
 	}
 	return true, nil
@@ -223,6 +231,7 @@ func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote dialer
 
 func (h *Handshaker) result(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
+		h.cancel()
 		return false, errors.ErrForbidden
 	}
 

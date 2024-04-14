@@ -50,6 +50,7 @@ func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) e
 	}
 
 	go func() {
+		f.log.Info("Listen", "scheme", f.peer.Scheme(), "addr", f.peer.Address(), "id", f.peer.ID(), "peer", f.peer)
 		defer listener.Close()
 		for {
 			select {
@@ -60,7 +61,7 @@ func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) e
 			conn, err := listener.Accept()
 			if err != nil {
 				f.log.Error("Listen.Accept", "peer", f.peer, "err", err)
-				continue
+				return
 			}
 			err = onConnect(conn)
 			if err != nil {
@@ -70,10 +71,8 @@ func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) e
 		}
 	}()
 
-	go func() {
-		<-ctx.Done()
-		listener.Close()
-	}()
-
+	<-ctx.Done()
+	f.log.Info("Listen.Close", "peer", f.peer, "err", ctx.Err())
+	listener.Close()
 	return nil
 }

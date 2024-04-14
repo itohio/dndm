@@ -11,6 +11,7 @@ import (
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
+	"golang.org/x/sync/errgroup"
 )
 
 var _ routers.Transport = (*Mesh)(nil)
@@ -33,10 +34,6 @@ func New(name string, size, numDialers int, timeout, pingDuration time.Duration,
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
 		peer := NewAddrbookEntry(p)
-
-		if _, ok := pm[peer.Peer.ID()]; ok {
-			continue
-		}
 		pm[p.Peer] = peer
 	}
 	return &Mesh{
@@ -64,11 +61,11 @@ func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
 				MaxAttempts:       uint32(p.MaxAttempts),
 				DefaultBackoff:    uint64(p.DefaultBackoff),
 				MaxBackoff:        uint64(p.MaxBackoff),
-				BackoffMultiplier: float32(p.BackOffMultiplier),
+				BackoffMultiplier: float32(p.BackoffMultiplier),
 				Attempts:          uint32(p.Attempts),
 				FailedAttempts:    uint32(p.Failed),
 				LastSuccess:       uint64(p.LastSuccess.UnixNano()),
-				Backoff:           uint64(p.BackOff),
+				Backoff:           uint64(p.Backoff),
 			},
 		)
 		p.Unlock()
@@ -77,18 +74,19 @@ func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
 }
 
 func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
+	eg, ctx := errgroup.WithContext(ctx)
 	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
 		return err
 	}
-	if err := t.container.Init(ctx, logger, add, remove); err != nil {
+	if err := t.container.Init(t.Ctx, logger, add, remove); err != nil {
 		return err
 	}
 
 	if server, ok := t.dialer.(dialers.Server); ok {
-		err := server.Serve(ctx, t.onConnect)
-		if err != nil {
+		eg.Go(func() error {
+			err := server.Serve(t.Ctx, t.onConnect)
 			return err
-		}
+		})
 	}
 
 	for i := 0; i < NumDialers; i++ {
@@ -103,6 +101,7 @@ func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 }
 
 func (t *Mesh) Close() error {
+	t.Log.Info("Mesh.Close")
 	errarr := make([]error, 0, 3)
 	errarr = append(errarr, t.Base.Close())
 	errarr = append(errarr, t.container.Close())
