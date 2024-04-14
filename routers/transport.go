@@ -56,6 +56,7 @@ type IntentInternal interface {
 type Transport interface {
 	io.Closer
 	Name() string
+	SetName(string)
 	// Publish will advertise an intent to publish named and typed data.
 	Publish(route Route, opt ...PubOpt) (Intent, error)
 	// Subscribe will advertise an interest in named and typed data.
@@ -97,6 +98,10 @@ func (t *Base) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 
 func (t *Base) Name() string {
 	return t.name
+}
+
+func (t *Base) SetName(name string) {
+	t.name = name
 }
 
 func (t *Base) Close() error {
