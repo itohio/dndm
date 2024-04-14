@@ -22,7 +22,7 @@ build: $(BUILD_TARGETS)
 
 .PHONY: proto
 proto:
-	buf generate
+	cd proto &&	buf generate 
 
 .PHONY: gen
 gen:

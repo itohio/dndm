@@ -19,10 +19,10 @@ func New(dialers ...Dialer) (*Factory, error) {
 	dm := make(map[string]Dialer, len(dialers))
 	sm := make(map[string]Server, len(dialers))
 	for _, d := range dialers {
-		_, dialer := dm[d.Scheme()]
-		_, server := sm[d.Scheme()]
+		_, inDialer := dm[d.Scheme()]
+		_, inServer := sm[d.Scheme()]
 		s, isServer := d.(Server)
-		if dialer || server && isServer {
+		if inDialer || inServer && isServer {
 			return nil, errors.ErrDuplicate
 		}
 		if d.Scheme() == "" {
@@ -56,6 +56,7 @@ func (f *Factory) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser
 	eg, ctx := errgroup.WithContext(ctx)
 
 	for _, s := range f.servers {
+		s := s
 		eg.Go(func() error { return s.Serve(ctx, onConnect) })
 	}
 

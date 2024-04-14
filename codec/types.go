@@ -25,6 +25,7 @@ func init() {
 	RegisterType(types.Type_INTERESTS, &types.Interests{})
 	RegisterType(types.Type_HANDSHAKE, &p2ptypes.Handshake{})
 	RegisterType(types.Type_PEERS, &p2ptypes.Peers{})
+	RegisterType(types.Type_ADDRBOOK, &p2ptypes.Addrbook{})
 	RegisterType(types.Type_PING, &types.Ping{})
 	RegisterType(types.Type_PONG, &types.Pong{})
 }
