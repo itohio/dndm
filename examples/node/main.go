@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
+	"time"
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/dialers"
@@ -52,7 +54,14 @@ func main() {
 	defer cancel()
 	node := errors.Must(dndm.New(
 		dndm.WithContext(ctx),
-		dndm.WithTransport(errors.Must(mesh.New(selfPeer.ID(), 3, d, peers.Peers()))),
+		dndm.WithTransport(errors.Must(mesh.New(
+			selfPeer.ID(),
+			3,
+			runtime.NumCPU()*5,
+			time.Second*10,
+			time.Second*3,
+			d, peers.Peers(),
+		))),
 	))
 
 	go examples.Consume[*types.Foo](ctx, node, *consume)

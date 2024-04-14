@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
@@ -18,15 +19,17 @@ const NumDialers = 10
 
 type Mesh struct {
 	*routers.Base
-	dialer    dialers.Dialer
-	container *routers.Container
+	timeout      time.Duration
+	pingDuration time.Duration
+	dialer       dialers.Dialer
+	container    *routers.Container
 
 	peerDialerQueue chan *AddrbookEntry
 	mu              sync.Mutex
 	peers           map[string]*AddrbookEntry
 }
 
-func New(name string, size int, node dialers.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
+func New(name string, size, numDialers int, timeout, pingDuration time.Duration, node dialers.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
 		peer := NewAddrbookEntry(p)
@@ -38,6 +41,8 @@ func New(name string, size int, node dialers.Dialer, peers []*p2ptypes.AddrbookE
 	}
 	return &Mesh{
 		Base:            routers.NewBase(name, size),
+		timeout:         timeout,
+		pingDuration:    pingDuration,
 		dialer:          node,
 		peers:           pm,
 		container:       routers.NewContainer(name, size),

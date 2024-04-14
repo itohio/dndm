@@ -2,6 +2,8 @@ package mesh
 
 import (
 	"io"
+
+	"github.com/itohio/dndm/dialers"
 )
 
 func (t *Mesh) dialerLoop() {
@@ -16,7 +18,9 @@ func (t *Mesh) dialerLoop() {
 }
 
 func (t *Mesh) onConnect(rw io.ReadWriteCloser) error {
-	hs := NewHandshaker(t.Ctx, t.Log, t.container, rw, address.Peer, HS_INIT)
+	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, dialers.Peer{}, HS_WAIT)
+
+	_ = hs
 
 	return nil
 }
@@ -27,7 +31,7 @@ func (t *Mesh) dial(address *AddrbookEntry) error {
 		return err
 	}
 
-	hs := NewHandshaker(t.Ctx, t.Log, t.container, rw, address.Peer, HS_INIT)
+	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, address.Peer, HS_INIT)
 
 	_ = hs
 
