@@ -3,6 +3,7 @@ package stream
 import (
 	"context"
 	"io"
+	"log/slog"
 	"sync"
 
 	"github.com/itohio/dndm/codec"
@@ -202,6 +203,7 @@ func (w *Stream) Peer() dialers.Peer {
 }
 
 func (w *Stream) Close() error {
+	slog.Info("Stream.Close")
 	if closer, ok := w.rw.(io.Closer); ok {
 		return closer.Close()
 	}

@@ -90,6 +90,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 }
 
 func (t *Transport) Close() error {
+	t.Log.Info("Remote.Close")
 	t.Base.Close()
 	t.wg.Wait()
 	if closer, ok := t.remote.(io.Closer); ok {

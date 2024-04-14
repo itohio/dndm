@@ -38,7 +38,8 @@ func (t *Transport) messageHandler() {
 		hdr, msg, err := t.remote.Read(t.Ctx)
 		if err != nil {
 			t.Log.Error("remote.Read", "err", err)
-			continue
+			t.Close()
+			return
 		}
 		// t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))
 		prevNonce := t.nonce.Load()
@@ -75,6 +76,8 @@ func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 	case types.Type_HANDSHAKE:
 		return nil
 	case types.Type_PEERS:
+		return nil
+	case types.Type_ADDRBOOK:
 		return nil
 	case types.Type_PING:
 		return t.handlePing(hdr, msg)
@@ -159,13 +162,13 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 		pong,
 	)
 	t.pingMu.Lock()
-	defer t.pingMu.Unlock()
 	t.pongRing.Value = &Pong{
 		timestamp:     hdr.ReceiveTimestamp,
 		pingTimestamp: hdr.Timestamp,
 		payload:       msg.Payload,
 	}
 	t.pongRing = t.pingRing.Next()
+	t.pingMu.Unlock()
 
 	return nil
 }

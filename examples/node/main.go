@@ -36,8 +36,8 @@ func (p PeerArr) Peers() []*p2ptypes.AddrbookEntry {
 
 func main() {
 	var peers PeerArr
-	self := flag.String("n", "tcp://0.0.0.0:1234/example", "self peer address")
-	flag.Var(&peers, "p", "multiple peer multi-addresses to connect to")
+	self := flag.String("n", "tcp://localhost:1234/example", "self peer address")
+	flag.Var(&peers, "P", "multiple peer multi-addresses to connect to")
 	consume := flag.String("c", "", "Consume Foo from name")
 	produce := flag.String("p", "", "Produce Foo to name")
 	reproduce := flag.String("r", "", "Reproduce Boo to name")
@@ -60,7 +60,8 @@ func main() {
 			runtime.NumCPU()*5,
 			time.Second*10,
 			time.Second*3,
-			d, peers.Peers(),
+			d,
+			peers.Peers(),
 		))),
 	))
 
