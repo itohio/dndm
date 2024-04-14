@@ -23,11 +23,11 @@ type Remote interface {
 
 type Dialer interface {
 	Scheme() string
-	Dial(ctx context.Context, peer Peer) (io.ReadWriteCloser, error)
+	Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWriteCloser, error)
 }
 
 type Server interface {
-	Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error) error
+	Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...SrvOpt) error
 }
 
 type Node interface {

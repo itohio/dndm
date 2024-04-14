@@ -24,34 +24,34 @@ type Pong struct {
 }
 
 func (t *Transport) messageHandler() {
-	t.log.Info("messageHandler", "loop", "START")
-	defer t.log.Info("messageHandler", "loop", "STOP")
+	t.Log.Info("messageHandler", "loop", "START")
+	defer t.Log.Info("messageHandler", "loop", "STOP")
 
 	defer t.wg.Done()
 	for {
 		select {
-		case <-t.ctx.Done():
+		case <-t.Ctx.Done():
 			return
 		default:
 		}
 
-		hdr, msg, err := t.remote.Read(t.ctx)
+		hdr, msg, err := t.remote.Read(t.Ctx)
 		if err != nil {
-			t.log.Error("remote.Read", "err", err)
+			t.Log.Error("remote.Read", "err", err)
 			continue
 		}
 		// t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))
 		prevNonce := t.nonce.Load()
 		duration := time.Duration(hdr.Timestamp) - time.Duration(prevNonce)
 		if duration <= 0 {
-			t.log.Warn("hdr.Timestamp", "hdr", hdr.Timestamp, "nonce", prevNonce, "duration", duration)
+			t.Log.Warn("hdr.Timestamp", "hdr", hdr.Timestamp, "nonce", prevNonce, "duration", duration)
 		} else {
 			t.nonce.Store(hdr.Timestamp)
 		}
 
 		err = t.handleMessage(hdr, msg)
 		if err != nil {
-			t.log.Error("handleMessage", "err", err)
+			t.Log.Error("handleMessage", "err", err)
 		}
 		// TODO: Awkward if handler wants to override result they must set hdr.WantResult = false
 		if hdr.Type != types.Type_MESSAGE && hdr.WantResult {
@@ -62,9 +62,9 @@ func (t *Transport) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.remote.Write(t.ctx, routers.Route{}, result)
+			err := t.remote.Write(t.Ctx, routers.Route{}, result)
 			if err != nil {
-				t.log.Error("write result", "err", err, "result", result)
+				t.Log.Error("write result", "err", err, "result", result)
 			}
 		}
 	}
@@ -102,7 +102,7 @@ func (t *Transport) messageSender(d time.Duration) {
 
 	for {
 		select {
-		case <-t.ctx.Done():
+		case <-t.Ctx.Done():
 			return
 		case <-ticker.C:
 			ping := &types.Ping{
@@ -110,7 +110,7 @@ func (t *Transport) messageSender(d time.Duration) {
 			}
 			rand.Read(ping.Payload)
 			t.remote.Write(
-				t.ctx,
+				t.Ctx,
 				routers.Route{},
 				ping,
 			)
@@ -135,7 +135,7 @@ func (t *Transport) handleResult(hdr *types.Header, m proto.Message) error {
 		return nil
 	}
 
-	t.log.Error("Result", "err", msg.Error, "description", msg.Description)
+	t.Log.Error("Result", "err", msg.Error, "description", msg.Description)
 	return nil
 }
 
@@ -154,7 +154,7 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 	}
 
 	t.remote.Write(
-		t.ctx,
+		t.Ctx,
 		routers.Route{},
 		pong,
 	)
@@ -311,7 +311,7 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 		return errors.ErrLocalInterest
 	}
 
-	t.addCallback(interest, t)
+	t.AddCallback(interest, t)
 
 	return nil
 }
@@ -342,7 +342,7 @@ func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
 		return errors.ErrNoIntent
 	}
 
-	ctx, cancel := context.WithTimeout(t.ctx, t.timeout)
+	ctx, cancel := context.WithTimeout(t.Ctx, t.timeout)
 	err = intent.Send(ctx, m)
 	cancel()
 	return err

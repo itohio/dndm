@@ -32,7 +32,7 @@ func defaultConfig() *serial.Config {
 	return &serial.Config{Baud: 115200}
 }
 
-func (f *Node) Dial(ctx context.Context, peer dialers.Peer) (io.ReadWriteCloser, error) {
+func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt) (io.ReadWriteCloser, error) {
 	if f.peer.Scheme() != peer.Scheme() {
 		return nil, errors.ErrBadArgument
 	}
@@ -75,7 +75,7 @@ func (f *Node) Dial(ctx context.Context, peer dialers.Peer) (io.ReadWriteCloser,
 	return port, err
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...dialers.SrvOpt) error {
 	rwc, err := f.Dial(ctx, f.peer)
 	if err != nil {
 		return err

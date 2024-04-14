@@ -25,7 +25,7 @@ func (f *Node) Scheme() string {
 	return f.peer.Scheme()
 }
 
-func (f *Node) Dial(ctx context.Context, peer dialers.Peer) (io.ReadWriteCloser, error) {
+func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt) (io.ReadWriteCloser, error) {
 	if f.peer.Scheme() != peer.Scheme() {
 		return nil, errors.ErrBadArgument
 	}
@@ -38,7 +38,7 @@ func (f *Node) Dial(ctx context.Context, peer dialers.Peer) (io.ReadWriteCloser,
 	return conn, nil
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...dialers.SrvOpt) error {
 	listener, err := net.Listen(f.peer.Scheme(), f.peer.Address())
 	if err != nil {
 		return err
