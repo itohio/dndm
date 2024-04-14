@@ -2,44 +2,73 @@ package mesh
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"sync"
 
 	"github.com/itohio/dndm/dialers"
+	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
+	p2ptypes "github.com/itohio/dndm/types/p2p"
 )
 
 var _ routers.Transport = (*Mesh)(nil)
 
-type AddrbookEntry struct {
-	Peer dialers.Peer
-}
+const NumDialers = 10
 
 type Mesh struct {
 	*routers.Base
 	dialer    dialers.Dialer
 	container *routers.Container
 
-	mu    sync.Mutex
-	peers map[string]AddrbookEntry
+	peerDialerQueue chan *AddrbookEntry
+	mu              sync.Mutex
+	peers           map[string]*AddrbookEntry
 }
 
-func New(name string, size int, node dialers.Dialer, peers []dialers.Peer) (*Mesh, error) {
-	pm := make(map[string]AddrbookEntry, len(peers))
+func New(name string, size int, node dialers.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
+	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
-		if _, ok := pm[p.ID()]; ok {
+		peer := NewAddrbookEntry(p)
+
+		if _, ok := pm[peer.Peer.ID()]; ok {
 			continue
 		}
-		pm[p.ID()] = AddrbookEntry{Peer: p}
+		pm[p.Peer] = peer
 	}
 	return &Mesh{
-		Base:      routers.NewBase(name, size),
-		dialer:    node,
-		peers:     pm,
-		container: routers.NewContainer(name, size),
+		Base:            routers.NewBase(name, size),
+		dialer:          node,
+		peers:           pm,
+		container:       routers.NewContainer(name, size),
+		peerDialerQueue: make(chan *AddrbookEntry, NumDialers),
 	}, nil
+}
+
+func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	book := make([]*p2ptypes.AddrbookEntry, 0, len(t.peers))
+	for _, p := range t.peers {
+		p.Lock()
+		book = append(
+			book,
+			&p2ptypes.AddrbookEntry{
+				Peer:              p.Peer.String(),
+				MaxAttempts:       uint32(p.MaxAttempts),
+				DefaultBackoff:    uint64(p.DefaultBackoff),
+				MaxBackoff:        uint64(p.MaxBackoff),
+				BackoffMultiplier: float32(p.BackOffMultiplier),
+				Attempts:          uint32(p.Attempts),
+				FailedAttempts:    uint32(p.Failed),
+				LastSuccess:       uint64(p.LastSuccess.UnixNano()),
+				Backoff:           uint64(p.BackOff),
+			},
+		)
+		p.Unlock()
+	}
+	return book
 }
 
 func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
@@ -57,11 +86,12 @@ func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 		}
 	}
 
+	for i := 0; i < NumDialers; i++ {
+		go t.dialerLoop()
+	}
+
 	for _, p := range t.peers {
-		err := t.dial(p.Peer)
-		if err != nil {
-			t.Log.Error("init.dial", "err", err, "peer", p)
-		}
+		t.peerDialerQueue <- p
 	}
 
 	return nil
@@ -78,7 +108,9 @@ func (t *Mesh) Close() error {
 }
 
 func (t *Mesh) Publish(route routers.Route, opt ...routers.PubOpt) (routers.Intent, error) {
+	return t.container.Publish(route, opt...)
 }
 
 func (t *Mesh) Subscribe(route routers.Route, opt ...routers.SubOpt) (routers.Interest, error) {
+	return t.container.Subscribe(route, opt...)
 }

@@ -1,6 +1,6 @@
 syntax = "proto3";
-package types.test;
-option go_package = "github.com/itohio/dndm/types/test/types";
+package types;
+option go_package = "github.com/itohio/dndm/types/test;types";
 
 // Foo is for creating foo test messages
 message Foo {

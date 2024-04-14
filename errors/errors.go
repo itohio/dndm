@@ -11,6 +11,7 @@ var (
 
 	ErrNotEnoughBytes   = errors.New("not enough bytes")
 	ErrNotFound         = errors.New("not found")
+	ErrRetry            = errors.New("will retry")
 	ErrNoInterest       = errors.New("no interest")
 	ErrNoIntent         = errors.New("no intent")
 	ErrForbidden        = errors.New("forbidden")
