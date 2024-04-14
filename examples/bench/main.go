@@ -12,14 +12,15 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
+	"github.com/itohio/dndm/dialers"
+	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
 	"github.com/itohio/dndm/routers/direct"
 	"github.com/itohio/dndm/routers/remote"
+	"github.com/itohio/dndm/stream"
 	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
-
-//go:generate protoc -I ../../proto --proto_path=. --go_opt=paths=source_relative --go_out=. ./msg.proto
 
 var (
 	sent atomic.Uint64
@@ -138,8 +139,11 @@ func testRemote(ctx context.Context, size int) {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	remoteA := remote.NewWire("remoteA", "pipe-name-a", size, time.Second, 0, bridge.A(), nil)
-	remoteB := remote.NewWire("remoteB", "pipe-name-b", size, time.Second, 0, bridge.B(), nil)
+	wireA := stream.NewWithContext(ctx, errors.Must(dialers.PeerFromString("pipe://local/remoteA?some_param=123")), bridge.A(), nil)
+	wireB := stream.NewWithContext(ctx, errors.Must(dialers.PeerFromString("pipe://local/remoteB?some_param=123")), bridge.B(), nil)
+
+	remoteA := remote.New("remoteA", wireA, size, time.Second, 0)
+	remoteB := remote.New("remoteB", wireB, size, time.Second, 0)
 
 	err = remoteA.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
 	if err != nil {

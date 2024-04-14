@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"sync"
 )
 
 type Link struct {
@@ -10,7 +11,9 @@ type Link struct {
 	intent   IntentInternal
 	interest InterestInternal
 	closer   func() error
-	done     chan struct{}
+
+	once sync.Once // Protects closing done
+	done chan struct{}
 }
 
 func NewLink(ctx context.Context, intent IntentInternal, interest InterestInternal, closer func() error) *Link {
@@ -21,7 +24,7 @@ func NewLink(ctx context.Context, intent IntentInternal, interest InterestIntern
 		intent:   intent,
 		interest: interest,
 		closer:   closer,
-		done:     make(chan struct{}, 1),
+		done:     make(chan struct{}),
 	}
 
 	return ret
@@ -31,12 +34,12 @@ func NewLink(ctx context.Context, intent IntentInternal, interest InterestIntern
 // send messages to interest's MsgC channel.
 //
 // Link notifies intent.
-func (l Link) Link() {
+func (l *Link) Link() {
 	go func() {
 		defer func() {
 			l.intent.Link(nil)
 			l.closer()
-			l.done <- struct{}{}
+			l.once.Do(func() { close(l.done) })
 		}()
 		l.intent.Link(l.interest.MsgC())
 		l.intent.Notify()
@@ -51,11 +54,11 @@ func (l Link) Link() {
 	}()
 }
 
-func (l Link) Unlink() {
+func (l *Link) Unlink() {
 	l.cancel()
 	<-l.done
 }
 
-func (l Link) Notify() {
+func (l *Link) Notify() {
 	l.intent.Notify()
 }

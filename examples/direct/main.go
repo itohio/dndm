@@ -15,8 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-//go:generate protoc -I ../../proto --proto_path=. --go_opt=paths=source_relative --go_out=. ./msg.proto
-
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
@@ -36,10 +34,8 @@ func main() {
 	time.Sleep(time.Second * 5)
 	go generateBar(ctx, node)
 
-	select {
-	case <-ctx.Done():
-		slog.Info("Stopped", "reason", ctx.Err())
-	}
+	<-ctx.Done()
+	slog.Info("Stopped", "reason", ctx.Err())
 }
 
 func generateFoo(ctx context.Context, node *dndm.Router) {
