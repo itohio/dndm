@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"io"
-
-	"github.com/itohio/dndm/routers/remote"
 )
 
 // ReadWriter stores pointers to a Reader and a Writer.
@@ -47,10 +45,10 @@ func makeBridge(ctx context.Context) *bridge {
 	}
 }
 
-func (b bridge) A() remote.ReadWriter {
+func (b bridge) A() io.ReadWriter {
 	return NewReadWriter(b.rA, b.wB)
 }
 
-func (b bridge) B() remote.ReadWriter {
+func (b bridge) B() io.ReadWriter {
 	return NewReadWriter(b.rB, b.wA)
 }

@@ -9,20 +9,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/routers"
 	types "github.com/itohio/dndm/types/core"
-	"google.golang.org/protobuf/proto"
 )
 
 var _ routers.Transport = (*Transport)(nil)
-
-type Remote interface {
-	io.Closer
-	Id() string
-	Read(ctx context.Context) (*types.Header, proto.Message, error)
-	Write(ctx context.Context, route routers.Route, msg proto.Message) error
-}
 
 type Transport struct {
 	ctx            context.Context
@@ -30,7 +23,7 @@ type Transport struct {
 	wg             sync.WaitGroup
 	log            *slog.Logger
 	name           string
-	remote         Remote
+	remote         dialers.Remote
 	addCallback    func(interest routers.Interest, t routers.Transport) error
 	removeCallback func(interest routers.Interest, t routers.Transport) error
 	size           int
@@ -47,7 +40,7 @@ type Transport struct {
 }
 
 // New creates a transport that communicates with a remote via Remote interface.
-func New(name string, remote Remote, size int, timeout, pingDuration time.Duration) *Transport {
+func New(name string, remote dialers.Remote, size int, timeout, pingDuration time.Duration) *Transport {
 	return &Transport{
 		name:         name,
 		size:         size,
@@ -73,10 +66,28 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	t.linker = routers.NewLinker(
 		ctx, logger, t.size,
 		func(interest routers.Interest) error {
-			return add(interest, t)
+			err := add(interest, t)
+			if err != nil {
+				return err
+			}
+			// Nil Type indicates remote interest
+			r := interest.Route()
+			if r.Type() != nil {
+				t.remote.AddRoute(r)
+			}
+			return nil
 		},
 		func(interest routers.Interest) error {
-			return remove(interest, t)
+			err := remove(interest, t)
+			if err != nil {
+				return err
+			}
+			// Nil Type indicates remote interest
+			r := interest.Route()
+			if r.Type() != nil {
+				t.remote.DelRoute(r)
+			}
+			return nil
 		},
 		nil,
 	)
@@ -93,6 +104,9 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 func (t *Transport) Close() error {
 	t.cancel()
 	t.wg.Wait()
+	if closer, ok := t.remote.(io.Closer); ok {
+		closer.Close()
+	}
 	return t.linker.Close()
 }
 
