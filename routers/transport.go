@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 
+	"github.com/itohio/dndm/errors"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -56,9 +57,49 @@ type Transport interface {
 	io.Closer
 	Name() string
 	// Publish will advertise an intent to publish named and typed data.
-	Publish(route Route) (Intent, error)
+	Publish(route Route, opt ...PubOpt) (Intent, error)
 	// Subscribe will advertise an interest in named and typed data.
-	Subscribe(route Route) (Interest, error)
+	Subscribe(route Route, opt ...SubOpt) (Interest, error)
 	// Init is used by the Router to initialize this transport.
 	Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Transport) error) error
+}
+
+type Base struct {
+	Ctx            context.Context
+	cancel         context.CancelFunc
+	name           string
+	Log            *slog.Logger
+	AddCallback    func(interest Interest, t Transport) error
+	RemoveCallback func(interest Interest, t Transport) error
+	Size           int
+}
+
+func NewBase(name string, size int) *Base {
+	return &Base{
+		name: name,
+		Size: size,
+	}
+}
+
+func (t *Base) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Transport) error) error {
+	if logger == nil || add == nil || remove == nil {
+		return errors.ErrBadArgument
+	}
+	t.Log = logger
+	t.AddCallback = add
+	t.RemoveCallback = remove
+	ctx, cancel := context.WithCancel(ctx)
+	t.Ctx = ctx
+	t.cancel = cancel
+
+	return nil
+}
+
+func (t *Base) Name() string {
+	return t.name
+}
+
+func (t *Base) Close() error {
+	t.cancel()
+	return nil
 }
