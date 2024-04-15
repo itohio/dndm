@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
+	"github.com/itohio/dndm/endpoint/direct"
 	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 )
@@ -19,7 +20,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	node, err := dndm.New(dndm.WithContext(ctx), dndm.WithQueueSize(3))
+	node, err := dndm.New(dndm.WithContext(ctx), dndm.WithQueueSize(3), dndm.WithEndpoint(direct.New(3)))
 	if err != nil {
 		panic(err)
 	}

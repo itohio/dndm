@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
-	"github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
@@ -35,22 +35,22 @@ func (wd *Watchdog) Reset() {
 }
 
 type RemoteIntent struct {
-	*router.LocalIntent
+	*dndm.LocalIntent
 	log    *slog.Logger
-	remote network.Remote
+	remote network.Conn
 	cfg    *types.Intent
 	wd     *Watchdog
 }
 
 type LocalIntent struct {
-	*router.LocalIntent
+	*dndm.LocalIntent
 	log    *slog.Logger
-	remote network.Remote
+	remote network.Conn
 }
 
-func wrapLocalIntent(log *slog.Logger, remote network.Remote) router.IntentWrapperFunc {
-	return func(ii router.IntentInternal) (router.IntentInternal, error) {
-		li, ok := ii.(*router.LocalIntent)
+func wrapLocalIntent(log *slog.Logger, remote network.Conn) dndm.IntentWrapperFunc {
+	return func(ii dndm.IntentInternal) (dndm.IntentInternal, error) {
+		li, ok := ii.(*dndm.LocalIntent)
 		if !ok {
 			return nil, errors.ErrLocalIntent
 		}
@@ -95,9 +95,9 @@ func (i *LocalIntent) Link(c chan<- proto.Message) {
 // wrapRemoteIntent returns an intent wrapper that embeds remote
 // wrap command and local intent into a RemoteIntent. It will start a watchdog timer
 // that when expired will close the intent.
-func wrapRemoteIntent(log *slog.Logger, remote network.Remote, ri *types.Intent) router.IntentWrapperFunc {
-	return func(ii router.IntentInternal) (router.IntentInternal, error) {
-		li, ok := ii.(*router.LocalIntent)
+func wrapRemoteIntent(log *slog.Logger, remote network.Conn, ri *types.Intent) dndm.IntentWrapperFunc {
+	return func(ii dndm.IntentInternal) (dndm.IntentInternal, error) {
+		li, ok := ii.(*dndm.LocalIntent)
 		if !ok {
 			return nil, errors.ErrLocalIntent
 		}
@@ -144,22 +144,22 @@ func (i *RemoteIntent) Link(c chan<- proto.Message) {
 }
 
 type RemoteInterest struct {
-	*router.LocalInterest
+	*dndm.LocalInterest
 	log    *slog.Logger
-	remote network.Remote
+	remote network.Conn
 	cfg    *types.Interest
 	wd     *Watchdog
 }
 
 type LocalInterest struct {
-	*router.LocalInterest
+	*dndm.LocalInterest
 	log    *slog.Logger
-	remote network.Remote
+	remote network.Conn
 }
 
-func wrapLocalInterest(log *slog.Logger, remote network.Remote) router.InterestWrapperFunc {
-	return func(ii router.InterestInternal) (router.InterestInternal, error) {
-		li, ok := ii.(*router.LocalInterest)
+func wrapLocalInterest(log *slog.Logger, remote network.Conn) dndm.InterestWrapperFunc {
+	return func(ii dndm.InterestInternal) (dndm.InterestInternal, error) {
+		li, ok := ii.(*dndm.LocalInterest)
 		if !ok {
 			return nil, errors.ErrLocalIntent
 		}
@@ -194,9 +194,9 @@ func (i *LocalInterest) Close() error {
 	return errors.Join(werr, cerr)
 }
 
-func wrapRemoteInterest(log *slog.Logger, remote network.Remote, ri *types.Interest) router.InterestWrapperFunc {
-	return func(ii router.InterestInternal) (router.InterestInternal, error) {
-		li, ok := ii.(*router.LocalInterest)
+func wrapRemoteInterest(log *slog.Logger, remote network.Conn, ri *types.Interest) dndm.InterestWrapperFunc {
+	return func(ii dndm.InterestInternal) (dndm.InterestInternal, error) {
+		li, ok := ii.(*dndm.LocalInterest)
 		if !ok {
 			return nil, errors.ErrLocalIntent
 		}

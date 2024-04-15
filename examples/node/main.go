@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
+	"github.com/itohio/dndm/endpoint/mesh"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/examples"
 	"github.com/itohio/dndm/network"
 	"github.com/itohio/dndm/network/net"
-	"github.com/itohio/dndm/router/mesh"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	types "github.com/itohio/dndm/types/test"
 )

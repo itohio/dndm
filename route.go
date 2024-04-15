@@ -1,4 +1,4 @@
-package router
+package dndm
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ func NewRoute(path string, msg proto.Message) (Route, error) {
 	}, nil
 }
 
-func NewRouteFromRoute(route string) (Route, error) {
+func RouteFromString(route string) (Route, error) {
 	return Route{
 		route: route,
 	}, nil

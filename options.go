@@ -6,8 +6,6 @@ import (
 	"slices"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/router"
-	"github.com/itohio/dndm/router/direct"
 )
 
 type Option func(*Options) error
@@ -15,18 +13,16 @@ type Option func(*Options) error
 type Options struct {
 	ctx       context.Context
 	logger    *slog.Logger
-	endpoints []router.Endpoint
+	endpoints []Endpoint
 	size      int
 }
 
 func defaultOptions() Options {
 	return Options{
-		ctx:    context.Background(),
-		logger: slog.Default(),
-		endpoints: []router.Endpoint{
-			direct.New(0),
-		},
-		size: 1,
+		ctx:       context.Background(),
+		logger:    slog.Default(),
+		endpoints: []Endpoint{},
+		size:      1,
 	}
 }
 
@@ -39,7 +35,7 @@ func (o *Options) Config(opts ...Option) error {
 	return nil
 }
 
-func (o *Options) addEndpoint(t router.Endpoint) error {
+func (o *Options) addEndpoint(t Endpoint) error {
 	if t == nil {
 		return errors.ErrInvalidEndpoint
 	}
@@ -79,15 +75,31 @@ func WithQueueSize(size int) Option {
 	}
 }
 
-func WithEndpoint(t router.Endpoint) Option {
+func WithEndpoint(t Endpoint) Option {
 	return func(o *Options) error {
 		return o.addEndpoint(t)
 	}
 }
 
-func WithEndpoints(t ...router.Endpoint) Option {
+func WithEndpoints(t ...Endpoint) Option {
 	return func(o *Options) error {
 		o.endpoints = t
+		return nil
+	}
+}
+
+type SubOptStruct struct {
+}
+type SubOpt func(*SubOptStruct) error
+
+type PubOptStruct struct {
+	blocking bool
+}
+type PubOpt func(*PubOptStruct) error
+
+func Blocking(b bool) PubOpt {
+	return func(o *PubOptStruct) error {
+		o.blocking = b
 		return nil
 	}
 }

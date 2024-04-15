@@ -1,4 +1,4 @@
-package router
+package dndm
 
 import (
 	"context"
@@ -9,16 +9,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Router interface {
-	Route() Route
-}
-
 // Interest is an interface to describe an interest in named data.
 // User should consume C of the interest until it is closed or no longer needed.
 // Messages will be delivered only when a corresponding Intent is discovered.
 type Interest interface {
 	io.Closer
-	Router
+	Route() Route
 	// C returns a channel that contains messages. Users should typecast to specific message type that
 	// was registered with the interest.
 	C() <-chan proto.Message
@@ -35,7 +31,7 @@ type InterestInternal interface {
 // Users can consume Interest channel to determine if it is worthwhile to send any data.
 type Intent interface {
 	io.Closer
-	Router
+	Route() Route
 	// Interest returns a channel that contains Routes that are interested in the data indicated by the intent.
 	// Users should start sending the data once an event is received on this channel.
 	Interest() <-chan Route

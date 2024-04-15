@@ -4,15 +4,15 @@ import (
 	"context"
 	"io"
 
-	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 
-type MessageHandler func(hdr *types.Header, msg proto.Message, remote Remote) (pass bool, err error)
+type MessageHandler func(hdr *types.Header, msg proto.Message, remote Conn) (pass bool, err error)
 
-// Remote interface represents a communication channel with the remote peer
-type Remote interface {
+// Conn interface represents a communication channel with the remote peer
+type Conn interface {
 	io.Closer
 	// LocalPeer returns the name of the local peer
 	LocalPeer() Peer
@@ -23,12 +23,12 @@ type Remote interface {
 	// Read reads a message sent by the peer
 	Read(ctx context.Context) (*types.Header, proto.Message, error)
 	// Write sends a message to the peer
-	Write(ctx context.Context, route router.Route, msg proto.Message) error
+	Write(ctx context.Context, route dndm.Route, msg proto.Message) error
 
 	// AddRoute registers a route type. NOTE: Route must have a valid Type
-	AddRoute(...router.Route)
+	AddRoute(...dndm.Route)
 	// DelRoute unregisters a route type.
-	DelRoute(...router.Route)
+	DelRoute(...dndm.Route)
 }
 
 // Dialer interface describes objects that can dial a remote peer.
