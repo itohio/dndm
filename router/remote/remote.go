@@ -34,10 +34,10 @@ type Remote struct {
 	nonce atomic.Uint64
 }
 
-// New creates a transport that communicates with a remote via Remote interface.
-func New(name string, remote network.Remote, size int, timeout, pingDuration time.Duration) *Remote {
+// New creates a endpoint that communicates with a remote via Remote interface.
+func New(self network.Peer, remote network.Remote, size int, timeout, pingDuration time.Duration) *Remote {
 	return &Remote{
-		Base:         router.NewBase(name, size),
+		Base:         router.NewBase(self.String(), size),
 		remote:       remote,
 		pingDuration: pingDuration,
 		timeout:      timeout,

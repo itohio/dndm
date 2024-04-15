@@ -139,11 +139,13 @@ func testRemote(ctx context.Context, size int) {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	wireA := stream.NewWithContext(ctx, errors.Must(network.PeerFromString("pipe://local/remoteA?some_param=123")), bridge.A(), nil)
-	wireB := stream.NewWithContext(ctx, errors.Must(network.PeerFromString("pipe://local/remoteB?some_param=123")), bridge.B(), nil)
+	peerA := errors.Must(network.PeerFromString("pipe://local/remoteA?some_param=123"))
+	peerB := errors.Must(network.PeerFromString("pipe://local/remoteB?some_param=123"))
+	wireA := stream.NewWithContext(ctx, peerA, peerB, bridge.A(), nil)
+	wireB := stream.NewWithContext(ctx, peerB, peerA, bridge.B(), nil)
 
-	remoteA := remote.New("remoteA", wireA, size, time.Second, 0)
-	remoteB := remote.New("remoteB", wireB, size, time.Second, 0)
+	remoteA := remote.New(peerA, wireA, size, time.Second, 0)
+	remoteB := remote.New(peerB, wireB, size, time.Second, 0)
 
 	err = remoteA.Init(ctx, slog.Default(), func(interest router.Interest, t router.Endpoint) error { return nil }, func(interest router.Interest, t router.Endpoint) error { return nil })
 	if err != nil {

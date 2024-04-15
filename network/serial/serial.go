@@ -75,11 +75,11 @@ func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt
 	return port, err
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(peer network.Peer, r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
 	rwc, err := f.Dial(ctx, f.peer)
 	if err != nil {
 		return err
 	}
 
-	return onConnect(rwc)
+	return onConnect(f.peer, rwc)
 }

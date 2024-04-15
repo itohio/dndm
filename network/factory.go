@@ -52,7 +52,7 @@ func (f *Factory) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWri
 	return d.Dial(ctx, peer)
 }
 
-func (f *Factory) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...SrvOpt) error {
+func (f *Factory) Serve(ctx context.Context, onConnect func(peer Peer, r io.ReadWriteCloser) error, o ...SrvOpt) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	for _, s := range f.servers {

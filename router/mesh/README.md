@@ -13,4 +13,3 @@ address book with other peers when then successfully handshake.
 - share peers
 - update remote transports
 
-TODO TODO: find a better name for router.transport!!!

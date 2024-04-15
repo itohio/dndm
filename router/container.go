@@ -45,7 +45,7 @@ func (t *Container) Close() error {
 	return errors.Join(errarr...)
 }
 
-// Init is used by the Router to initialize this transport.
+// Init is used by the Router to initialize this endpoint.
 func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error {
 	if logger == nil || add == nil || remove == nil {
 		return errors.ErrBadArgument
@@ -60,39 +60,39 @@ func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	return nil
 }
 
-func (t *Container) Add(transport Endpoint) error {
-	if transport == nil {
-		return errors.ErrInvalidTransport
+func (t *Container) Add(ep Endpoint) error {
+	if ep == nil {
+		return errors.ErrInvalidEndpoint
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	idx := slices.Index(t.endpoints, transport)
+	idx := slices.Index(t.endpoints, ep)
 	if idx >= 0 {
 		return errors.ErrDuplicate
 	}
 	// TODO
-	err := transport.Init(t.ctx, t.log,
+	err := ep.Init(t.ctx, t.log,
 		func(interest Interest, t Endpoint) error { return nil },
 		func(interest Interest, t Endpoint) error { return nil },
 	)
 	if err != nil {
 		return err
 	}
-	t.endpoints = append(t.endpoints, transport)
+	t.endpoints = append(t.endpoints, ep)
 	return nil
 }
 
-func (t *Container) Remove(transport Endpoint) error {
+func (t *Container) Remove(ep Endpoint) error {
 	t.mu.Lock() // NOTE: Watchout for unlocks!
-	idx := slices.Index(t.endpoints, transport)
+	idx := slices.Index(t.endpoints, ep)
 	if idx < 0 {
 		t.mu.Unlock()
 		return errors.ErrNotFound
 	}
-	transport = t.endpoints[idx]
+	ep = t.endpoints[idx]
 	t.endpoints = slices.Delete(t.endpoints, idx, idx+1)
 	t.mu.Unlock()
-	return transport.Close()
+	return ep.Close()
 }
 
 func finderFunc[T any](arr []T, compare func(T) bool) []T {

@@ -12,6 +12,79 @@ import (
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 )
 
+type Addrbook struct {
+	ctx             context.Context
+	mu              sync.Mutex
+	self            network.Peer
+	peers           map[string]*AddrbookEntry
+	peerDialerQueue chan *AddrbookEntry
+}
+
+func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry) *Addrbook {
+	pm := make(map[string]*AddrbookEntry, len(peers))
+	for _, p := range peers {
+		peer := NewAddrbookEntry(p)
+		pm[p.Peer] = peer
+	}
+
+	ret := &Addrbook{
+		self:            self,
+		peers:           pm,
+		peerDialerQueue: make(chan *AddrbookEntry, NumDialers),
+	}
+
+	return ret
+}
+
+func (b *Addrbook) Self() network.Peer {
+	return b.self
+}
+
+func (b *Addrbook) Dials() chan *AddrbookEntry {
+	return b.peerDialerQueue
+}
+
+func (b *Addrbook) Init(ctx context.Context) {
+	b.ctx = ctx
+
+	for _, p := range b.peers {
+		b.peerDialerQueue <- p
+	}
+}
+
+func (b *Addrbook) AddPeer(p network.Peer) {
+}
+
+func (b *Addrbook) BanPeer(p network.Peer) {
+}
+
+func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	book := make([]*p2ptypes.AddrbookEntry, 0, len(b.peers))
+	for _, p := range b.peers {
+		p.Lock()
+		book = append(
+			book,
+			&p2ptypes.AddrbookEntry{
+				Peer:              p.Peer.String(),
+				MaxAttempts:       uint32(p.MaxAttempts),
+				DefaultBackoff:    uint64(p.DefaultBackoff),
+				MaxBackoff:        uint64(p.MaxBackoff),
+				BackoffMultiplier: float32(p.BackoffMultiplier),
+				Attempts:          uint32(p.Attempts),
+				FailedAttempts:    uint32(p.Failed),
+				LastSuccess:       uint64(p.LastSuccess.UnixNano()),
+				Backoff:           uint64(p.Backoff),
+			},
+		)
+		p.Unlock()
+	}
+	return book
+
+}
+
 type AddrbookEntry struct {
 	sync.Mutex
 

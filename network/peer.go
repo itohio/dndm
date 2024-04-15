@@ -22,6 +22,15 @@ func (r Peer) String() string {
 	return u.String()
 }
 
+func NewPeer(scheme, address, id string, args url.Values) (Peer, error) {
+	return Peer{
+		scheme: scheme,
+		addr:   address,
+		id:     id,
+		args:   args,
+	}, nil
+}
+
 func PeerFromString(peer string) (Peer, error) {
 	u, err := url.Parse(peer)
 	if err != nil {

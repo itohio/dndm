@@ -203,7 +203,7 @@ func (t *Remote) handlePong(hdr *types.Header, m proto.Message) error {
 		// also, msg.PingTimestamp, hdr.ReceiveTimestamp are local times
 		// while hdr.Timestamp, and msg.ReceiveTimestamp are remote times
 		// FIXME: this is utterly confusing. Need better names.
-		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "me", t.Name(), "them", t.remote.Peer())
+		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "name", t.Name(), "peer", t.remote.RemotePeer())
 	})
 
 	return nil

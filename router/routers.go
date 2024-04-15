@@ -55,12 +55,11 @@ type IntentInternal interface {
 type Endpoint interface {
 	io.Closer
 	Name() string
-	SetName(string)
 	// Publish will advertise an intent to publish named and typed data.
 	Publish(route Route, opt ...PubOpt) (Intent, error)
 	// Subscribe will advertise an interest in named and typed data.
 	Subscribe(route Route, opt ...SubOpt) (Interest, error)
-	// Init is used by the Router to initialize this transport.
+	// Init is used by the Router to initialize this endpoint.
 	Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error
 }
 

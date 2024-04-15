@@ -17,7 +17,7 @@ type Router struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	size            int
-	transports      []router.Endpoint
+	endpoints       []router.Endpoint
 	intentRouters   map[string]*router.IntentRouter
 	interestRouters map[string]*router.InterestRouter
 }
@@ -33,18 +33,18 @@ func New(opts ...Option) (*Router, error) {
 		ctx:             ctx,
 		cancel:          cancel,
 		log:             opt.logger.With("module", "router"),
-		transports:      make([]router.Endpoint, len(opt.transports)),
+		endpoints:       make([]router.Endpoint, len(opt.endpoints)),
 		intentRouters:   make(map[string]*router.IntentRouter),
 		interestRouters: make(map[string]*router.InterestRouter),
 		size:            opt.size,
 	}
 
-	for i, t := range opt.transports {
-		log := opt.logger.With("transport", t.Name())
+	for i, t := range opt.endpoints {
+		log := opt.logger.With("endpoint", t.Name())
 		if err := t.Init(ret.ctx, log, ret.addInterest, ret.removeInterest); err != nil {
 			return nil, err
 		}
-		ret.transports[i] = t
+		ret.endpoints[i] = t
 	}
 
 	return ret, nil
@@ -108,9 +108,9 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...router.PubOpt) (
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	intents := make([]router.Intent, 0, len(d.transports))
+	intents := make([]router.Intent, 0, len(d.endpoints))
 	// Advertise intents even if we are already publishing
-	for _, t := range d.transports {
+	for _, t := range d.endpoints {
 		intent, err := t.Publish(route)
 		if err != nil {
 			closeAll(intents...)
@@ -148,8 +148,8 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...router.SubOpt)
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	// Advertise interests anyway (even if we are already subscribed)
-	interests := make([]router.Interest, 0, len(d.transports))
-	for _, t := range d.transports {
+	interests := make([]router.Interest, 0, len(d.endpoints))
+	for _, t := range d.endpoints {
 		interest, err := t.Subscribe(route)
 		if err != nil {
 			closeAll(interests...)

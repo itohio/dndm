@@ -12,15 +12,15 @@ func (t *Mesh) dialerLoop() {
 		case <-t.Ctx.Done():
 			t.Log.Info("mesh.loop", "err", t.Ctx.Err())
 			return
-		case peer := <-t.peerDialerQueue:
+		case peer := <-t.addrbook.Dials():
 			t.Log.Info("mesh.dial", "attempts", peer.Attempts, "failed", peer.Failed, "backoff", peer.Backoff, "peer", peer.Peer)
 			t.dial(peer)
 		}
 	}
 }
 
-func (t *Mesh) onConnect(rw io.ReadWriteCloser) error {
-	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, network.Peer{}, HS_WAIT)
+func (t *Mesh) onConnect(peer network.Peer, rw io.ReadWriteCloser) error {
+	hs := NewHandshaker(t.addrbook, peer, t.Size, t.timeout, t.pingDuration, t.container, rw, HS_WAIT)
 
 	t.container.Add(hs)
 
@@ -28,12 +28,12 @@ func (t *Mesh) onConnect(rw io.ReadWriteCloser) error {
 }
 
 func (t *Mesh) dial(address *AddrbookEntry) error {
-	rw, err := address.Dial(t.Ctx, t.Log, t.dialer, t.peerDialerQueue)
+	rw, err := address.Dial(t.Ctx, t.Log, t.dialer, t.addrbook.Dials())
 	if err != nil {
 		return err
 	}
 
-	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, address.Peer, HS_INIT)
+	hs := NewHandshaker(t.addrbook, address.Peer, t.Size, t.timeout, t.pingDuration, t.container, rw, HS_INIT)
 
 	t.container.Add(hs)
 
