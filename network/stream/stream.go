@@ -8,16 +8,16 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/codec"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
-	routers "github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 
-var _ network.Remote = (*StreamContext)(nil)
-var _ network.Remote = (*Stream)(nil)
+var _ network.Conn = (*StreamContext)(nil)
+var _ network.Conn = (*Stream)(nil)
 
 // StreamContext is a wrapper over ReadWriter that will read and decode messages from Reader as well as encode and write them to the Writer. It allows
 // using regular Reader/Writer interfaces with a context, however, it must be noted that the read/write loop will be leaked if Read/Write blocks.
@@ -107,7 +107,7 @@ func (w *StreamContext) Read(ctx context.Context) (*types.Header, proto.Message,
 	return hdr, msg, err
 }
 
-func (w *StreamContext) Write(ctx context.Context, route routers.Route, msg proto.Message) error {
+func (w *StreamContext) Write(ctx context.Context, route dndm.Route, msg proto.Message) error {
 	buf, err := codec.EncodeMessage(msg, route)
 	if err != nil {
 		return err
@@ -181,7 +181,7 @@ type Stream struct {
 	mu         sync.Mutex
 	localPeer  network.Peer
 	remotePeer network.Peer
-	routes     map[string]routers.Route
+	routes     map[string]dndm.Route
 }
 
 type readWriter struct {
@@ -237,7 +237,7 @@ func (w *Stream) Close() error {
 	return nil
 }
 
-func (w *Stream) AddRoute(routes ...routers.Route) {
+func (w *Stream) AddRoute(routes ...dndm.Route) {
 	w.mu.Lock()
 	for _, r := range routes {
 		w.routes[r.ID()] = r
@@ -245,7 +245,7 @@ func (w *Stream) AddRoute(routes ...routers.Route) {
 	w.mu.Unlock()
 }
 
-func (w *Stream) DelRoute(routes ...routers.Route) {
+func (w *Stream) DelRoute(routes ...dndm.Route) {
 	w.mu.Lock()
 	for _, r := range routes {
 		delete(w.routes, r.ID())
@@ -287,7 +287,7 @@ func (w *Stream) Read(ctx context.Context) (*types.Header, proto.Message, error)
 	return hdr, msg, err
 }
 
-func (w *Stream) Write(ctx context.Context, route routers.Route, msg proto.Message) error {
+func (w *Stream) Write(ctx context.Context, route dndm.Route, msg proto.Message) error {
 	buf, err := codec.EncodeMessage(msg, route)
 	if err != nil {
 		return err

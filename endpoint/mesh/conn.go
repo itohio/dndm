@@ -6,7 +6,7 @@ import (
 	"github.com/itohio/dndm/network"
 )
 
-func (t *Mesh) dialerLoop() {
+func (t *Endpoint) dialerLoop() {
 	for {
 		select {
 		case <-t.Ctx.Done():
@@ -19,7 +19,7 @@ func (t *Mesh) dialerLoop() {
 	}
 }
 
-func (t *Mesh) onConnect(peer network.Peer, rw io.ReadWriteCloser) error {
+func (t *Endpoint) onConnect(peer network.Peer, rw io.ReadWriteCloser) error {
 	hs := NewHandshaker(t.addrbook, peer, t.Size, t.timeout, t.pingDuration, t.container, rw, HS_WAIT)
 
 	t.container.Add(hs)
@@ -27,7 +27,7 @@ func (t *Mesh) onConnect(peer network.Peer, rw io.ReadWriteCloser) error {
 	return nil
 }
 
-func (t *Mesh) dial(address *AddrbookEntry) error {
+func (t *Endpoint) dial(address *AddrbookEntry) error {
 	rw, err := address.Dial(t.Ctx, t.Log, t.dialer, t.addrbook.Dials())
 	if err != nil {
 		return err

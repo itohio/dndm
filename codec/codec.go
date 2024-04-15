@@ -7,8 +7,8 @@ import (
 	reflect "reflect"
 	"time"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
-	routers "github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	pool "github.com/libp2p/go-buffer-pool"
 	"google.golang.org/protobuf/proto"
@@ -28,7 +28,7 @@ const MagicNumber = 0xFADABEDA
 const MagicNumberHeaderless = 0xCEBAFE4A
 
 // EncodeMessage encodes any proto message into stream bytes. It adds a header and packet part sizes.
-func EncodeMessage(msg proto.Message, route routers.Route) ([]byte, error) {
+func EncodeMessage(msg proto.Message, route dndm.Route) ([]byte, error) {
 	h := &types.Header{
 		Timestamp: uint64(time.Now().UnixNano()),
 		Type:      resolveType(msg),
@@ -110,7 +110,7 @@ func ReadMessage(r io.Reader) ([]byte, uint64, error) {
 }
 
 // DecodeMessage assumes the data array is already of correct size and preamble size field is removed
-func DecodeMessage(data []byte, interests map[string]routers.Route) (*types.Header, proto.Message, error) {
+func DecodeMessage(data []byte, interests map[string]dndm.Route) (*types.Header, proto.Message, error) {
 	var h types.Header
 
 	hSize := int(binary.BigEndian.Uint32(data))

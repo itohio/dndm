@@ -9,22 +9,22 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
-	"github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 )
 
-var _ router.Endpoint = (*Remote)(nil)
+var _ dndm.Endpoint = (*Endpoint)(nil)
 
-type Remote struct {
-	*router.Base
+type Endpoint struct {
+	*dndm.Base
 
 	wg     sync.WaitGroup
-	remote network.Remote
+	remote network.Conn
 
 	timeout time.Duration
-	linker  *router.Linker
+	linker  *dndm.Linker
 
 	pingDuration time.Duration
 	pingMu       sync.Mutex
@@ -35,9 +35,9 @@ type Remote struct {
 }
 
 // New creates a endpoint that communicates with a remote via Remote interface.
-func New(self network.Peer, remote network.Remote, size int, timeout, pingDuration time.Duration) *Remote {
-	return &Remote{
-		Base:         router.NewBase(self.String(), size),
+func New(self network.Peer, remote network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
+	return &Endpoint{
+		Base:         dndm.NewBase(self.String(), size),
 		remote:       remote,
 		pingDuration: pingDuration,
 		timeout:      timeout,
@@ -46,14 +46,14 @@ func New(self network.Peer, remote network.Remote, size int, timeout, pingDurati
 	}
 }
 
-func (t *Remote) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
+func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
 	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
 		return err
 	}
 
-	t.linker = router.NewLinker(
+	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
-		func(interest router.Interest) error {
+		func(interest dndm.Interest) error {
 			err := add(interest, t)
 			if err != nil {
 				return err
@@ -65,7 +65,7 @@ func (t *Remote) Init(ctx context.Context, logger *slog.Logger, add, remove func
 			}
 			return nil
 		},
-		func(interest router.Interest) error {
+		func(interest dndm.Interest) error {
 			err := remove(interest, t)
 			if err != nil {
 				return err
@@ -89,7 +89,7 @@ func (t *Remote) Init(ctx context.Context, logger *slog.Logger, add, remove func
 	return nil
 }
 
-func (t *Remote) Close() error {
+func (t *Endpoint) Close() error {
 	t.Log.Info("Remote.Close")
 	t.Base.Close()
 	t.wg.Wait()
@@ -99,7 +99,7 @@ func (t *Remote) Close() error {
 	return t.linker.Close()
 }
 
-func (t *Remote) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
+func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
 	// TODO: LocalWrapped intent
 	intent, err := t.linker.AddIntentWithWrapper(route, wrapLocalIntent(t.Log, t.remote))
 	if err != nil {
@@ -114,7 +114,7 @@ func (t *Remote) Publish(route router.Route, opt ...router.PubOpt) (router.Inten
 	return intent, err
 }
 
-func (t *Remote) publish(route router.Route, m *types.Intent) (router.Intent, error) {
+func (t *Endpoint) publish(route dndm.Route, m *types.Intent) (dndm.Intent, error) {
 	intent, err := t.linker.AddIntentWithWrapper(route, wrapRemoteIntent(t.Log, t.remote, m))
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (t *Remote) publish(route router.Route, m *types.Intent) (router.Intent, er
 	return intent, nil
 }
 
-func (t *Remote) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
+func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
 	// TODO: LocalWrapped intent
 	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.Log, t.remote))
 	if err != nil {
@@ -140,7 +140,7 @@ func (t *Remote) Subscribe(route router.Route, opt ...router.SubOpt) (router.Int
 	return interest, err
 }
 
-func (t *Remote) subscribe(route router.Route, m *types.Interest) (router.Interest, error) {
+func (t *Endpoint) subscribe(route dndm.Route, m *types.Interest) (dndm.Interest, error) {
 	interest, err := t.linker.AddInterestWithWrapper(route, wrapRemoteInterest(t.Log, t.remote, m))
 	if err != nil {
 		return nil, err

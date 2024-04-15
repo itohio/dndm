@@ -8,17 +8,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/itohio/dndm"
+	"github.com/itohio/dndm/endpoint/remote"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
-	"github.com/itohio/dndm/router"
-	"github.com/itohio/dndm/router/remote"
-	"github.com/itohio/dndm/stream"
+	"github.com/itohio/dndm/network/stream"
 	types "github.com/itohio/dndm/types/core"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	"google.golang.org/protobuf/proto"
 )
 
-var _ router.Endpoint = (*Handshaker)(nil)
+var _ dndm.Endpoint = (*Handshaker)(nil)
 
 type HandshakeState int
 
@@ -30,8 +30,8 @@ const (
 )
 
 type Container interface {
-	Add(router.Endpoint) error
-	Remove(router.Endpoint) error
+	Add(dndm.Endpoint) error
+	Remove(dndm.Endpoint) error
 }
 
 type Handshaker struct {
@@ -44,8 +44,8 @@ type Handshaker struct {
 	size         int
 	timeout      time.Duration
 	pingDuration time.Duration
-	remote       network.Remote
-	endpoint     atomic.Pointer[remote.Remote]
+	remote       network.Conn
+	endpoint     atomic.Pointer[remote.Endpoint]
 	container    Container
 	addrbook     *Addrbook
 	remotePeer   network.Peer
@@ -93,7 +93,7 @@ func (h *Handshaker) SetName(name string) {
 }
 
 // Publish will advertise an intent to publish named and typed data.
-func (h *Handshaker) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
+func (h *Handshaker) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
 	tr := h.endpoint.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
@@ -103,7 +103,7 @@ func (h *Handshaker) Publish(route router.Route, opt ...router.PubOpt) (router.I
 }
 
 // Subscribe will advertise an interest in named and typed data.
-func (h *Handshaker) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
+func (h *Handshaker) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
 	tr := h.endpoint.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
@@ -113,7 +113,7 @@ func (h *Handshaker) Subscribe(route router.Route, opt ...router.SubOpt) (router
 }
 
 // Init is used by the Router to initialize this transport.
-func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
+func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
 	if h.endpoint.Load() != nil {
 		panic("h.transport != nil")
 	}
@@ -143,7 +143,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	if h.state == HS_INIT {
 		h.state = HS_WAIT
 		h.log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
-		h.remote.Write(ctx, router.Route{}, &p2ptypes.Handshake{
+		h.remote.Write(ctx, dndm.Route{}, &p2ptypes.Handshake{
 			Id:    h.addrbook.Self().String(),
 			Stage: p2ptypes.HandshakeStage_INITIAL,
 		})
@@ -156,7 +156,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	return nil
 }
 
-func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote network.Conn) (pass bool, err error) {
 	h.hsCount++
 	if h.hsCount > 5 {
 		h.cancel()
@@ -197,7 +197,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 	return false, nil
 }
 
-func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote network.Conn) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -214,7 +214,7 @@ func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote netwo
 	return false, nil
 }
 
-func (h *Handshaker) addrbookMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) addrbookMsg(hdr *types.Header, msg proto.Message, remote network.Conn) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -231,7 +231,7 @@ func (h *Handshaker) addrbookMsg(hdr *types.Header, msg proto.Message, remote ne
 	return false, nil
 }
 
-func (h *Handshaker) messageMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) messageMsg(hdr *types.Header, msg proto.Message, remote network.Conn) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -239,7 +239,7 @@ func (h *Handshaker) messageMsg(hdr *types.Header, msg proto.Message, remote net
 	return true, nil
 }
 
-func (h *Handshaker) resultMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) resultMsg(hdr *types.Header, msg proto.Message, remote network.Conn) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden

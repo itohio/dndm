@@ -6,47 +6,47 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
-	"github.com/itohio/dndm/router"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	"golang.org/x/sync/errgroup"
 )
 
-var _ router.Endpoint = (*Mesh)(nil)
+var _ dndm.Endpoint = (*Endpoint)(nil)
 
 const NumDialers = 10
 
-type Mesh struct {
-	*router.Base
+type Endpoint struct {
+	*dndm.Base
 	timeout      time.Duration
 	pingDuration time.Duration
 	dialer       network.Dialer
-	container    *router.Container
+	container    *dndm.Container
 	localPeer    network.Peer
 
 	addrbook *Addrbook
 }
 
-func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
-	ret := &Mesh{
-		Base:         router.NewBase(localPeer.String(), size),
+func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Endpoint, error) {
+	ret := &Endpoint{
+		Base:         dndm.NewBase(localPeer.String(), size),
 		localPeer:    localPeer,
 		timeout:      timeout,
 		pingDuration: pingDuration,
 		dialer:       node,
-		container:    router.NewContainer(localPeer.String(), size),
+		container:    dndm.NewContainer(localPeer.String(), size),
 	}
 	ret.addrbook = NewAddrbook(localPeer, peers)
 
 	return ret, nil
 }
 
-func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
+func (t *Endpoint) Addrbook() []*p2ptypes.AddrbookEntry {
 	return t.addrbook.Peers()
 }
 
-func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
+func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
 		return err
@@ -71,7 +71,7 @@ func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 	return nil
 }
 
-func (t *Mesh) Close() error {
+func (t *Endpoint) Close() error {
 	t.Log.Info("Mesh.Close")
 	errarr := make([]error, 0, 3)
 	errarr = append(errarr, t.Base.Close())
@@ -82,10 +82,10 @@ func (t *Mesh) Close() error {
 	return errors.Join(errarr...)
 }
 
-func (t *Mesh) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
+func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
 	return t.container.Publish(route, opt...)
 }
 
-func (t *Mesh) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
+func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
 	return t.container.Subscribe(route, opt...)
 }
