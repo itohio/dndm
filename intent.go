@@ -2,6 +2,7 @@ package dndm
 
 import (
 	"context"
+	"io"
 	"reflect"
 	"slices"
 	"sync"
@@ -9,6 +10,25 @@ import (
 	"github.com/itohio/dndm/errors"
 	"google.golang.org/protobuf/proto"
 )
+
+// Intent is an interface to describe an intent to provide named data.
+// Users can consume Interest channel to determine if it is worthwhile to send any data.
+type Intent interface {
+	io.Closer
+	Route() Route
+	// Interest returns a channel that contains Routes that are interested in the data indicated by the intent.
+	// Users should start sending the data once an event is received on this channel.
+	Interest() <-chan Route
+	// Send will send a message to any recepient that indicated an interest.
+	Send(context.Context, proto.Message) error
+}
+type IntentInternal interface {
+	Intent
+	Link(chan<- proto.Message)
+	Notify()
+	Ctx() context.Context
+	// MsgC() <-chan proto.Message
+}
 
 type LocalIntent struct {
 	ctx    context.Context
@@ -20,6 +40,8 @@ type LocalIntent struct {
 
 	mu      sync.RWMutex
 	linkedC chan<- proto.Message
+
+	once sync.Once
 }
 
 func NewIntent(ctx context.Context, route Route, size int, closer func() error) *LocalIntent {
@@ -43,8 +65,8 @@ func (i *LocalIntent) Close() error {
 	if err != nil {
 		return err
 	}
-	i.cancel()
-	close(i.notifyC)
+	i.once.Do(func() { i.cancel() })
+	i.once.Do(func() { close(i.notifyC) })
 	i.linkedC = nil
 	return nil
 }
@@ -92,6 +114,7 @@ func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 func (i *LocalIntent) Link(c chan<- proto.Message) {
 	i.mu.Lock()
 	if i.linkedC != nil && c != nil && i.linkedC != c {
+		i.mu.Unlock()
 		panic("Link called multiple times illegally")
 	}
 	i.linkedC = c
@@ -130,8 +153,8 @@ type IntentRouter struct {
 	mu       sync.RWMutex
 	wg       sync.WaitGroup
 	ctx      context.Context
-	route    Route
 	cancel   context.CancelFunc
+	route    Route
 	closer   func() error
 	intents  []Intent
 	cancels  []context.CancelFunc

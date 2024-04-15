@@ -14,10 +14,11 @@ type MessageHandler func(hdr *types.Header, msg proto.Message, remote Conn) (pas
 // Conn interface represents a communication channel with the remote peer
 type Conn interface {
 	io.Closer
-	// LocalPeer returns the name of the local peer
-	LocalPeer() Peer
-	// RemotePeer returns the name of the remote peer
-	RemotePeer() Peer
+	dndm.CloseNotifier
+	// Local returns the name of the local peer
+	Local() Peer
+	// Remote returns the name of the remote peer
+	Remote() Peer
 	// UpdateRemotePeer sets the remote peer name. Peer scheme and address must match to take effect.
 	UpdateRemotePeer(Peer) error
 	// Read reads a message sent by the peer

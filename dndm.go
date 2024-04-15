@@ -8,6 +8,17 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// CauseCloser interface for objects that accepts closure reason
+type CauseCloser interface {
+	CloseCause(e error) error
+}
+
+// CloseNotifier interface for objects that can notify about a closure
+type CloseNotifier interface {
+	// OnClose will be called when the connection closes
+	OnClose(func())
+}
+
 type Router struct {
 	mu              sync.Mutex
 	log             *slog.Logger

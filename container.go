@@ -11,12 +11,7 @@ import (
 )
 
 type Container struct {
-	ctx            context.Context
-	cancel         context.CancelFunc
-	log            *slog.Logger
-	size           int
-	addCallback    func(interest Interest, t Endpoint) error
-	removeCallback func(interest Interest, t Endpoint) error
+	*Base
 
 	mu              sync.Mutex
 	endpoints       []Endpoint
@@ -26,7 +21,7 @@ type Container struct {
 
 func NewContainer(name string, size int) *Container {
 	return &Container{
-		size:            size,
+		Base:            NewBase(name, size),
 		endpoints:       make([]Endpoint, 0, 8),
 		intentRouters:   make(map[string]*IntentRouter),
 		interestRouters: make(map[string]*InterestRouter),
@@ -42,20 +37,15 @@ func (t *Container) Close() error {
 		}
 	}
 	t.endpoints = nil
+	errarr = append(errarr, t.Base.Close())
 	return errors.Join(errarr...)
 }
 
 // Init is used by the Router to initialize this endpoint.
 func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error {
-	if logger == nil || add == nil || remove == nil {
-		return errors.ErrBadArgument
+	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
+		return err
 	}
-	t.log = logger
-	t.addCallback = add
-	t.removeCallback = remove
-	ctx, cancel := context.WithCancel(ctx)
-	t.ctx = ctx
-	t.cancel = cancel
 
 	return nil
 }
@@ -71,7 +61,7 @@ func (t *Container) Add(ep Endpoint) error {
 		return errors.ErrDuplicate
 	}
 	// TODO
-	err := ep.Init(t.ctx, t.log,
+	err := ep.Init(t.Ctx, t.Log,
 		func(interest Interest, t Endpoint) error { return nil },
 		func(interest Interest, t Endpoint) error { return nil },
 	)
@@ -151,14 +141,14 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir = NewIntentRouter(t.ctx, route,
+	ir = NewIntentRouter(t.Ctx, route,
 		func() error {
 			t.mu.Lock()
 			defer t.mu.Unlock()
 			delete(t.intentRouters, route.ID())
 			return nil
 		},
-		t.size,
+		t.Size,
 		intents...,
 	)
 	t.intentRouters[route.ID()] = ir
@@ -189,14 +179,14 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir = NewInterestRouter(t.ctx, route,
+	ir = NewInterestRouter(t.Ctx, route,
 		func() error {
 			t.mu.Lock()
 			defer t.mu.Unlock()
 			delete(t.interestRouters, route.ID())
 			return nil
 		},
-		t.size,
+		t.Size,
 		interests...,
 	)
 	t.interestRouters[route.ID()] = ir

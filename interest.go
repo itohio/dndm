@@ -2,6 +2,7 @@ package dndm
 
 import (
 	"context"
+	"io"
 	"slices"
 	"sync"
 
@@ -9,12 +10,31 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// Interest is an interface to describe an interest in named data.
+// User should consume C of the interest until it is closed or no longer needed.
+// Messages will be delivered only when a corresponding Intent is discovered.
+type Interest interface {
+	io.Closer
+	Route() Route
+	// C returns a channel that contains messages. Users should typecast to specific message type that
+	// was registered with the interest.
+	C() <-chan proto.Message
+}
+
+// InterestInternal is an interface to describe an internal interest data structure. Should not be used by users.
+type InterestInternal interface {
+	Interest
+	Ctx() context.Context
+	MsgC() chan<- proto.Message
+}
+
 type LocalInterest struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	route  Route
 	msgC   chan proto.Message
 	closer func() error
+	once   sync.Once
 }
 
 func NewInterest(ctx context.Context, route Route, size int, closer func() error) *LocalInterest {
@@ -37,8 +57,8 @@ func (i *LocalInterest) Close() error {
 	if err != nil {
 		return err
 	}
-	i.cancel()
-	close(i.msgC) // FIXME: Might cause panic in `link`, however, it should have been unlinked by then
+	i.once.Do(func() { i.cancel() })
+	i.once.Do(func() { close(i.msgC) })
 	i.msgC = nil
 	return nil
 }
@@ -82,6 +102,7 @@ type InterestRouter struct {
 	cancels   []context.CancelFunc
 	wrappers  []*interestWrapper
 	size      int
+	once      sync.Once
 }
 
 func NewInterestRouter(ctx context.Context, route Route, closer func() error, size int, interests ...Interest) *InterestRouter {
@@ -200,7 +221,7 @@ func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 }
 
 func (i *InterestRouter) Close() error {
-	i.cancel()
+	i.once.Do(func() { i.cancel() })
 	err := i.closer()
 	if err != nil {
 		return err
