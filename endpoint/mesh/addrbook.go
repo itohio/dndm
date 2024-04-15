@@ -85,6 +85,15 @@ func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
 
 }
 
+func (b *Addrbook) HasConn(c network.Conn) {
+}
+
+func (b *Addrbook) AddConn(c network.Conn) {
+}
+
+func (b *Addrbook) DelConn(c network.Conn) {
+}
+
 type AddrbookEntry struct {
 	sync.Mutex
 
@@ -98,6 +107,8 @@ type AddrbookEntry struct {
 	Failed      int
 	LastSuccess time.Time
 	Backoff     time.Duration
+
+	conn network.Conn
 }
 
 func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {

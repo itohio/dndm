@@ -35,7 +35,7 @@ func (t *Endpoint) messageHandler() {
 		default:
 		}
 
-		hdr, msg, err := t.remote.Read(t.Ctx)
+		hdr, msg, err := t.conn.Read(t.Ctx)
 		if err != nil {
 			t.Log.Error("remote.Read", "err", err)
 			t.Close()
@@ -63,7 +63,7 @@ func (t *Endpoint) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.remote.Write(t.Ctx, dndm.Route{}, result)
+			err := t.conn.Write(t.Ctx, dndm.Route{}, result)
 			if err != nil {
 				t.Log.Error("write result", "err", err, "result", result)
 			}
@@ -113,7 +113,7 @@ func (t *Endpoint) messageSender(d time.Duration) {
 				Payload: make([]byte, 1024),
 			}
 			rand.Read(ping.Payload)
-			err := t.remote.Write(
+			err := t.conn.Write(
 				t.Ctx,
 				dndm.Route{},
 				ping,
@@ -158,7 +158,7 @@ func (t *Endpoint) handlePing(hdr *types.Header, m proto.Message) error {
 		Payload:          msg.Payload,
 	}
 
-	err := t.remote.Write(
+	err := t.conn.Write(
 		t.Ctx,
 		dndm.Route{},
 		pong,
@@ -203,7 +203,7 @@ func (t *Endpoint) handlePong(hdr *types.Header, m proto.Message) error {
 		// also, msg.PingTimestamp, hdr.ReceiveTimestamp are local times
 		// while hdr.Timestamp, and msg.ReceiveTimestamp are remote times
 		// FIXME: this is utterly confusing. Need better names.
-		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "name", t.Name(), "peer", t.remote.RemotePeer())
+		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "name", t.Name(), "peer", t.conn.Remote())
 	})
 
 	return nil

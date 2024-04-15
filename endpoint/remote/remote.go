@@ -20,8 +20,8 @@ var _ dndm.Endpoint = (*Endpoint)(nil)
 type Endpoint struct {
 	*dndm.Base
 
-	wg     sync.WaitGroup
-	remote network.Conn
+	wg   sync.WaitGroup
+	conn network.Conn
 
 	timeout time.Duration
 	linker  *dndm.Linker
@@ -35,10 +35,10 @@ type Endpoint struct {
 }
 
 // New creates a endpoint that communicates with a remote via Remote interface.
-func New(self network.Peer, remote network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
+func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
 	return &Endpoint{
 		Base:         dndm.NewBase(self.String(), size),
-		remote:       remote,
+		conn:         conn,
 		pingDuration: pingDuration,
 		timeout:      timeout,
 		pingRing:     ring.New(3),
@@ -51,6 +51,8 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 		return err
 	}
 
+	t.conn.OnClose(func() { t.Close() })
+
 	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
 		func(interest dndm.Interest) error {
@@ -61,7 +63,7 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 			// Nil Type indicates remote interest
 			r := interest.Route()
 			if r.Type() != nil {
-				t.remote.AddRoute(r)
+				t.conn.AddRoute(r)
 			}
 			return nil
 		},
@@ -73,7 +75,7 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 			// Nil Type indicates remote interest
 			r := interest.Route()
 			if r.Type() != nil {
-				t.remote.DelRoute(r)
+				t.conn.DelRoute(r)
 			}
 			return nil
 		},
@@ -93,7 +95,7 @@ func (t *Endpoint) Close() error {
 	t.Log.Info("Remote.Close")
 	t.Base.Close()
 	t.wg.Wait()
-	if closer, ok := t.remote.(io.Closer); ok {
+	if closer, ok := t.conn.(io.Closer); ok {
 		closer.Close()
 	}
 	return t.linker.Close()
@@ -101,7 +103,7 @@ func (t *Endpoint) Close() error {
 
 func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
 	// TODO: LocalWrapped intent
-	intent, err := t.linker.AddIntentWithWrapper(route, wrapLocalIntent(t.Log, t.remote))
+	intent, err := t.linker.AddIntentWithWrapper(route, wrapLocalIntent(t.Log, t.conn))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,7 @@ func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, e
 }
 
 func (t *Endpoint) publish(route dndm.Route, m *types.Intent) (dndm.Intent, error) {
-	intent, err := t.linker.AddIntentWithWrapper(route, wrapRemoteIntent(t.Log, t.remote, m))
+	intent, err := t.linker.AddIntentWithWrapper(route, wrapRemoteIntent(t.Log, t.conn, m))
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +128,7 @@ func (t *Endpoint) publish(route dndm.Route, m *types.Intent) (dndm.Intent, erro
 
 func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
 	// TODO: LocalWrapped intent
-	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.Log, t.remote))
+	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.Log, t.conn))
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +143,7 @@ func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interes
 }
 
 func (t *Endpoint) subscribe(route dndm.Route, m *types.Interest) (dndm.Interest, error) {
-	interest, err := t.linker.AddInterestWithWrapper(route, wrapRemoteInterest(t.Log, t.remote, m))
+	interest, err := t.linker.AddInterestWithWrapper(route, wrapRemoteInterest(t.Log, t.conn, m))
 	if err != nil {
 		return nil, err
 	}

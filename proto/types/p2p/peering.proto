@@ -6,12 +6,14 @@ enum HandshakeStage {
   UNSPECIFIED_HANDSHAKE = 0;
   INITIAL = 1;
   FINAL = 2;
+  UPDATE = 3;
 }
 
 message Handshake {
-  string id = 1;
-  HandshakeStage stage = 2;
-  bytes public_key = 3;
+  string me = 1;
+  string you = 2;
+  HandshakeStage stage = 3;
+  bytes public_key = 4;
 }
 
 message Peers {

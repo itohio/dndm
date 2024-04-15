@@ -31,6 +31,7 @@ type StreamContext struct {
 	cancel context.CancelFunc
 	read   contextRW
 	write  contextRW
+	once   sync.Once
 }
 
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
@@ -55,6 +56,10 @@ func (c *StreamContext) run(ctx context.Context) {
 	c.cancel = cancel
 	go c.read.Run(ctx, c.rw.Read)
 	go c.write.Run(ctx, c.rw.Write)
+	go func() {
+		<-ctx.Done()
+		c.Close()
+	}()
 }
 
 func (c *StreamContext) Reader(ctx context.Context) io.Reader {
@@ -65,11 +70,11 @@ func (c *StreamContext) Reader(ctx context.Context) io.Reader {
 }
 
 func (w *StreamContext) Close() error {
-	w.cancel()
-	close(w.read.request)
-	close(w.write.request)
-	close(w.read.result)
-	close(w.write.result)
+	w.once.Do(func() { w.cancel() })
+	w.once.Do(func() { close(w.read.request) })
+	w.once.Do(func() { close(w.write.request) })
+	w.once.Do(func() { close(w.read.result) })
+	w.once.Do(func() { close(w.write.result) })
 	return w.Stream.Close()
 }
 
@@ -182,6 +187,8 @@ type Stream struct {
 	localPeer  network.Peer
 	remotePeer network.Peer
 	routes     map[string]dndm.Route
+	once       sync.Once
+	done       chan struct{}
 }
 
 type readWriter struct {
@@ -205,14 +212,15 @@ func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[type
 		remotePeer: remotePeer,
 		rw:         rw,
 		handlers:   handlers,
+		done:       make(chan struct{}),
 	}
 }
 
-func (w *Stream) LocalPeer() network.Peer {
+func (w *Stream) Local() network.Peer {
 	return w.localPeer
 }
 
-func (w *Stream) RemotePeer() network.Peer {
+func (w *Stream) Remote() network.Peer {
 	w.mu.Lock()
 	p := w.remotePeer
 	w.mu.Unlock()
@@ -234,7 +242,20 @@ func (w *Stream) Close() error {
 	if closer, ok := w.rw.(io.Closer); ok {
 		return closer.Close()
 	}
+	w.once.Do(func() { close(w.done) })
 	return nil
+}
+
+func (w *Stream) OnClose(f func()) {
+	if notifier, ok := w.rw.(dndm.CloseNotifier); ok {
+		notifier.OnClose(f)
+		return
+	}
+
+	go func() {
+		<-w.done
+		w.once.Do(f)
+	}()
 }
 
 func (w *Stream) AddRoute(routes ...dndm.Route) {
