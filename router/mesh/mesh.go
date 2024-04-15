@@ -7,42 +7,42 @@ import (
 	"sync"
 	"time"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/router"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	"golang.org/x/sync/errgroup"
 )
 
-var _ routers.Transport = (*Mesh)(nil)
+var _ router.Endpoint = (*Mesh)(nil)
 
 const NumDialers = 10
 
 type Mesh struct {
-	*routers.Base
+	*router.Base
 	timeout      time.Duration
 	pingDuration time.Duration
-	dialer       dialers.Dialer
-	container    *routers.Container
+	dialer       network.Dialer
+	container    *router.Container
 
 	peerDialerQueue chan *AddrbookEntry
 	mu              sync.Mutex
 	peers           map[string]*AddrbookEntry
 }
 
-func New(name string, size, numDialers int, timeout, pingDuration time.Duration, node dialers.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
+func New(name string, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
 		peer := NewAddrbookEntry(p)
 		pm[p.Peer] = peer
 	}
 	return &Mesh{
-		Base:            routers.NewBase(name, size),
+		Base:            router.NewBase(name, size),
 		timeout:         timeout,
 		pingDuration:    pingDuration,
 		dialer:          node,
 		peers:           pm,
-		container:       routers.NewContainer(name, size),
+		container:       router.NewContainer(name, size),
 		peerDialerQueue: make(chan *AddrbookEntry, NumDialers),
 	}, nil
 }
@@ -73,7 +73,7 @@ func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
 	return book
 }
 
-func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
+func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
 		return err
@@ -82,7 +82,7 @@ func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 		return err
 	}
 
-	if server, ok := t.dialer.(dialers.Server); ok {
+	if server, ok := t.dialer.(network.Server); ok {
 		eg.Go(func() error {
 			err := server.Serve(t.Ctx, t.onConnect)
 			return err
@@ -111,10 +111,10 @@ func (t *Mesh) Close() error {
 	return errors.Join(errarr...)
 }
 
-func (t *Mesh) Publish(route routers.Route, opt ...routers.PubOpt) (routers.Intent, error) {
+func (t *Mesh) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
 	return t.container.Publish(route, opt...)
 }
 
-func (t *Mesh) Subscribe(route routers.Route, opt ...routers.SubOpt) (routers.Interest, error) {
+func (t *Mesh) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
 	return t.container.Subscribe(route, opt...)
 }

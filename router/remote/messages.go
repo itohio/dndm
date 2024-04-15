@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
@@ -23,7 +23,7 @@ type Pong struct {
 	payload       []byte
 }
 
-func (t *Transport) messageHandler() {
+func (t *Remote) messageHandler() {
 	t.Log.Info("messageHandler", "loop", "START")
 	defer t.Log.Info("messageHandler", "loop", "STOP")
 
@@ -63,7 +63,7 @@ func (t *Transport) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.remote.Write(t.Ctx, routers.Route{}, result)
+			err := t.remote.Write(t.Ctx, router.Route{}, result)
 			if err != nil {
 				t.Log.Error("write result", "err", err, "result", result)
 			}
@@ -71,7 +71,7 @@ func (t *Transport) messageHandler() {
 	}
 }
 
-func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
+func (t *Remote) handleMessage(hdr *types.Header, msg proto.Message) error {
 	switch hdr.Type {
 	case types.Type_HANDSHAKE:
 		return nil
@@ -99,10 +99,11 @@ func (t *Transport) handleMessage(hdr *types.Header, msg proto.Message) error {
 	return errors.ErrInvalidRoute
 }
 
-func (t *Transport) messageSender(d time.Duration) {
+func (t *Remote) messageSender(d time.Duration) {
 	defer t.wg.Done()
 	ticker := time.NewTicker(d)
 
+	t.Log.Info("Remote.Pinging")
 	for {
 		select {
 		case <-t.Ctx.Done():
@@ -112,11 +113,12 @@ func (t *Transport) messageSender(d time.Duration) {
 				Payload: make([]byte, 1024),
 			}
 			rand.Read(ping.Payload)
-			t.remote.Write(
+			err := t.remote.Write(
 				t.Ctx,
-				routers.Route{},
+				router.Route{},
 				ping,
 			)
+			t.Log.Info("Remote.Ping", "send", err)
 			t.pingMu.Lock()
 			t.pingRing.Value = &Ping{
 				timestamp: uint64(time.Now().UnixNano()),
@@ -128,7 +130,7 @@ func (t *Transport) messageSender(d time.Duration) {
 	}
 }
 
-func (t *Transport) handleResult(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handleResult(hdr *types.Header, m proto.Message) error {
 	msg, ok := m.(*types.Result)
 	if !ok {
 		return errors.ErrInvalidType
@@ -142,7 +144,7 @@ func (t *Transport) handleResult(hdr *types.Header, m proto.Message) error {
 	return nil
 }
 
-func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handlePing(hdr *types.Header, m proto.Message) error {
 	msg, ok := m.(*types.Ping)
 	if !ok {
 		return errors.ErrInvalidType
@@ -156,11 +158,12 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 		Payload:          msg.Payload,
 	}
 
-	t.remote.Write(
+	err := t.remote.Write(
 		t.Ctx,
-		routers.Route{},
+		router.Route{},
 		pong,
 	)
+	t.Log.Info("Remote.Pong", "send", err)
 	t.pingMu.Lock()
 	t.pongRing.Value = &Pong{
 		timestamp:     hdr.ReceiveTimestamp,
@@ -173,7 +176,7 @@ func (t *Transport) handlePing(hdr *types.Header, m proto.Message) error {
 	return nil
 }
 
-func (t *Transport) handlePong(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handlePong(hdr *types.Header, m proto.Message) error {
 	msg, ok := m.(*types.Pong)
 	if !ok {
 		return errors.ErrInvalidType
@@ -191,21 +194,22 @@ func (t *Transport) handlePong(hdr *types.Header, m proto.Message) error {
 		}
 
 		// TODO: now - when sent
-		rtt := hdr.ReceiveTimestamp - p.timestamp
+		rtt := time.Duration(hdr.ReceiveTimestamp - p.timestamp)
 		// now - when sent as reported by remote
-		rtt1 := hdr.ReceiveTimestamp - msg.PingTimestamp
+		rtt1 := time.Duration(hdr.ReceiveTimestamp - msg.PingTimestamp)
 		_ = rtt
 		_ = rtt1
 		// too much difference may indicate non-compliant remote
 		// also, msg.PingTimestamp, hdr.ReceiveTimestamp are local times
 		// while hdr.Timestamp, and msg.ReceiveTimestamp are remote times
 		// FIXME: this is utterly confusing. Need better names.
+		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "me", t.Name(), "them", t.remote.Peer())
 	})
 
 	return nil
 }
 
-func (t *Transport) handleIntent(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handleIntent(hdr *types.Header, m proto.Message) error {
 	if m == nil {
 		return errors.ErrInvalidType
 	}
@@ -216,7 +220,7 @@ func (t *Transport) handleIntent(hdr *types.Header, m proto.Message) error {
 	return t.handleRemoteIntent(msg)
 }
 
-func (t *Transport) handleIntents(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handleIntents(hdr *types.Header, m proto.Message) error {
 	if m == nil {
 		return errors.ErrInvalidType
 	}
@@ -232,8 +236,8 @@ func (t *Transport) handleIntents(hdr *types.Header, m proto.Message) error {
 	return nil
 }
 
-func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
-	route, err := routers.NewRouteFromRoute(msg.Route)
+func (t *Remote) handleRemoteIntent(msg *types.Intent) error {
+	route, err := router.NewRouteFromRoute(msg.Route)
 	if err != nil {
 		return err
 	}
@@ -253,7 +257,7 @@ func (t *Transport) handleRemoteIntent(msg *types.Intent) error {
 	return nil
 }
 
-func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent) error {
+func (t *Remote) handleUnregisterIntent(route router.Route, m *types.Intent) error {
 	intent, ok := t.linker.Intent(route)
 	if !ok {
 		return errors.ErrNoIntent
@@ -268,7 +272,7 @@ func (t *Transport) handleUnregisterIntent(route routers.Route, m *types.Intent)
 	return intent.Close()
 }
 
-func (t *Transport) handleInterest(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handleInterest(hdr *types.Header, m proto.Message) error {
 	if m == nil {
 		return errors.ErrInvalidType
 	}
@@ -279,7 +283,7 @@ func (t *Transport) handleInterest(hdr *types.Header, m proto.Message) error {
 	return t.handleRemoteInterest(msg)
 }
 
-func (t *Transport) handleInterests(hdr *types.Header, m proto.Message) error {
+func (t *Remote) handleInterests(hdr *types.Header, m proto.Message) error {
 	if m == nil {
 		return errors.ErrInvalidType
 	}
@@ -295,8 +299,8 @@ func (t *Transport) handleInterests(hdr *types.Header, m proto.Message) error {
 	return nil
 }
 
-func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
-	route, err := routers.NewRouteFromRoute(msg.Route)
+func (t *Remote) handleRemoteInterest(msg *types.Interest) error {
+	route, err := router.NewRouteFromRoute(msg.Route)
 	if err != nil {
 		return err
 	}
@@ -319,7 +323,7 @@ func (t *Transport) handleRemoteInterest(msg *types.Interest) error {
 	return nil
 }
 
-func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Interest) error {
+func (t *Remote) handleUnregisterInterest(route router.Route, m *types.Interest) error {
 	interest, ok := t.linker.Interest(route)
 	if !ok {
 		return errors.ErrNoIntent
@@ -334,8 +338,8 @@ func (t *Transport) handleUnregisterInterest(route routers.Route, m *types.Inter
 	return interest.Close()
 }
 
-func (t *Transport) handleMsg(hdr *types.Header, m proto.Message) error {
-	route, err := routers.NewRouteFromRoute(hdr.Route)
+func (t *Remote) handleMsg(hdr *types.Header, m proto.Message) error {
+	route, err := router.NewRouteFromRoute(hdr.Route)
 	if err != nil {
 		return err
 	}

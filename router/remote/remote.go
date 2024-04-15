@@ -9,22 +9,22 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 )
 
-var _ routers.Transport = (*Transport)(nil)
+var _ router.Endpoint = (*Remote)(nil)
 
-type Transport struct {
-	*routers.Base
+type Remote struct {
+	*router.Base
 
 	wg     sync.WaitGroup
-	remote dialers.Remote
+	remote network.Remote
 
 	timeout time.Duration
-	linker  *routers.Linker
+	linker  *router.Linker
 
 	pingDuration time.Duration
 	pingMu       sync.Mutex
@@ -35,9 +35,9 @@ type Transport struct {
 }
 
 // New creates a transport that communicates with a remote via Remote interface.
-func New(name string, remote dialers.Remote, size int, timeout, pingDuration time.Duration) *Transport {
-	return &Transport{
-		Base:         routers.NewBase(name, size),
+func New(name string, remote network.Remote, size int, timeout, pingDuration time.Duration) *Remote {
+	return &Remote{
+		Base:         router.NewBase(name, size),
 		remote:       remote,
 		pingDuration: pingDuration,
 		timeout:      timeout,
@@ -46,14 +46,14 @@ func New(name string, remote dialers.Remote, size int, timeout, pingDuration tim
 	}
 }
 
-func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
+func (t *Remote) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
 	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
 		return err
 	}
 
-	t.linker = routers.NewLinker(
+	t.linker = router.NewLinker(
 		ctx, logger, t.Size,
-		func(interest routers.Interest) error {
+		func(interest router.Interest) error {
 			err := add(interest, t)
 			if err != nil {
 				return err
@@ -65,7 +65,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 			}
 			return nil
 		},
-		func(interest routers.Interest) error {
+		func(interest router.Interest) error {
 			err := remove(interest, t)
 			if err != nil {
 				return err
@@ -89,7 +89,7 @@ func (t *Transport) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	return nil
 }
 
-func (t *Transport) Close() error {
+func (t *Remote) Close() error {
 	t.Log.Info("Remote.Close")
 	t.Base.Close()
 	t.wg.Wait()
@@ -99,7 +99,7 @@ func (t *Transport) Close() error {
 	return t.linker.Close()
 }
 
-func (t *Transport) Publish(route routers.Route, opt ...routers.PubOpt) (routers.Intent, error) {
+func (t *Remote) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
 	// TODO: LocalWrapped intent
 	intent, err := t.linker.AddIntentWithWrapper(route, wrapLocalIntent(t.Log, t.remote))
 	if err != nil {
@@ -114,7 +114,7 @@ func (t *Transport) Publish(route routers.Route, opt ...routers.PubOpt) (routers
 	return intent, err
 }
 
-func (t *Transport) publish(route routers.Route, m *types.Intent) (routers.Intent, error) {
+func (t *Remote) publish(route router.Route, m *types.Intent) (router.Intent, error) {
 	intent, err := t.linker.AddIntentWithWrapper(route, wrapRemoteIntent(t.Log, t.remote, m))
 	if err != nil {
 		return nil, err
@@ -124,7 +124,7 @@ func (t *Transport) publish(route routers.Route, m *types.Intent) (routers.Inten
 	return intent, nil
 }
 
-func (t *Transport) Subscribe(route routers.Route, opt ...routers.SubOpt) (routers.Interest, error) {
+func (t *Remote) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
 	// TODO: LocalWrapped intent
 	interest, err := t.linker.AddInterestWithWrapper(route, wrapLocalInterest(t.Log, t.remote))
 	if err != nil {
@@ -140,7 +140,7 @@ func (t *Transport) Subscribe(route routers.Route, opt ...routers.SubOpt) (route
 	return interest, err
 }
 
-func (t *Transport) subscribe(route routers.Route, m *types.Interest) (routers.Interest, error) {
+func (t *Remote) subscribe(route router.Route, m *types.Interest) (router.Interest, error) {
 	interest, err := t.linker.AddInterestWithWrapper(route, wrapRemoteInterest(t.Log, t.remote, m))
 	if err != nil {
 		return nil, err

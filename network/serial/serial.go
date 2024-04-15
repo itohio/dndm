@@ -8,17 +8,17 @@ import (
 
 	"github.com/tarm/serial"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
+	"github.com/itohio/dndm/network"
 )
 
-var _ dialers.Node = (*Node)(nil)
+var _ network.Node = (*Node)(nil)
 
 type Node struct {
-	peer dialers.Peer
+	peer network.Peer
 }
 
-func New(peer dialers.Peer) (*Node, error) {
+func New(peer network.Peer) (*Node, error) {
 	return &Node{
 		peer: peer,
 	}, nil
@@ -32,7 +32,7 @@ func defaultConfig() *serial.Config {
 	return &serial.Config{Baud: 115200}
 }
 
-func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt) (io.ReadWriteCloser, error) {
+func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt) (io.ReadWriteCloser, error) {
 	if f.peer.Scheme() != peer.Scheme() {
 		return nil, errors.ErrBadArgument
 	}
@@ -75,7 +75,7 @@ func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt
 	return port, err
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...dialers.SrvOpt) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
 	rwc, err := f.Dial(ctx, f.peer)
 	if err != nil {
 		return err

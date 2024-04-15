@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm/errors"
-	routers "github.com/itohio/dndm/routers"
+	routers "github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	pool "github.com/libp2p/go-buffer-pool"
 	"google.golang.org/protobuf/proto"
