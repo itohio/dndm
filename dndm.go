@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/router"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -17,9 +17,9 @@ type Router struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
 	size            int
-	transports      []routers.Transport
-	intentRouters   map[string]*routers.IntentRouter
-	interestRouters map[string]*routers.InterestRouter
+	transports      []router.Endpoint
+	intentRouters   map[string]*router.IntentRouter
+	interestRouters map[string]*router.InterestRouter
 }
 
 func New(opts ...Option) (*Router, error) {
@@ -33,9 +33,9 @@ func New(opts ...Option) (*Router, error) {
 		ctx:             ctx,
 		cancel:          cancel,
 		log:             opt.logger.With("module", "router"),
-		transports:      make([]routers.Transport, len(opt.transports)),
-		intentRouters:   make(map[string]*routers.IntentRouter),
-		interestRouters: make(map[string]*routers.InterestRouter),
+		transports:      make([]router.Endpoint, len(opt.transports)),
+		intentRouters:   make(map[string]*router.IntentRouter),
+		interestRouters: make(map[string]*router.InterestRouter),
 		size:            opt.size,
 	}
 
@@ -50,7 +50,7 @@ func New(opts ...Option) (*Router, error) {
 	return ret, nil
 }
 
-func (d *Router) addInterest(interest routers.Interest, t routers.Transport) error {
+func (d *Router) addInterest(interest router.Interest, t router.Endpoint) error {
 	route := interest.Route()
 	go func() {
 		d.mu.Lock()
@@ -61,7 +61,7 @@ func (d *Router) addInterest(interest routers.Interest, t routers.Transport) err
 			return
 		}
 
-		ir = routers.NewInterestRouter(d.ctx, route,
+		ir = router.NewInterestRouter(d.ctx, route,
 			func() error {
 				d.mu.Lock()
 				defer d.mu.Unlock()
@@ -77,7 +77,7 @@ func (d *Router) addInterest(interest routers.Interest, t routers.Transport) err
 	return nil
 }
 
-func (d *Router) removeInterest(interest routers.Interest, t routers.Transport) error {
+func (d *Router) removeInterest(interest router.Interest, t router.Endpoint) error {
 	route := interest.Route()
 	go func() {
 		d.mu.Lock()
@@ -100,15 +100,15 @@ func closeAll[T io.Closer](closers ...T) error {
 }
 
 // Publish delivers data to an interested party. It may advertise the availability of the data if no interest is found.
-func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) (routers.Intent, error) {
-	route, err := routers.NewRoute(path, msg)
+func (d *Router) Publish(path string, msg proto.Message, opt ...router.PubOpt) (router.Intent, error) {
+	route, err := router.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	intents := make([]routers.Intent, 0, len(d.transports))
+	intents := make([]router.Intent, 0, len(d.transports))
 	// Advertise intents even if we are already publishing
 	for _, t := range d.transports {
 		intent, err := t.Publish(route)
@@ -124,7 +124,7 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 		return ir.Wrap(), nil
 	}
 
-	ir = routers.NewIntentRouter(d.ctx, route,
+	ir = router.NewIntentRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
@@ -139,8 +139,8 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...routers.PubOpt) 
 }
 
 // Subscribe advertises an interest in a specific message type on particular path.
-func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt) (routers.Interest, error) {
-	route, err := routers.NewRoute(path, msg)
+func (d *Router) Subscribe(path string, msg proto.Message, opt ...router.SubOpt) (router.Interest, error) {
+	route, err := router.NewRoute(path, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	// Advertise interests anyway (even if we are already subscribed)
-	interests := make([]routers.Interest, 0, len(d.transports))
+	interests := make([]router.Interest, 0, len(d.transports))
 	for _, t := range d.transports {
 		interest, err := t.Subscribe(route)
 		if err != nil {
@@ -163,7 +163,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...routers.SubOpt
 		return ir.Wrap(), nil
 	}
 
-	ir = routers.NewInterestRouter(d.ctx, route,
+	ir = router.NewInterestRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()

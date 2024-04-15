@@ -1,4 +1,4 @@
-package dialers
+package network
 
 type SrvOptStruct struct {
 }

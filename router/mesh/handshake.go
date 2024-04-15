@@ -8,17 +8,17 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/remote"
+	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/router/remote"
 	"github.com/itohio/dndm/stream"
 	types "github.com/itohio/dndm/types/core"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	"google.golang.org/protobuf/proto"
 )
 
-var _ routers.Transport = (*Handshaker)(nil)
+var _ router.Endpoint = (*Handshaker)(nil)
 
 type HandshakeState int
 
@@ -30,8 +30,8 @@ const (
 )
 
 type Container interface {
-	Add(routers.Transport) error
-	Remove(routers.Transport) error
+	Add(router.Endpoint) error
+	Remove(router.Endpoint) error
 }
 
 type Handshaker struct {
@@ -44,13 +44,13 @@ type Handshaker struct {
 	size         int
 	timeout      time.Duration
 	pingDuration time.Duration
-	remote       dialers.Remote
-	transport    atomic.Pointer[remote.Transport]
+	remote       network.Remote
+	transport    atomic.Pointer[remote.Remote]
 	container    Container
-	peer         dialers.Peer
+	peer         network.Peer
 }
 
-func NewHandshaker(size int, timeout, pingDuration time.Duration, c Container, rw io.ReadWriter, p dialers.Peer, state HandshakeState) *Handshaker {
+func NewHandshaker(size int, timeout, pingDuration time.Duration, c Container, rw io.ReadWriter, p network.Peer, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
 		state:        state,
 		rw:           rw,
@@ -91,7 +91,7 @@ func (h *Handshaker) SetName(name string) {
 }
 
 // Publish will advertise an intent to publish named and typed data.
-func (h *Handshaker) Publish(route routers.Route, opt ...routers.PubOpt) (routers.Intent, error) {
+func (h *Handshaker) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
 	tr := h.transport.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
@@ -101,7 +101,7 @@ func (h *Handshaker) Publish(route routers.Route, opt ...routers.PubOpt) (router
 }
 
 // Subscribe will advertise an interest in named and typed data.
-func (h *Handshaker) Subscribe(route routers.Route, opt ...routers.SubOpt) (routers.Interest, error) {
+func (h *Handshaker) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
 	tr := h.transport.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
@@ -111,7 +111,7 @@ func (h *Handshaker) Subscribe(route routers.Route, opt ...routers.SubOpt) (rout
 }
 
 // Init is used by the Router to initialize this transport.
-func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest routers.Interest, t routers.Transport) error) error {
+func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
 	if h.transport.Load() != nil {
 		panic("h.transport != nil")
 	}
@@ -121,7 +121,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	h.cancel = cancel
 	h.log = logger
 
-	h.remote = stream.NewWithContext(ctx, h.peer, h.rw, map[types.Type]dialers.MessageHandler{
+	h.remote = stream.NewWithContext(ctx, h.peer, h.rw, map[types.Type]network.MessageHandler{
 		types.Type_HANDSHAKE: h.handshake,
 		types.Type_ADDRBOOK:  h.addrbook,
 		types.Type_PEERS:     h.peers,
@@ -139,7 +139,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	if h.state == HS_INIT {
 		h.state = HS_WAIT
 		h.log.Info("Sending Handshake", "state", h.state, "peer", h.peer)
-		h.remote.Write(ctx, routers.Route{}, &p2ptypes.Handshake{
+		h.remote.Write(ctx, router.Route{}, &p2ptypes.Handshake{
 			Id:    h.peer.String(),
 			Stage: p2ptypes.HandshakeStage_INITIAL,
 		})
@@ -152,7 +152,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	return nil
 }
 
-func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
+func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	h.hsCount++
 	if h.hsCount > 5 {
 		h.cancel()
@@ -172,7 +172,7 @@ func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote dial
 	case HS_WAIT:
 		h.hsCount = 0
 		h.state = HS_DONE
-		peer, err := dialers.PeerFromString(hs.Id)
+		peer, err := network.PeerFromString(hs.Id)
 		if err != nil {
 			return false, err
 		}
@@ -187,7 +187,7 @@ func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote dial
 	return false, nil
 }
 
-func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
+func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -204,7 +204,7 @@ func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote dialers.
 	return false, nil
 }
 
-func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
+func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -221,7 +221,7 @@ func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote diale
 	return false, nil
 }
 
-func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
+func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -229,7 +229,7 @@ func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote dialer
 	return true, nil
 }
 
-func (h *Handshaker) result(hdr *types.Header, msg proto.Message, remote dialers.Remote) (pass bool, err error) {
+func (h *Handshaker) result(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden

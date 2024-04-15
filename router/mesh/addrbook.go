@@ -7,15 +7,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
+	"github.com/itohio/dndm/network"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 )
 
 type AddrbookEntry struct {
 	sync.Mutex
 
-	Peer              dialers.Peer
+	Peer              network.Peer
 	MaxAttempts       int
 	DefaultBackoff    time.Duration
 	MaxBackoff        time.Duration
@@ -29,7 +29,7 @@ type AddrbookEntry struct {
 
 func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 	ret := &AddrbookEntry{
-		Peer:              errors.Must(dialers.PeerFromString(p.Peer)),
+		Peer:              errors.Must(network.PeerFromString(p.Peer)),
 		MaxAttempts:       int(p.MaxAttempts),
 		DefaultBackoff:    time.Duration(p.DefaultBackoff),
 		MaxBackoff:        time.Duration(p.MaxBackoff),
@@ -54,7 +54,7 @@ func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 	return ret
 }
 
-func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer dialers.Dialer, q chan<- *AddrbookEntry) (io.ReadWriter, error) {
+func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer network.Dialer, q chan<- *AddrbookEntry) (io.ReadWriter, error) {
 	rw, err := dialer.Dial(ctx, a.Peer)
 	a.Lock()
 	defer a.Unlock()

@@ -1,4 +1,4 @@
-package routers
+package router
 
 import (
 	"context"
@@ -15,11 +15,11 @@ type Container struct {
 	cancel         context.CancelFunc
 	log            *slog.Logger
 	size           int
-	addCallback    func(interest Interest, t Transport) error
-	removeCallback func(interest Interest, t Transport) error
+	addCallback    func(interest Interest, t Endpoint) error
+	removeCallback func(interest Interest, t Endpoint) error
 
 	mu              sync.Mutex
-	transports      []Transport
+	endpoints       []Endpoint
 	intentRouters   map[string]*IntentRouter
 	interestRouters map[string]*InterestRouter
 }
@@ -27,26 +27,26 @@ type Container struct {
 func NewContainer(name string, size int) *Container {
 	return &Container{
 		size:            size,
-		transports:      make([]Transport, 0, 8),
+		endpoints:       make([]Endpoint, 0, 8),
 		intentRouters:   make(map[string]*IntentRouter),
 		interestRouters: make(map[string]*InterestRouter),
 	}
 }
 
 func (t *Container) Close() error {
-	errarr := make([]error, 0, len(t.transports))
-	for _, tr := range t.transports {
+	errarr := make([]error, 0, len(t.endpoints))
+	for _, tr := range t.endpoints {
 		err := tr.Close()
 		if err != nil {
 			errarr = append(errarr, err)
 		}
 	}
-	t.transports = nil
+	t.endpoints = nil
 	return errors.Join(errarr...)
 }
 
 // Init is used by the Router to initialize this transport.
-func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Transport) error) error {
+func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error {
 	if logger == nil || add == nil || remove == nil {
 		return errors.ErrBadArgument
 	}
@@ -60,37 +60,37 @@ func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove f
 	return nil
 }
 
-func (t *Container) Add(transport Transport) error {
+func (t *Container) Add(transport Endpoint) error {
 	if transport == nil {
 		return errors.ErrInvalidTransport
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	idx := slices.Index(t.transports, transport)
+	idx := slices.Index(t.endpoints, transport)
 	if idx >= 0 {
 		return errors.ErrDuplicate
 	}
 	// TODO
 	err := transport.Init(t.ctx, t.log,
-		func(interest Interest, t Transport) error { return nil },
-		func(interest Interest, t Transport) error { return nil },
+		func(interest Interest, t Endpoint) error { return nil },
+		func(interest Interest, t Endpoint) error { return nil },
 	)
 	if err != nil {
 		return err
 	}
-	t.transports = append(t.transports, transport)
+	t.endpoints = append(t.endpoints, transport)
 	return nil
 }
 
-func (t *Container) Remove(transport Transport) error {
+func (t *Container) Remove(transport Endpoint) error {
 	t.mu.Lock() // NOTE: Watchout for unlocks!
-	idx := slices.Index(t.transports, transport)
+	idx := slices.Index(t.endpoints, transport)
 	if idx < 0 {
 		t.mu.Unlock()
 		return errors.ErrNotFound
 	}
-	transport = t.transports[idx]
-	t.transports = slices.Delete(t.transports, idx, idx+1)
+	transport = t.endpoints[idx]
+	t.endpoints = slices.Delete(t.endpoints, idx, idx+1)
 	t.mu.Unlock()
 	return transport.Close()
 }
@@ -105,10 +105,10 @@ func finderFunc[T any](arr []T, compare func(T) bool) []T {
 	return res
 }
 
-func (t *Container) Transport(compare func(Transport) bool) []Transport {
+func (t *Container) Endpoint(compare func(Endpoint) bool) []Endpoint {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return finderFunc(t.transports, compare)
+	return finderFunc(t.endpoints, compare)
 }
 
 func (t *Container) Intent(compare func(Intent) bool) []Intent {
@@ -135,9 +135,9 @@ func (t *Container) Publish(route Route, opt ...PubOpt) (Intent, error) {
 }
 
 func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
-	intents := make([]Intent, 0, len(t.transports))
+	intents := make([]Intent, 0, len(t.endpoints))
 	// Advertise intents even if we are already publishing
-	for _, t := range t.transports {
+	for _, t := range t.endpoints {
 		intent, err := t.Publish(route)
 		if err != nil {
 			closeAll(intents...)
@@ -174,8 +174,8 @@ func (t *Container) Subscribe(route Route, opt ...SubOpt) (Interest, error) {
 
 func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 	// Advertise interests anyway (even if we are already subscribed)
-	interests := make([]Interest, 0, len(t.transports))
-	for _, t := range t.transports {
+	interests := make([]Interest, 0, len(t.endpoints))
+	for _, t := range t.endpoints {
 		interest, err := t.Subscribe(route)
 		if err != nil {
 			closeAll(interests...)

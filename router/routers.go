@@ -1,4 +1,4 @@
-package routers
+package router
 
 import (
 	"context"
@@ -50,10 +50,9 @@ type IntentInternal interface {
 	// MsgC() <-chan proto.Message
 }
 
-// Transport is the interface that describes a End To End route.
-//
-// FIXME: NAMING
-type Transport interface {
+// Endpoint is the interface that describes a End To End route.
+// Endpoint registers Interests and Intents and links them together when they match.
+type Endpoint interface {
 	io.Closer
 	Name() string
 	SetName(string)
@@ -62,7 +61,7 @@ type Transport interface {
 	// Subscribe will advertise an interest in named and typed data.
 	Subscribe(route Route, opt ...SubOpt) (Interest, error)
 	// Init is used by the Router to initialize this transport.
-	Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Transport) error) error
+	Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error
 }
 
 type Base struct {
@@ -70,8 +69,8 @@ type Base struct {
 	cancel         context.CancelFunc
 	name           string
 	Log            *slog.Logger
-	AddCallback    func(interest Interest, t Transport) error
-	RemoveCallback func(interest Interest, t Transport) error
+	AddCallback    func(interest Interest, t Endpoint) error
+	RemoveCallback func(interest Interest, t Endpoint) error
 	Size           int
 }
 
@@ -82,7 +81,7 @@ func NewBase(name string, size int) *Base {
 	}
 }
 
-func (t *Base) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Transport) error) error {
+func (t *Base) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error {
 	if logger == nil || add == nil || remove == nil {
 		return errors.ErrBadArgument
 	}

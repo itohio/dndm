@@ -7,15 +7,15 @@ import (
 	"sync"
 
 	"github.com/itohio/dndm/codec"
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
-	routers "github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/network"
+	routers "github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
 
-var _ dialers.Remote = (*StreamContext)(nil)
-var _ dialers.Remote = (*Stream)(nil)
+var _ network.Remote = (*StreamContext)(nil)
+var _ network.Remote = (*Stream)(nil)
 
 // StreamContext is a wrapper over ReadWriter that will read and decode messages from Reader as well as encode and write them to the Writer. It allows
 // using regular Reader/Writer interfaces with a context, however, it must be noted that the read/write loop will be leaked if Read/Write blocks.
@@ -32,7 +32,7 @@ type StreamContext struct {
 }
 
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
-func NewWithContext(ctx context.Context, peer dialers.Peer, rw io.ReadWriter, handlers map[types.Type]dialers.MessageHandler) *StreamContext {
+func NewWithContext(ctx context.Context, peer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
 		Stream: New(peer, rw, handlers),
 		read: contextRW{
@@ -167,8 +167,8 @@ func (r reader) Read(buf []byte) (int, error) {
 
 // Stream converts regular ReaderWriter into a Remote
 type Stream struct {
-	peer     dialers.Peer
-	handlers map[types.Type]dialers.MessageHandler
+	peer     network.Peer
+	handlers map[types.Type]network.MessageHandler
 	rw       io.ReadWriter
 
 	mu     sync.Mutex
@@ -184,13 +184,13 @@ func (rw readWriter) Read(buf []byte) (int, error)  { return rw.r.Read(buf) }
 func (rw readWriter) Write(buf []byte) (int, error) { return rw.w.Write(buf) }
 
 // NewIO creates a Remote using io.Reader and io.Writer.
-func NewIO(peer dialers.Peer, r io.Reader, w io.Writer, handlers map[types.Type]dialers.MessageHandler) *Stream {
+func NewIO(peer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
 	rw := readWriter{r: r, w: w}
 	return New(peer, rw, handlers)
 }
 
 // New creates a Remote using provided ReaderWriter.
-func New(peer dialers.Peer, rw io.ReadWriter, handlers map[types.Type]dialers.MessageHandler) *Stream {
+func New(peer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
 		peer:     peer,
 		rw:       rw,
@@ -198,7 +198,7 @@ func New(peer dialers.Peer, rw io.ReadWriter, handlers map[types.Type]dialers.Me
 	}
 }
 
-func (w *Stream) Peer() dialers.Peer {
+func (w *Stream) Peer() network.Peer {
 	return w.peer
 }
 

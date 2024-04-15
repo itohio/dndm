@@ -6,8 +6,8 @@ import (
 	"slices"
 
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/direct"
+	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/router/direct"
 )
 
 type Option func(*Options) error
@@ -15,7 +15,7 @@ type Option func(*Options) error
 type Options struct {
 	ctx        context.Context
 	logger     *slog.Logger
-	transports []routers.Transport
+	transports []router.Endpoint
 	size       int
 }
 
@@ -23,7 +23,7 @@ func defaultOptions() Options {
 	return Options{
 		ctx:    context.Background(),
 		logger: slog.Default(),
-		transports: []routers.Transport{
+		transports: []router.Endpoint{
 			direct.New(0),
 		},
 		size: 1,
@@ -39,7 +39,7 @@ func (o *Options) Config(opts ...Option) error {
 	return nil
 }
 
-func (o *Options) addTransport(t routers.Transport) error {
+func (o *Options) addTransport(t router.Endpoint) error {
 	if t == nil {
 		return errors.New("invalid transport")
 	}
@@ -79,13 +79,13 @@ func WithQueueSize(size int) Option {
 	}
 }
 
-func WithTransport(t routers.Transport) Option {
+func WithTransport(t router.Endpoint) Option {
 	return func(o *Options) error {
 		return o.addTransport(t)
 	}
 }
 
-func WithTransports(t ...routers.Transport) Option {
+func WithTransports(t ...router.Endpoint) Option {
 	return func(o *Options) error {
 		o.transports = t
 		return nil

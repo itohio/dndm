@@ -6,18 +6,18 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
+	"github.com/itohio/dndm/network"
 )
 
-var _ dialers.Node = (*Node)(nil)
+var _ network.Node = (*Node)(nil)
 
 type Node struct {
 	log  *slog.Logger
-	peer dialers.Peer
+	peer network.Peer
 }
 
-func New(log *slog.Logger, peer dialers.Peer) (*Node, error) {
+func New(log *slog.Logger, peer network.Peer) (*Node, error) {
 	return &Node{
 		log:  log,
 		peer: peer,
@@ -28,7 +28,7 @@ func (f *Node) Scheme() string {
 	return f.peer.Scheme()
 }
 
-func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt) (io.ReadWriteCloser, error) {
+func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt) (io.ReadWriteCloser, error) {
 	if f.peer.Scheme() != peer.Scheme() {
 		return nil, errors.ErrBadArgument
 	}
@@ -43,7 +43,7 @@ func (f *Node) Dial(ctx context.Context, peer dialers.Peer, o ...dialers.DialOpt
 	return conn, nil
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...dialers.SrvOpt) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
 	listener, err := net.Listen(f.peer.Scheme(), f.peer.Address())
 	if err != nil {
 		return err

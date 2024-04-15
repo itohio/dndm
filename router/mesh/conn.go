@@ -3,7 +3,7 @@ package mesh
 import (
 	"io"
 
-	"github.com/itohio/dndm/dialers"
+	"github.com/itohio/dndm/network"
 )
 
 func (t *Mesh) dialerLoop() {
@@ -20,7 +20,7 @@ func (t *Mesh) dialerLoop() {
 }
 
 func (t *Mesh) onConnect(rw io.ReadWriteCloser) error {
-	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, dialers.Peer{}, HS_WAIT)
+	hs := NewHandshaker(t.Size, t.timeout, t.pingDuration, t.container, rw, network.Peer{}, HS_WAIT)
 
 	t.container.Add(hs)
 

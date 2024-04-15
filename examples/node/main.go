@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
-	"github.com/itohio/dndm/dialers"
-	"github.com/itohio/dndm/dialers/net"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/examples"
-	"github.com/itohio/dndm/routers/mesh"
+	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/network/net"
+	"github.com/itohio/dndm/router/mesh"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
 	types "github.com/itohio/dndm/types/test"
 )
@@ -44,9 +44,9 @@ func main() {
 
 	flag.Parse()
 
-	selfPeer := errors.Must(dialers.PeerFromString(*self))
+	selfPeer := errors.Must(network.PeerFromString(*self))
 
-	d := errors.Must(dialers.New(
+	d := errors.Must(network.New(
 		errors.Must(net.New(slog.Default(), selfPeer)),
 	))
 

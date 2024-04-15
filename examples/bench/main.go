@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
-	"github.com/itohio/dndm/dialers"
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/routers"
-	"github.com/itohio/dndm/routers/direct"
-	"github.com/itohio/dndm/routers/remote"
+	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/router"
+	"github.com/itohio/dndm/router/direct"
+	"github.com/itohio/dndm/router/remote"
 	"github.com/itohio/dndm/stream"
 	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
@@ -107,12 +107,12 @@ func testIntent(ctx context.Context, size int) {
 func testDirect(ctx context.Context, size int) {
 	fmt.Println("----------------[ testDirect ]-----------")
 	var t *types.Foo
-	route, err := routers.NewRoute("path", t)
+	route, err := router.NewRoute("path", t)
 	if err != nil {
 		panic(err)
 	}
 	rtr := direct.New(size)
-	err = rtr.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
+	err = rtr.Init(ctx, slog.Default(), func(interest router.Interest, t router.Endpoint) error { return nil }, func(interest router.Interest, t router.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
@@ -126,7 +126,7 @@ func testDirect(ctx context.Context, size int) {
 		panic(err)
 	}
 
-	senderIntent(ctx, size, "path", intent.(routers.IntentInternal))
+	senderIntent(ctx, size, "path", intent.(router.IntentInternal))
 	go consumerInterest(interest)
 	slog.Info("testDirect", "interest", interest.C())
 }
@@ -134,22 +134,22 @@ func testDirect(ctx context.Context, size int) {
 func testRemote(ctx context.Context, size int) {
 	fmt.Println("----------------[ testRemote ]-----------")
 	var t *types.Foo
-	route, err := routers.NewRoute("path", t)
+	route, err := router.NewRoute("path", t)
 	if err != nil {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	wireA := stream.NewWithContext(ctx, errors.Must(dialers.PeerFromString("pipe://local/remoteA?some_param=123")), bridge.A(), nil)
-	wireB := stream.NewWithContext(ctx, errors.Must(dialers.PeerFromString("pipe://local/remoteB?some_param=123")), bridge.B(), nil)
+	wireA := stream.NewWithContext(ctx, errors.Must(network.PeerFromString("pipe://local/remoteA?some_param=123")), bridge.A(), nil)
+	wireB := stream.NewWithContext(ctx, errors.Must(network.PeerFromString("pipe://local/remoteB?some_param=123")), bridge.B(), nil)
 
 	remoteA := remote.New("remoteA", wireA, size, time.Second, 0)
 	remoteB := remote.New("remoteB", wireB, size, time.Second, 0)
 
-	err = remoteA.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
+	err = remoteA.Init(ctx, slog.Default(), func(interest router.Interest, t router.Endpoint) error { return nil }, func(interest router.Interest, t router.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
-	err = remoteB.Init(ctx, slog.Default(), func(interest routers.Interest, t routers.Transport) error { return nil }, func(interest routers.Interest, t routers.Transport) error { return nil })
+	err = remoteB.Init(ctx, slog.Default(), func(interest router.Interest, t router.Endpoint) error { return nil }, func(interest router.Interest, t router.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
@@ -163,20 +163,20 @@ func testRemote(ctx context.Context, size int) {
 		panic(err)
 	}
 
-	senderIntent(ctx, size, "path", intent.(routers.IntentInternal))
+	senderIntent(ctx, size, "path", intent.(router.IntentInternal))
 	go consumerInterest(interest)
 }
 
-func senderIntent(ctx context.Context, size int, path string, intent routers.IntentInternal) <-chan proto.Message {
+func senderIntent(ctx context.Context, size int, path string, intent router.IntentInternal) <-chan proto.Message {
 	var t *types.Foo
-	route, err := routers.NewRoute(path, t)
+	route, err := router.NewRoute(path, t)
 	if err != nil {
 		panic(err)
 	}
 	localC := false
 	var c chan proto.Message
 	if intent == nil {
-		intent = routers.NewIntent(ctx, route, size, func() error { return nil })
+		intent = router.NewIntent(ctx, route, size, func() error { return nil })
 		c = make(chan proto.Message, size)
 		intent.Link(c)
 		localC = true
@@ -231,7 +231,7 @@ func consumer(c <-chan proto.Message) {
 	}
 }
 
-func consumerInterest(interest routers.Interest) {
+func consumerInterest(interest router.Interest) {
 	slog.Info("consumerInterest", "loop", "start", "C", interest.C())
 	for m := range interest.C() {
 		msg := m.(*types.Foo)
@@ -261,7 +261,7 @@ func generate(ctx context.Context, node *dndm.Router, path string) {
 	}
 }
 
-func generateFoo(ctx context.Context, path string, route routers.Route, intent routers.Intent) error {
+func generateFoo(ctx context.Context, path string, route router.Route, intent router.Intent) error {
 	var t *types.Foo
 	slog.Info("generateFoo", "loop", "start", "path", path, "type", reflect.TypeOf(t), "route", route)
 	for {

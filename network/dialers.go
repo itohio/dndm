@@ -1,10 +1,10 @@
-package dialers
+package network
 
 import (
 	"context"
 	"io"
 
-	"github.com/itohio/dndm/routers"
+	"github.com/itohio/dndm/router"
 	types "github.com/itohio/dndm/types/core"
 	"google.golang.org/protobuf/proto"
 )
@@ -15,10 +15,10 @@ type Remote interface {
 	io.Closer
 	Peer() Peer
 	Read(ctx context.Context) (*types.Header, proto.Message, error)
-	Write(ctx context.Context, route routers.Route, msg proto.Message) error
+	Write(ctx context.Context, route router.Route, msg proto.Message) error
 
-	AddRoute(...routers.Route)
-	DelRoute(...routers.Route)
+	AddRoute(...router.Route)
+	DelRoute(...router.Route)
 }
 
 type Dialer interface {
