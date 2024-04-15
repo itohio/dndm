@@ -43,7 +43,7 @@ func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt
 	return conn, nil
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(peer network.Peer, r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
 	listener, err := net.Listen(f.peer.Scheme(), f.peer.Address())
 	if err != nil {
 		return err
@@ -63,7 +63,12 @@ func (f *Node) Serve(ctx context.Context, onConnect func(r io.ReadWriteCloser) e
 				f.log.Error("Listen.Accept", "peer", f.peer, "err", err)
 				return
 			}
-			err = onConnect(conn)
+			peer, err := network.NewPeer(f.Scheme(), conn.RemoteAddr().String(), "", nil)
+			if err != nil {
+				f.log.Error("Listen.Accept NewPeer", "peer", f.peer, "err", err)
+				return
+			}
+			err = onConnect(peer, conn)
 			if err != nil {
 				f.log.Error("Listen.onConnect", "peer", f.peer, "err", err)
 				return

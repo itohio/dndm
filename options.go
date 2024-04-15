@@ -13,17 +13,17 @@ import (
 type Option func(*Options) error
 
 type Options struct {
-	ctx        context.Context
-	logger     *slog.Logger
-	transports []router.Endpoint
-	size       int
+	ctx       context.Context
+	logger    *slog.Logger
+	endpoints []router.Endpoint
+	size      int
 }
 
 func defaultOptions() Options {
 	return Options{
 		ctx:    context.Background(),
 		logger: slog.Default(),
-		transports: []router.Endpoint{
+		endpoints: []router.Endpoint{
 			direct.New(0),
 		},
 		size: 1,
@@ -39,16 +39,16 @@ func (o *Options) Config(opts ...Option) error {
 	return nil
 }
 
-func (o *Options) addTransport(t router.Endpoint) error {
+func (o *Options) addEndpoint(t router.Endpoint) error {
 	if t == nil {
-		return errors.New("invalid transport")
+		return errors.ErrInvalidEndpoint
 	}
 
-	if slices.Contains(o.transports, t) {
-		return errors.New("already registered")
+	if slices.Contains(o.endpoints, t) {
+		return errors.ErrDuplicate
 	}
 
-	o.transports = append(o.transports, t)
+	o.endpoints = append(o.endpoints, t)
 	return nil
 }
 
@@ -62,7 +62,7 @@ func WithContext(ctx context.Context) Option {
 func WithLogger(l *slog.Logger) Option {
 	return func(o *Options) error {
 		if l == nil {
-			return errors.New("nil logger")
+			return errors.ErrBadArgument
 		}
 		o.logger = l
 		return nil
@@ -79,15 +79,15 @@ func WithQueueSize(size int) Option {
 	}
 }
 
-func WithTransport(t router.Endpoint) Option {
+func WithEndpoint(t router.Endpoint) Option {
 	return func(o *Options) error {
-		return o.addTransport(t)
+		return o.addEndpoint(t)
 	}
 }
 
-func WithTransports(t ...router.Endpoint) Option {
+func WithEndpoints(t ...router.Endpoint) Option {
 	return func(o *Options) error {
-		o.transports = t
+		o.endpoints = t
 		return nil
 	}
 }

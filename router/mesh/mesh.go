@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/itohio/dndm/errors"
@@ -24,53 +23,27 @@ type Mesh struct {
 	pingDuration time.Duration
 	dialer       network.Dialer
 	container    *router.Container
+	localPeer    network.Peer
 
-	peerDialerQueue chan *AddrbookEntry
-	mu              sync.Mutex
-	peers           map[string]*AddrbookEntry
+	addrbook *Addrbook
 }
 
-func New(name string, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
-	pm := make(map[string]*AddrbookEntry, len(peers))
-	for _, p := range peers {
-		peer := NewAddrbookEntry(p)
-		pm[p.Peer] = peer
+func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Mesh, error) {
+	ret := &Mesh{
+		Base:         router.NewBase(localPeer.String(), size),
+		localPeer:    localPeer,
+		timeout:      timeout,
+		pingDuration: pingDuration,
+		dialer:       node,
+		container:    router.NewContainer(localPeer.String(), size),
 	}
-	return &Mesh{
-		Base:            router.NewBase(name, size),
-		timeout:         timeout,
-		pingDuration:    pingDuration,
-		dialer:          node,
-		peers:           pm,
-		container:       router.NewContainer(name, size),
-		peerDialerQueue: make(chan *AddrbookEntry, NumDialers),
-	}, nil
+	ret.addrbook = NewAddrbook(localPeer, peers)
+
+	return ret, nil
 }
 
 func (t *Mesh) Addrbook() []*p2ptypes.AddrbookEntry {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	book := make([]*p2ptypes.AddrbookEntry, 0, len(t.peers))
-	for _, p := range t.peers {
-		p.Lock()
-		book = append(
-			book,
-			&p2ptypes.AddrbookEntry{
-				Peer:              p.Peer.String(),
-				MaxAttempts:       uint32(p.MaxAttempts),
-				DefaultBackoff:    uint64(p.DefaultBackoff),
-				MaxBackoff:        uint64(p.MaxBackoff),
-				BackoffMultiplier: float32(p.BackoffMultiplier),
-				Attempts:          uint32(p.Attempts),
-				FailedAttempts:    uint32(p.Failed),
-				LastSuccess:       uint64(p.LastSuccess.UnixNano()),
-				Backoff:           uint64(p.Backoff),
-			},
-		)
-		p.Unlock()
-	}
-	return book
+	return t.addrbook.Peers()
 }
 
 func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
@@ -93,9 +66,7 @@ func (t *Mesh) Init(ctx context.Context, logger *slog.Logger, add, remove func(i
 		go t.dialerLoop()
 	}
 
-	for _, p := range t.peers {
-		t.peerDialerQueue <- p
-	}
+	t.addrbook.Init(ctx)
 
 	return nil
 }

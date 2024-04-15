@@ -45,12 +45,13 @@ type Handshaker struct {
 	timeout      time.Duration
 	pingDuration time.Duration
 	remote       network.Remote
-	transport    atomic.Pointer[remote.Remote]
+	endpoint     atomic.Pointer[remote.Remote]
 	container    Container
-	peer         network.Peer
+	addrbook     *Addrbook
+	remotePeer   network.Peer
 }
 
-func NewHandshaker(size int, timeout, pingDuration time.Duration, c Container, rw io.ReadWriter, p network.Peer, state HandshakeState) *Handshaker {
+func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeout, pingDuration time.Duration, c Container, rw io.ReadWriter, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
 		state:        state,
 		rw:           rw,
@@ -58,7 +59,8 @@ func NewHandshaker(size int, timeout, pingDuration time.Duration, c Container, r
 		timeout:      timeout,
 		pingDuration: pingDuration,
 		container:    c,
-		peer:         p,
+		addrbook:     addrbook,
+		remotePeer:   remotePeer,
 	}
 
 	return ret
@@ -71,7 +73,7 @@ func (h *Handshaker) Close() error {
 		errarr = append(errarr, closer.Close())
 	}
 
-	if tr := h.transport.Swap(nil); tr != nil {
+	if tr := h.endpoint.Swap(nil); tr != nil {
 		h.container.Remove(tr)
 	}
 	h.remote = nil
@@ -81,18 +83,18 @@ func (h *Handshaker) Close() error {
 }
 
 func (h *Handshaker) Name() string {
-	return h.peer.String()
+	return h.remotePeer.String()
 }
 
 func (h *Handshaker) SetName(name string) {
-	if tr := h.transport.Load(); tr != nil {
+	if tr := h.endpoint.Load(); tr != nil {
 		tr.SetName(name)
 	}
 }
 
 // Publish will advertise an intent to publish named and typed data.
 func (h *Handshaker) Publish(route router.Route, opt ...router.PubOpt) (router.Intent, error) {
-	tr := h.transport.Load()
+	tr := h.endpoint.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
 	}
@@ -102,7 +104,7 @@ func (h *Handshaker) Publish(route router.Route, opt ...router.PubOpt) (router.I
 
 // Subscribe will advertise an interest in named and typed data.
 func (h *Handshaker) Subscribe(route router.Route, opt ...router.SubOpt) (router.Interest, error) {
-	tr := h.transport.Load()
+	tr := h.endpoint.Load()
 	if h.state != HS_DONE || tr == nil {
 		return nil, errors.ErrForbidden
 	}
@@ -112,7 +114,7 @@ func (h *Handshaker) Subscribe(route router.Route, opt ...router.SubOpt) (router
 
 // Init is used by the Router to initialize this transport.
 func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest router.Interest, t router.Endpoint) error) error {
-	if h.transport.Load() != nil {
+	if h.endpoint.Load() != nil {
 		panic("h.transport != nil")
 	}
 
@@ -121,26 +123,28 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	h.cancel = cancel
 	h.log = logger
 
-	h.remote = stream.NewWithContext(ctx, h.peer, h.rw, map[types.Type]network.MessageHandler{
-		types.Type_HANDSHAKE: h.handshake,
-		types.Type_ADDRBOOK:  h.addrbook,
-		types.Type_PEERS:     h.peers,
-		types.Type_RESULT:    h.result,
-	})
+	h.remote = stream.NewWithContext(ctx,
+		h.addrbook.Self(), h.remotePeer,
+		h.rw, map[types.Type]network.MessageHandler{
+			types.Type_HANDSHAKE: h.handshakeMsg,
+			types.Type_ADDRBOOK:  h.addrbookMsg,
+			types.Type_PEERS:     h.peersMsg,
+			types.Type_RESULT:    h.resultMsg,
+		})
 
-	tr := remote.New(h.peer.String(), h.remote, h.size, h.timeout, h.pingDuration)
+	tr := remote.New(h.remotePeer, h.remote, h.size, h.timeout, h.pingDuration)
 
 	err := tr.Init(ctx, logger, add, remove)
 	if err != nil {
 		return err
 	}
-	h.transport.Store(tr)
+	h.endpoint.Store(tr)
 
 	if h.state == HS_INIT {
 		h.state = HS_WAIT
-		h.log.Info("Sending Handshake", "state", h.state, "peer", h.peer)
+		h.log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
 		h.remote.Write(ctx, router.Route{}, &p2ptypes.Handshake{
-			Id:    h.peer.String(),
+			Id:    h.addrbook.Self().String(),
 			Stage: p2ptypes.HandshakeStage_INITIAL,
 		})
 	}
@@ -152,21 +156,21 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	return nil
 }
 
-func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	h.hsCount++
 	if h.hsCount > 5 {
 		h.cancel()
-		h.log.Error("Handshake", "state", h.state, "peer", h.peer, "count", h.hsCount)
+		h.log.Error("Handshake", "state", h.state, "peer", h.remotePeer, "count", h.hsCount)
 		return false, errors.ErrForbidden
 	}
 
 	hs, ok := msg.(*p2ptypes.Handshake)
 	if !ok {
-		h.log.Error("Handshake", "state", h.state, "peer", h.peer, "type", reflect.TypeOf(msg))
+		h.log.Error("Handshake", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.log.Info("Got Handshake", "state", h.state, "peer", h.peer, "id", hs.Id, "stage", hs.Stage)
+	h.log.Info("Got Handshake", "state", h.state, "peer", h.remotePeer, "id", hs.Id, "stage", hs.Stage)
 
 	switch h.state {
 	case HS_WAIT:
@@ -176,10 +180,16 @@ func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote netw
 		if err != nil {
 			return false, err
 		}
-		h.peer = peer
-		h.SetName(peer.String())
+		err = h.remote.UpdateRemotePeer(peer)
+		if err != nil {
+			return false, err
+		}
+		h.log.Info("Handshaker.UpdatePeer", "peer", peer, "prevPeer", h.remotePeer)
+		h.remotePeer = peer
+
 		return false, nil
 	case HS_DONE:
+		h.log.Info("Handshaker DONE", "remote", h.remotePeer)
 		h.hsCount = 0
 		return false, nil
 	}
@@ -187,7 +197,7 @@ func (h *Handshaker) handshake(hdr *types.Header, msg proto.Message, remote netw
 	return false, nil
 }
 
-func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -195,16 +205,16 @@ func (h *Handshaker) peers(hdr *types.Header, msg proto.Message, remote network.
 
 	peers, ok := msg.(*p2ptypes.Peers)
 	if !ok {
-		h.log.Error("peers", "state", h.state, "peer", h.peer, "type", reflect.TypeOf(msg))
+		h.log.Error("peers", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.log.Info("Got Peers", "state", h.state, "peer", h.peer, "peers", peers)
+	h.log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", peers)
 
 	return false, nil
 }
 
-func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) addrbookMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -212,16 +222,16 @@ func (h *Handshaker) addrbook(hdr *types.Header, msg proto.Message, remote netwo
 
 	book, ok := msg.(*p2ptypes.Addrbook)
 	if !ok {
-		h.log.Error("addrbook", "state", h.state, "peer", h.peer, "type", reflect.TypeOf(msg))
+		h.log.Error("addrbook", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.log.Info("Got Peers", "state", h.state, "peer", h.peer, "peers", book)
+	h.log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", book)
 
 	return false, nil
 }
 
-func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) messageMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden
@@ -229,7 +239,7 @@ func (h *Handshaker) message(hdr *types.Header, msg proto.Message, remote networ
 	return true, nil
 }
 
-func (h *Handshaker) result(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
+func (h *Handshaker) resultMsg(hdr *types.Header, msg proto.Message, remote network.Remote) (pass bool, err error) {
 	if h.state != HS_DONE {
 		h.cancel()
 		return false, errors.ErrForbidden

@@ -54,8 +54,8 @@ func main() {
 	defer cancel()
 	node := errors.Must(dndm.New(
 		dndm.WithContext(ctx),
-		dndm.WithTransport(errors.Must(mesh.New(
-			selfPeer.ID(),
+		dndm.WithEndpoint(errors.Must(mesh.New(
+			selfPeer,
 			3,
 			runtime.NumCPU()*5,
 			time.Second*10,

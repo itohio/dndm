@@ -32,4 +32,4 @@ ENV TZ=UTC
 WORKDIR /home/app
 COPY --from=build /home/src/dist/${BINARY_NAME} .
 
-CMD ["./${BINARY_NAME}"]
+ENTRYPOINT [ "./${BINARY_NAME}" ]

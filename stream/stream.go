@@ -2,8 +2,10 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
+	"reflect"
 	"sync"
 
 	"github.com/itohio/dndm/codec"
@@ -32,9 +34,9 @@ type StreamContext struct {
 }
 
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
-func NewWithContext(ctx context.Context, peer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
+func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
-		Stream: New(peer, rw, handlers),
+		Stream: New(localPeer, remotePeer, rw, handlers),
 		read: contextRW{
 			request: make(chan []byte),
 			result:  make(chan contextRWResult),
@@ -129,6 +131,12 @@ type contextRW struct {
 }
 
 func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("TypeOf", err, reflect.TypeOf(err))
+		}
+	}()
+
 	for r := range c.request {
 		n, err := f(r)
 		select {
@@ -167,12 +175,13 @@ func (r reader) Read(buf []byte) (int, error) {
 
 // Stream converts regular ReaderWriter into a Remote
 type Stream struct {
-	peer     network.Peer
 	handlers map[types.Type]network.MessageHandler
 	rw       io.ReadWriter
 
-	mu     sync.Mutex
-	routes map[string]routers.Route
+	mu         sync.Mutex
+	localPeer  network.Peer
+	remotePeer network.Peer
+	routes     map[string]routers.Route
 }
 
 type readWriter struct {
@@ -184,22 +193,40 @@ func (rw readWriter) Read(buf []byte) (int, error)  { return rw.r.Read(buf) }
 func (rw readWriter) Write(buf []byte) (int, error) { return rw.w.Write(buf) }
 
 // NewIO creates a Remote using io.Reader and io.Writer.
-func NewIO(peer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
+func NewIO(localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
 	rw := readWriter{r: r, w: w}
-	return New(peer, rw, handlers)
+	return New(localPeer, remotePeer, rw, handlers)
 }
 
 // New creates a Remote using provided ReaderWriter.
-func New(peer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
+func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
-		peer:     peer,
-		rw:       rw,
-		handlers: handlers,
+		localPeer:  localPeer,
+		remotePeer: remotePeer,
+		rw:         rw,
+		handlers:   handlers,
 	}
 }
 
-func (w *Stream) Peer() network.Peer {
-	return w.peer
+func (w *Stream) LocalPeer() network.Peer {
+	return w.localPeer
+}
+
+func (w *Stream) RemotePeer() network.Peer {
+	w.mu.Lock()
+	p := w.remotePeer
+	w.mu.Unlock()
+	return p
+}
+
+func (w *Stream) UpdateRemotePeer(p network.Peer) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if p.Scheme() != w.remotePeer.Scheme() {
+		return errors.ErrBadArgument
+	}
+	w.remotePeer = p
+	return nil
 }
 
 func (w *Stream) Close() error {
