@@ -93,12 +93,13 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 
 func (t *Endpoint) Close() error {
 	t.Log.Info("Remote.Close")
-	t.Base.Close()
-	t.wg.Wait()
+	errarr := make([]error, 0, 3)
 	if closer, ok := t.conn.(io.Closer); ok {
-		closer.Close()
+		errarr = append(errarr, closer.Close())
 	}
-	return t.linker.Close()
+	errarr = append(errarr, t.Base.Close(), t.linker.Close())
+	t.wg.Wait()
+	return errors.Join(errarr...)
 }
 
 func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {

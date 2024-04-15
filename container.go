@@ -69,6 +69,12 @@ func (t *Container) Add(ep Endpoint) error {
 		return err
 	}
 	t.endpoints = append(t.endpoints, ep)
+	if notifier, ok := ep.(CloseNotifier); ok {
+		notifier.OnClose(func() {
+			t.Log.Info("Container OnClose", "name", ep.Name())
+			t.Remove(ep)
+		})
+	}
 	return nil
 }
 

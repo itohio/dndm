@@ -13,6 +13,7 @@ message AddrbookEntry {
 	uint32 failed_attempts = 7;
 	uint64 last_success = 8;
 	uint64 backoff = 9;
+  bool persistent = 10;
 }
 
 message Addrbook {
