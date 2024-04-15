@@ -37,7 +37,7 @@ func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration tim
 		dialer:       node,
 		container:    dndm.NewContainer(localPeer.String(), size),
 	}
-	ret.addrbook = NewAddrbook(localPeer, peers)
+	ret.addrbook = NewAddrbook(localPeer, peers, 3)
 
 	return ret, nil
 }
@@ -66,9 +66,7 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 		go t.dialerLoop()
 	}
 
-	t.addrbook.Init(ctx)
-
-	return nil
+	return t.addrbook.Init(ctx, logger)
 }
 
 func (t *Endpoint) Close() error {

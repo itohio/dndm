@@ -20,7 +20,7 @@ func (t *Endpoint) dialerLoop() {
 }
 
 func (t *Endpoint) onConnect(peer network.Peer, rw io.ReadWriteCloser) error {
-	hs := NewHandshaker(t.addrbook, peer, t.Size, t.timeout, t.pingDuration, t.container, rw, HS_WAIT)
+	hs := NewHandshaker(t.addrbook, peer, t.Size, t.timeout, t.pingDuration, rw, HS_WAIT)
 
 	t.container.Add(hs)
 
@@ -33,7 +33,7 @@ func (t *Endpoint) dial(address *AddrbookEntry) error {
 		return err
 	}
 
-	hs := NewHandshaker(t.addrbook, address.Peer, t.Size, t.timeout, t.pingDuration, t.container, rw, HS_INIT)
+	hs := NewHandshaker(t.addrbook, address.Peer, t.Size, t.timeout, t.pingDuration, rw, HS_INIT)
 
 	t.container.Add(hs)
 

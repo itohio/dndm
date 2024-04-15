@@ -14,23 +14,27 @@ import (
 
 type Addrbook struct {
 	ctx             context.Context
-	mu              sync.Mutex
+	log             *slog.Logger
 	self            network.Peer
+	minConnected    int
+	mu              sync.Mutex
 	peers           map[string]*AddrbookEntry
 	peerDialerQueue chan *AddrbookEntry
 }
 
-func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry) *Addrbook {
+func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry, minConnected int) *Addrbook {
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
 		peer := NewAddrbookEntry(p)
-		pm[p.Peer] = peer
+		peer.outbound = true
+		pm[peer.Peer.ID()] = peer
 	}
 
 	ret := &Addrbook{
 		self:            self,
 		peers:           pm,
 		peerDialerQueue: make(chan *AddrbookEntry, NumDialers),
+		minConnected:    minConnected,
 	}
 
 	return ret
@@ -44,18 +48,69 @@ func (b *Addrbook) Dials() chan *AddrbookEntry {
 	return b.peerDialerQueue
 }
 
-func (b *Addrbook) Init(ctx context.Context) {
+func (b *Addrbook) Init(ctx context.Context, log *slog.Logger) error {
 	b.ctx = ctx
+	b.log = log
 
+	go func() {
+		t := time.NewTicker(time.Second * 30)
+		for {
+			b.monitor()
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+			}
+		}
+	}()
+
+	return nil
+}
+
+func (b *Addrbook) monitor() {
+	n := b.NumConnectedPeers()
+	b.log.Info("Addrbook", "active", n)
+
+	if n >= b.minConnected {
+		return
+	}
+
+	// simplest algorithm ever
+	b.mu.Lock()
+	defer b.mu.Unlock()
 	for _, p := range b.peers {
-		b.peerDialerQueue <- p
+		if !p.outbound {
+			continue
+		}
+		if p.IsActive() {
+			continue
+		}
+		if p.Failed > p.MaxAttempts {
+			continue
+		}
+
+		select {
+		case <-b.ctx.Done():
+			return
+		case b.peerDialerQueue <- p:
+		default:
+		}
 	}
 }
 
-func (b *Addrbook) AddPeer(p network.Peer) {
+func (b *Addrbook) NumConnectedPeers() int {
+	b.mu.Lock()
+	n := 0
+	for _, p := range b.peers {
+		if p.IsActive() {
+			n++
+		}
+	}
+	b.mu.Unlock()
+	return n
 }
 
-func (b *Addrbook) BanPeer(p network.Peer) {
+func (b *Addrbook) AddPeers(peers ...network.Peer) {
 }
 
 func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
@@ -77,6 +132,7 @@ func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
 				FailedAttempts:    uint32(p.Failed),
 				LastSuccess:       uint64(p.LastSuccess.UnixNano()),
 				Backoff:           uint64(p.Backoff),
+				Persistent:        p.Persistent,
 			},
 		)
 		p.Unlock()
@@ -85,19 +141,36 @@ func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
 
 }
 
-func (b *Addrbook) HasConn(c network.Conn) {
+func (b *Addrbook) Entry(p network.Peer) (*AddrbookEntry, bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	e, ok := b.peers[p.ID()]
+	return e, ok
 }
 
-func (b *Addrbook) AddConn(c network.Conn) {
+func (b *Addrbook) AddConn(c network.Conn) error {
+	e, ok := b.Entry(c.Remote())
+	if !ok {
+		abe := p2ptypes.AddrbookEntryFromPeer(c.Remote().String())
+		e = NewAddrbookEntry(abe)
+	}
+
+	return e.SetConn(c)
 }
 
 func (b *Addrbook) DelConn(c network.Conn) {
+	if e, ok := b.Entry(c.Remote()); ok {
+		e.SetConn(nil)
+	}
 }
 
 type AddrbookEntry struct {
 	sync.Mutex
 
+	outbound bool
+
 	Peer              network.Peer
+	Persistent        bool
 	MaxAttempts       int
 	DefaultBackoff    time.Duration
 	MaxBackoff        time.Duration
@@ -108,7 +181,8 @@ type AddrbookEntry struct {
 	LastSuccess time.Time
 	Backoff     time.Duration
 
-	conn network.Conn
+	conn    network.Conn
+	dialing bool
 }
 
 func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
@@ -138,7 +212,40 @@ func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 	return ret
 }
 
+func (a *AddrbookEntry) IsActive() bool {
+	a.Lock()
+	b := a.conn != nil
+	a.Unlock()
+	return b || a.dialing
+}
+
+func (a *AddrbookEntry) SetConn(c network.Conn) error {
+	a.Lock()
+	defer a.Unlock()
+
+	if a.conn != nil && c != nil {
+		return errors.ErrDuplicate
+	}
+
+	a.conn = c
+	c.OnClose(func() {
+		a.SetConn(nil)
+	})
+
+	return nil
+}
+
 func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer network.Dialer, q chan<- *AddrbookEntry) (io.ReadWriter, error) {
+	a.Lock()
+	a.dialing = true
+	defer func() { a.dialing = false }()
+	if a.conn != nil {
+		a.Unlock()
+		log.Error("AddrbookEntry.Dial", "err", "connection already set")
+		return nil, errors.ErrDuplicate
+	}
+	a.Unlock()
+
 	rw, err := dialer.Dial(ctx, a.Peer)
 	a.Lock()
 	defer a.Unlock()
