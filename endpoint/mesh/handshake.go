@@ -46,8 +46,21 @@ type Handshaker struct {
 	remote       atomic.Pointer[remote.Endpoint]
 	addrbook     *Addrbook
 	remotePeer   network.Peer
+	isSeed       bool
 }
 
+// NewHandshake creates a Endpoint wrapper over Remote endpoint that acts as a handshake middleware.
+//
+// initial state transitions:
+//
+//	Connect to remote:
+//	1. HS_INIT
+//	2. HS_WAIT
+//	3. HS_DONE
+//
+//	Remote connects to us:
+//	1. HS_WAIT
+//	2. HS_DONE
 func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeout, pingDuration time.Duration, rw io.ReadWriter, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
 		Base:         dndm.NewBase(remotePeer.String(), size),
@@ -57,6 +70,7 @@ func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeou
 		pingDuration: pingDuration,
 		addrbook:     addrbook,
 		remotePeer:   remotePeer,
+		isSeed:       true,
 	}
 
 	return ret
@@ -145,6 +159,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	})
 
 	if h.state == HS_INIT {
+		h.addrbook.AddConn(h.remotePeer, true, h.conn)
 		h.state = HS_WAIT
 		h.Log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
 		h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
@@ -192,6 +207,33 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		}
 		h.Log.Info("Handshaker.UpdatePeer", "them", hs.Me, "us", hs.You, "prevPeer", h.remotePeer)
 		h.remotePeer = peer
+		h.addrbook.AddConn(h.remotePeer, false, h.conn)
+
+		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
+			Me:    h.addrbook.Self().String(),
+			You:   peer.String(),
+			Stage: p2ptypes.HandshakeStage_FINAL,
+		})
+		if err != nil {
+			return false, err
+		}
+
+		if !h.isSeed {
+			return false, nil
+		}
+
+		activePeers := h.addrbook.ActivePeers()
+		if activePeers == nil {
+			return false, nil
+		}
+
+		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Peers{
+			Remove: false,
+			Ids:    activePeers,
+		})
+		if err != nil {
+			return false, err
+		}
 
 		return false, nil
 	case HS_DONE:
@@ -216,6 +258,15 @@ func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote netwo
 	}
 
 	h.Log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", peers)
+
+	for _, p := range peers.Ids {
+		peer, err := network.PeerFromString(p)
+		if err != nil {
+			h.Log.Error("Parsing peer", "err", err, "peer", p)
+			return false, err
+		}
+		h.addrbook.AddConn(peer, true, nil)
+	}
 
 	return false, nil
 }

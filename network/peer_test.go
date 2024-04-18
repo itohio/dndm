@@ -17,7 +17,7 @@ func TestPeerFromString(t *testing.T) {
 			want: Peer{
 				scheme: "tcp",
 				addr:   "localhost:123",
-				id:     "peer-id",
+				path:   "peer-id",
 				args:   url.Values{"value": []string{"val"}},
 			},
 			wantErr: false,

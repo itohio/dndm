@@ -25,9 +25,9 @@ type Addrbook struct {
 func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry, minConnected int) *Addrbook {
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
-		peer := NewAddrbookEntry(p)
+		peer := NewAddrbookEntry(slog.Default(), p)
 		peer.outbound = true
-		pm[peer.Peer.ID()] = peer
+		pm[peer.Peer.Address()] = peer
 	}
 
 	ret := &Addrbook{
@@ -52,8 +52,14 @@ func (b *Addrbook) Init(ctx context.Context, log *slog.Logger) error {
 	b.ctx = ctx
 	b.log = log
 
+	b.mu.Lock()
+	for _, p := range b.peers {
+		p.log = log
+	}
+	b.mu.Unlock()
+
 	go func() {
-		t := time.NewTicker(time.Second * 30)
+		t := time.NewTicker(time.Second * 10)
 		for {
 			b.monitor()
 			select {
@@ -68,16 +74,10 @@ func (b *Addrbook) Init(ctx context.Context, log *slog.Logger) error {
 }
 
 func (b *Addrbook) monitor() {
-	n := b.NumConnectedPeers()
-	b.log.Info("Addrbook", "active", n)
-
-	if n >= b.minConnected {
-		return
-	}
-
 	// simplest algorithm ever
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	b.log.Info("Monitor", "peers", len(b.peers))
 	for _, p := range b.peers {
 		if !p.outbound {
 			continue
@@ -85,7 +85,7 @@ func (b *Addrbook) monitor() {
 		if p.IsActive() {
 			continue
 		}
-		if p.Failed > p.MaxAttempts {
+		if p.Failed > p.MaxAttempts && !p.Persistent {
 			continue
 		}
 
@@ -110,10 +110,48 @@ func (b *Addrbook) NumConnectedPeers() int {
 	return n
 }
 
-func (b *Addrbook) AddPeers(peers ...network.Peer) {
+func (b *Addrbook) AddPeers(outbound bool, peers ...network.Peer) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	for _, p := range peers {
+		if b.self.Equal(p) {
+			continue
+		}
+		if _, ok := b.peers[p.Address()]; ok {
+			continue
+		}
+
+		abe := p2ptypes.AddrbookEntryFromPeer(p.String())
+		e := NewAddrbookEntry(b.log, abe)
+		e.outbound = outbound
+		b.peers[p.Address()] = e
+		b.log.Info("Addrbook.AddPeers", "peer", p)
+	}
+	return nil
 }
 
-func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
+func (b *Addrbook) ActivePeers() []string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	peers := make([]string, 0, len(b.peers))
+	for _, p := range b.peers {
+		p.Lock()
+		peer := p.Peer.String()
+		p.Unlock()
+
+		b.log.Info("Addrbook ACTIVE PEERS", "peer", p.Peer, "active", p.IsActive())
+
+		if !p.IsActive() {
+			continue
+		}
+
+		peers = append(peers, peer)
+	}
+	return peers
+}
+
+func (b *Addrbook) Addrbook() []*p2ptypes.AddrbookEntry {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -144,22 +182,29 @@ func (b *Addrbook) Peers() []*p2ptypes.AddrbookEntry {
 func (b *Addrbook) Entry(p network.Peer) (*AddrbookEntry, bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	e, ok := b.peers[p.ID()]
+	e, ok := b.peers[p.Address()]
 	return e, ok
 }
 
-func (b *Addrbook) AddConn(c network.Conn) error {
-	e, ok := b.Entry(c.Remote())
+func (b *Addrbook) AddConn(p network.Peer, outbound bool, c network.Conn) error {
+	if b.self.Equal(p) {
+		return nil
+	}
+
+	e, ok := b.Entry(p)
 	if !ok {
-		abe := p2ptypes.AddrbookEntryFromPeer(c.Remote().String())
-		e = NewAddrbookEntry(abe)
+		abe := p2ptypes.AddrbookEntryFromPeer(p.String())
+		e = NewAddrbookEntry(b.log, abe)
+		e.outbound = outbound
+		b.peers[p.Address()] = e
+		b.log.Info("Addrbook.AddConn", "peer", p)
 	}
 
 	return e.SetConn(c)
 }
 
-func (b *Addrbook) DelConn(c network.Conn) {
-	if e, ok := b.Entry(c.Remote()); ok {
+func (b *Addrbook) DelConn(p network.Peer, c network.Conn) {
+	if e, ok := b.Entry(p); ok {
 		e.SetConn(nil)
 	}
 }
@@ -183,9 +228,11 @@ type AddrbookEntry struct {
 
 	conn    network.Conn
 	dialing bool
+
+	log *slog.Logger
 }
 
-func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
+func NewAddrbookEntry(log *slog.Logger, p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 	ret := &AddrbookEntry{
 		Peer:              errors.Must(network.PeerFromString(p.Peer)),
 		MaxAttempts:       int(p.MaxAttempts),
@@ -196,6 +243,7 @@ func NewAddrbookEntry(p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 		Failed:            int(p.FailedAttempts),
 		LastSuccess:       time.Unix(0, int64(p.LastSuccess)),
 		Backoff:           time.Duration(p.Backoff),
+		log:               log,
 	}
 	if ret.BackoffMultiplier < .1 {
 		ret.BackoffMultiplier = .1
@@ -228,8 +276,13 @@ func (a *AddrbookEntry) SetConn(c network.Conn) error {
 	}
 
 	a.conn = c
+	if c == nil {
+		return nil
+	}
+
 	c.OnClose(func() {
 		a.SetConn(nil)
+		a.log.Info("Addrbook Peer closed", "peer", a.Peer)
 	})
 
 	return nil

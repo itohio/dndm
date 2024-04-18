@@ -43,7 +43,7 @@ func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration tim
 }
 
 func (t *Endpoint) Addrbook() []*p2ptypes.AddrbookEntry {
-	return t.addrbook.Peers()
+	return t.addrbook.Addrbook()
 }
 
 func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
