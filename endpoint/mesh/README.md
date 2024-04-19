@@ -53,7 +53,6 @@ The handshake is as follows:
 5. Peer receives `Peers` and adds them to the addrbook
   5.1. It will try to connect to these peers if it has no active connection to them yet
 
-
 ### Intent
 
 ### Interest

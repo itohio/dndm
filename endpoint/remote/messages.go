@@ -1,14 +1,13 @@
 package remote
 
 import (
-	"bytes"
 	"context"
-	"crypto/rand"
 	"time"
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	types "github.com/itohio/dndm/types/core"
+	p2ptypes "github.com/itohio/dndm/types/p2p"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -109,23 +108,9 @@ func (t *Endpoint) messageSender(d time.Duration) {
 		case <-t.Ctx.Done():
 			return
 		case <-ticker.C:
-			ping := &types.Ping{
-				Payload: make([]byte, 1024),
-			}
-			rand.Read(ping.Payload)
-			err := t.conn.Write(
-				t.Ctx,
-				dndm.Route{},
-				ping,
-			)
+			ping := t.latency.MakePing(1024)
+			err := t.conn.Write(t.Ctx, dndm.Route{}, ping)
 			t.Log.Debug("Remote.Ping", "send", err)
-			t.pingMu.Lock()
-			t.pingRing.Value = &Ping{
-				timestamp: uint64(time.Now().UnixNano()),
-				payload:   ping.Payload,
-			}
-			t.pingRing = t.pingRing.Next()
-			t.pingMu.Unlock()
 		}
 	}
 }
@@ -152,26 +137,10 @@ func (t *Endpoint) handlePing(hdr *types.Header, m proto.Message) error {
 	if len(msg.Payload) < 16 {
 		return errors.ErrNotEnoughBytes
 	}
-	pong := &types.Pong{
-		ReceiveTimestamp: hdr.ReceiveTimestamp,
-		PingTimestamp:    hdr.Timestamp,
-		Payload:          msg.Payload,
-	}
+	pong := t.latency.MakePong(hdr, msg)
 
-	err := t.conn.Write(
-		t.Ctx,
-		dndm.Route{},
-		pong,
-	)
+	err := t.conn.Write(t.Ctx, dndm.Route{}, pong)
 	t.Log.Debug("Remote.Pong", "send", err)
-	t.pingMu.Lock()
-	t.pongRing.Value = &Pong{
-		timestamp:     hdr.ReceiveTimestamp,
-		pingTimestamp: hdr.Timestamp,
-		payload:       msg.Payload,
-	}
-	t.pongRing = t.pingRing.Next()
-	t.pingMu.Unlock()
 
 	return nil
 }
@@ -181,30 +150,35 @@ func (t *Endpoint) handlePong(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return errors.ErrInvalidType
 	}
-	t.pingMu.Lock()
-	defer t.pingMu.Unlock()
 
-	t.pingRing.Do(func(a any) {
-		p, ok := a.(*Ping)
-		if !ok {
-			return
-		}
-		if !bytes.Equal(p.payload, msg.Payload) {
-			return
-		}
+	t.latency.ObservePong(hdr, msg)
 
-		// TODO: now - when sent
-		rtt := time.Duration(hdr.ReceiveTimestamp - p.timestamp)
-		// now - when sent as reported by remote
-		rtt1 := time.Duration(hdr.ReceiveTimestamp - msg.PingTimestamp)
-		_ = rtt
-		_ = rtt1
-		// too much difference may indicate non-compliant remote
-		// also, msg.PingTimestamp, hdr.ReceiveTimestamp are local times
-		// while hdr.Timestamp, and msg.ReceiveTimestamp are remote times
-		// FIXME: this is utterly confusing. Need better names.
-		t.Log.Info("Remote.Ping-Pong", "rtt", rtt, "rtt1", rtt1, "name", t.Name(), "peer", t.conn.Remote())
-	})
+	return nil
+}
+
+func (t *Endpoint) handleHandshake(hdr *types.Header, m proto.Message) error {
+	handshake, ok := m.(*p2ptypes.Handshake)
+	if !ok {
+		return nil
+	}
+	if handshake.Stage != p2ptypes.HandshakeStage_FINAL {
+		return nil
+	}
+
+	t.Log.Info("HS", "intents", handshake.Intents, "interests", handshake.Interests)
+
+	for _, i := range handshake.Intents {
+		if err := t.handleRemoteIntent(i); err != nil {
+			t.Log.Error("HS.intent", "err", err, "intent", i.Route)
+			return err
+		}
+	}
+	for _, i := range handshake.Interests {
+		if err := t.handleRemoteInterest(i); err != nil {
+			t.Log.Error("HS.interest", "err", err, "interest", i.Route)
+			return err
+		}
+	}
 
 	return nil
 }
