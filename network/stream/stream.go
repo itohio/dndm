@@ -281,7 +281,7 @@ func (w *Stream) DelRoute(routes ...dndm.Route) {
 	w.mu.Unlock()
 }
 
-func (w *Stream) Read(ctx context.Context) (*types.Header, proto.Message, error) {
+func (w *Stream) read(ctx context.Context) (*types.Header, proto.Message, error) {
 	buf, ts, err := codec.ReadMessage(w.rw)
 	if err != nil {
 		return nil, nil, err
@@ -297,22 +297,35 @@ func (w *Stream) Read(ctx context.Context) (*types.Header, proto.Message, error)
 	}
 	codec.Release(buf)
 	hdr.ReceiveTimestamp = ts
+	return hdr, msg, nil
+}
 
-	if w.handlers == nil {
-		return hdr, msg, err
-	}
-
-	if handler, found := w.handlers[hdr.Type]; found {
-		pass, err := handler(hdr, msg, w)
+func (w *Stream) Read(ctx context.Context) (*types.Header, proto.Message, error) {
+	for {
+		hdr, msg, err := w.read(ctx)
 		if err != nil {
+			return nil, nil, err
+		}
+
+		if w.handlers == nil {
 			return hdr, msg, err
 		}
-		if !pass {
-			return w.Read(ctx)
+
+		pass := true
+		if handler, found := w.handlers[hdr.Type]; found {
+			_pass, err := handler(hdr, msg, w)
+			if err != nil {
+				return hdr, msg, err
+			}
+
+			if !_pass {
+				pass = false
+			}
+		}
+		if pass {
+			return hdr, msg, err
 		}
 	}
-
-	return hdr, msg, err
 }
 
 func (w *Stream) Write(ctx context.Context, route dndm.Route, msg proto.Message) error {

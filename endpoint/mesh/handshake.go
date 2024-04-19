@@ -223,12 +223,12 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		}
 
 		if !h.isSeed {
-			return false, nil
+			return true, nil
 		}
 
 		activePeers := h.addrbook.ActivePeers(peer)
 		if activePeers == nil {
-			return false, nil
+			return true, nil
 		}
 
 		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Peers{
@@ -240,11 +240,11 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		}
 		h.addrbook.SetSharedPeers(peer, activePeers)
 
-		return false, nil
+		return true, nil
 	case HS_DONE:
 		h.Log.Info("Handshaker DONE", "remote", h.remotePeer)
 		h.hsCount = 0
-		return false, nil
+		return true, nil
 	}
 
 	return false, nil
