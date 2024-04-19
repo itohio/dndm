@@ -118,7 +118,7 @@ func (t *Endpoint) messageSender(d time.Duration) {
 				dndm.Route{},
 				ping,
 			)
-			t.Log.Info("Remote.Ping", "send", err)
+			t.Log.Debug("Remote.Ping", "send", err)
 			t.pingMu.Lock()
 			t.pingRing.Value = &Ping{
 				timestamp: uint64(time.Now().UnixNano()),
@@ -163,7 +163,7 @@ func (t *Endpoint) handlePing(hdr *types.Header, m proto.Message) error {
 		dndm.Route{},
 		pong,
 	)
-	t.Log.Info("Remote.Pong", "send", err)
+	t.Log.Debug("Remote.Pong", "send", err)
 	t.pingMu.Lock()
 	t.pongRing.Value = &Pong{
 		timestamp:     hdr.ReceiveTimestamp,

@@ -65,8 +65,10 @@ func (i *LocalIntent) Close() error {
 	if err != nil {
 		return err
 	}
-	i.once.Do(func() { i.cancel() })
-	i.once.Do(func() { close(i.notifyC) })
+	i.once.Do(func() {
+		i.cancel()
+		close(i.notifyC)
+	})
 	i.linkedC = nil
 	return nil
 }

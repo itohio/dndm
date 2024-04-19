@@ -163,9 +163,11 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 		h.state = HS_WAIT
 		h.Log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
 		h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
-			Me:    h.addrbook.Self().String(),
-			You:   h.remotePeer.String(),
-			Stage: p2ptypes.HandshakeStage_INITIAL,
+			Me:        h.addrbook.Self().String(),
+			You:       h.remotePeer.String(),
+			Stage:     p2ptypes.HandshakeStage_INITIAL,
+			Intents:   nil, // FIXME
+			Interests: nil,
 		})
 	}
 
@@ -210,9 +212,11 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		h.addrbook.AddConn(h.remotePeer, false, h.conn)
 
 		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
-			Me:    h.addrbook.Self().String(),
-			You:   peer.String(),
-			Stage: p2ptypes.HandshakeStage_FINAL,
+			Me:        h.addrbook.Self().String(),
+			You:       peer.String(),
+			Stage:     p2ptypes.HandshakeStage_FINAL,
+			Intents:   nil, // FIXME
+			Interests: nil,
 		})
 		if err != nil {
 			return false, err
@@ -222,7 +226,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 			return false, nil
 		}
 
-		activePeers := h.addrbook.ActivePeers()
+		activePeers := h.addrbook.ActivePeers(peer)
 		if activePeers == nil {
 			return false, nil
 		}
@@ -234,6 +238,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		if err != nil {
 			return false, err
 		}
+		h.addrbook.SetSharedPeers(peer, activePeers)
 
 		return false, nil
 	case HS_DONE:

@@ -2,6 +2,8 @@ syntax = "proto3";
 package types.p2p;
 option go_package = "github.com/itohio/dndm/types/p2p/types";
 
+// AddrbookEntry is for storing and transfering information about peers.
+// This structure contains the information about connectivity history with that peer.
 message AddrbookEntry {
 	string peer = 1;
 	uint32 max_attempts = 2;
@@ -16,6 +18,7 @@ message AddrbookEntry {
   bool persistent = 10;
 }
 
+// Addrbook contains entries about peers.
 message Addrbook {
   repeated AddrbookEntry entries = 1;
 }

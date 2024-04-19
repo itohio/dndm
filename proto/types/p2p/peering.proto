@@ -1,7 +1,10 @@
 syntax = "proto3";
 package types.p2p;
 option go_package = "github.com/itohio/dndm/types/p2p/types";
+import "types/core/interests.proto";
+import "types/core/intents.proto";
 
+// HandshakeStage enum specifies what handshake state this message corresponds to.
 enum HandshakeStage {
   UNSPECIFIED_HANDSHAKE = 0;
   INITIAL = 1;
@@ -9,13 +12,17 @@ enum HandshakeStage {
   UPDATE = 3;
 }
 
+// Handshake will contain the information needed for each handshake stage.
 message Handshake {
   string me = 1;
   string you = 2;
   HandshakeStage stage = 3;
-  bytes public_key = 4;
+  repeated core.Intent intents = 4;
+  repeated core.Interest interests = 5;
+  bytes public_key = 6;
 }
 
+// Peers is used for sharing peering information so that it would be possible to form a mesh.
 message Peers {
   repeated string ids = 1;
   bool remove = 2;
