@@ -1,7 +1,6 @@
 package remote
 
 import (
-	"container/ring"
 	"context"
 	"io"
 	"log/slog"
@@ -27,11 +26,10 @@ type Endpoint struct {
 	linker  *dndm.Linker
 
 	pingDuration time.Duration
-	pingMu       sync.Mutex
-	pingRing     *ring.Ring
-	pongRing     *ring.Ring
 
 	nonce atomic.Uint64
+
+	latency *LatencyTracker
 }
 
 // New creates a endpoint that communicates with a remote via Remote interface.
@@ -41,8 +39,7 @@ func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration t
 		conn:         conn,
 		pingDuration: pingDuration,
 		timeout:      timeout,
-		pingRing:     ring.New(3),
-		pongRing:     ring.New(3),
+		latency:      NewLatencyTracker(10),
 	}
 }
 
@@ -151,4 +148,8 @@ func (t *Endpoint) subscribe(route dndm.Route, m *types.Interest) (dndm.Interest
 	t.AddCallback(interest, t)
 	t.Log.Info("remote interest registered", "route", route.Route())
 	return interest, nil
+}
+
+func (t *Endpoint) Latency() *LatencyTracker {
+	return t.latency
 }
