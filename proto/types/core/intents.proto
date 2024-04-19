@@ -2,10 +2,12 @@ syntax = "proto3";
 package types.core;
 option go_package = "github.com/itohio/dndm/types/core/types";
 
+// Intents is the message that contains a list of intents
 message Intents {
   repeated Intent intents = 1;
 }
 
+// Intent is the message for advertising intent of publishing certain type of data
 message Intent {
   string route = 1;
   uint64 hops = 2;
@@ -13,6 +15,8 @@ message Intent {
   bool register = 4;
 }
 
+// NotifyIntent is the message that will notify if certain intent has matching Interest.
+// This notification is used by publishers to know when to start publishing data.
 message NotifyIntent {
   string route = 1;
 }

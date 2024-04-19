@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/itohio/dndm/types/
+    default: github.com/itohio/dndm/
 plugins:
   - plugin: go
     out: ../

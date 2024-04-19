@@ -50,7 +50,7 @@ func (f *Node) Serve(ctx context.Context, onConnect func(peer network.Peer, r io
 	}
 
 	go func() {
-		f.log.Info("Listen", "scheme", f.peer.Scheme(), "addr", f.peer.Address(), "id", f.peer.Path(), "peer", f.peer)
+		f.log.Info("Listen", "scheme", f.peer.Scheme(), "addr", f.peer.Address(), "path", f.peer.Path(), "peer", f.peer)
 		defer listener.Close()
 		for {
 			select {

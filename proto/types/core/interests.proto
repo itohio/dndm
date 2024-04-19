@@ -2,10 +2,12 @@ syntax = "proto3";
 package types.core;
 option go_package = "github.com/itohio/dndm/types/core/types";
 
+// Interests is the message that contains a list of interests
 message Interests {
   repeated Interest interests = 1;
 }
 
+// Interest is the message for advertising interest in certain type of data
 message Interest {
   string route = 1;
   uint64 hops = 2;

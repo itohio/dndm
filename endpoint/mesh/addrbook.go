@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"maps"
 	"sync"
 	"time"
 
@@ -77,8 +78,9 @@ func (b *Addrbook) monitor() {
 	// simplest algorithm ever
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	b.log.Info("Monitor", "peers", len(b.peers))
-	for _, p := range b.peers {
+	// b.log.Info("Monitor", "peers", len(b.peers))
+	for k, p := range b.peers {
+		b.log.Info("Monitor", "addr", k, "p", p.Peer.String(), "out", p.outbound, "active", p.IsActive(), "failed", p.Failed, "persistent", p.Persistent)
 		if !p.outbound {
 			continue
 		}
@@ -130,9 +132,27 @@ func (b *Addrbook) AddPeers(outbound bool, peers ...network.Peer) error {
 	return nil
 }
 
-func (b *Addrbook) ActivePeers() []string {
+// SetSharedPeers sets the list of peers that was shared with the target peer.
+// The peers returned by ActivePeers will be excluded from the returned list
+func (b *Addrbook) SetSharedPeers(remote network.Peer, activePeers []string) {
+	entry, ok := b.Entry(remote)
+	if !ok {
+		return
+	}
+
+	entry.SetSharedPeers(activePeers)
+}
+
+// ActivePeers returns a list of active peers to be shared to the remote peer.
+// The remote peer itself will be excluded as well as any peers that were already shared with the remote.
+func (b *Addrbook) ActivePeers(remote network.Peer) []string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+
+	sharedPeers := make(map[string]struct{})
+	if e, remoteFound := b.peers[remote.Address()]; remoteFound {
+		sharedPeers = e.SharedPeers()
+	}
 
 	peers := make([]string, 0, len(b.peers))
 	for _, p := range b.peers {
@@ -143,6 +163,14 @@ func (b *Addrbook) ActivePeers() []string {
 		b.log.Info("Addrbook ACTIVE PEERS", "peer", p.Peer, "active", p.IsActive())
 
 		if !p.IsActive() {
+			continue
+		}
+
+		if p.Peer.Equal(remote) {
+			continue
+		}
+
+		if _, ok := sharedPeers[peer]; ok {
 			continue
 		}
 
@@ -200,6 +228,10 @@ func (b *Addrbook) AddConn(p network.Peer, outbound bool, c network.Conn) error 
 		b.log.Info("Addrbook.AddConn", "peer", p)
 	}
 
+	if c == nil {
+		return nil
+	}
+
 	return e.SetConn(c)
 }
 
@@ -229,6 +261,8 @@ type AddrbookEntry struct {
 	conn    network.Conn
 	dialing bool
 
+	sharedPeers map[string]struct{}
+
 	log *slog.Logger
 }
 
@@ -244,6 +278,7 @@ func NewAddrbookEntry(log *slog.Logger, p *p2ptypes.AddrbookEntry) *AddrbookEntr
 		LastSuccess:       time.Unix(0, int64(p.LastSuccess)),
 		Backoff:           time.Duration(p.Backoff),
 		log:               log,
+		sharedPeers:       make(map[string]struct{}),
 	}
 	if ret.BackoffMultiplier < .1 {
 		ret.BackoffMultiplier = .1
@@ -260,6 +295,29 @@ func NewAddrbookEntry(log *slog.Logger, p *p2ptypes.AddrbookEntry) *AddrbookEntr
 	return ret
 }
 
+func (a *AddrbookEntry) WasPeerShared(peer string) bool {
+	a.Lock()
+	_, ok := a.sharedPeers[peer]
+	a.Unlock()
+	return ok
+}
+
+func (a *AddrbookEntry) SetSharedPeers(peers []string) {
+	a.Lock()
+	defer a.Unlock()
+
+	for _, p := range peers {
+		a.sharedPeers[p] = struct{}{}
+	}
+}
+
+func (a *AddrbookEntry) SharedPeers() map[string]struct{} {
+	a.Lock()
+	sp := maps.Clone(a.sharedPeers)
+	a.Unlock()
+	return sp
+}
+
 func (a *AddrbookEntry) IsActive() bool {
 	a.Lock()
 	b := a.conn != nil
@@ -272,9 +330,11 @@ func (a *AddrbookEntry) SetConn(c network.Conn) error {
 	defer a.Unlock()
 
 	if a.conn != nil && c != nil {
+		a.log.Error("Setting Connection on Active Peer", "peer", a.Peer, "conn.remote", c.Remote(), "conn.local", c.Local())
 		return errors.ErrDuplicate
 	}
 
+	a.sharedPeers = make(map[string]struct{})
 	a.conn = c
 	if c == nil {
 		return nil

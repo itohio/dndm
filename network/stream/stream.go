@@ -70,11 +70,13 @@ func (c *StreamContext) Reader(ctx context.Context) io.Reader {
 }
 
 func (w *StreamContext) Close() error {
-	w.once.Do(func() { w.cancel() })
-	w.once.Do(func() { close(w.read.request) })
-	w.once.Do(func() { close(w.write.request) })
-	w.once.Do(func() { close(w.read.result) })
-	w.once.Do(func() { close(w.write.result) })
+	w.once.Do(func() {
+		w.cancel()
+		close(w.read.request)
+		close(w.write.request)
+		close(w.read.result)
+		close(w.write.result)
+	})
 	return w.Stream.Close()
 }
 
@@ -239,11 +241,12 @@ func (w *Stream) UpdateRemotePeer(p network.Peer) error {
 
 func (w *Stream) Close() error {
 	slog.Info("Stream.Close")
+	var err error
 	if closer, ok := w.rw.(io.Closer); ok {
-		return closer.Close()
+		err = closer.Close()
 	}
 	w.once.Do(func() { close(w.done) })
-	return nil
+	return err
 }
 
 func (w *Stream) OnClose(f func()) {
@@ -252,9 +255,13 @@ func (w *Stream) OnClose(f func()) {
 		return
 	}
 
+	if f == nil {
+		return
+	}
+
 	go func() {
 		<-w.done
-		w.once.Do(f)
+		f()
 	}()
 }
 

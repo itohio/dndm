@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"sync"
 
 	"github.com/itohio/dndm/errors"
 )
@@ -30,7 +29,6 @@ type Base struct {
 	AddCallback    func(interest Interest, t Endpoint) error
 	RemoveCallback func(interest Interest, t Endpoint) error
 	Size           int
-	once           sync.Once
 }
 
 func NewBase(name string, size int) *Base {
@@ -73,8 +71,11 @@ func (t *Base) CloseCause(err error) error {
 }
 
 func (t *Base) OnClose(f func()) {
+	if f == nil {
+		return
+	}
 	go func() {
 		<-t.Ctx.Done()
-		t.once.Do(f)
+		f()
 	}()
 }

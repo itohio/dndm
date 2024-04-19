@@ -57,8 +57,10 @@ func (i *LocalInterest) Close() error {
 	if err != nil {
 		return err
 	}
-	i.once.Do(func() { i.cancel() })
-	i.once.Do(func() { close(i.msgC) })
+	i.once.Do(func() {
+		i.cancel()
+		close(i.msgC)
+	})
 	i.msgC = nil
 	return nil
 }

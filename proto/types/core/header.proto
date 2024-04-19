@@ -2,6 +2,7 @@ syntax = "proto3";
 package types.core;
 option go_package = "github.com/itohio/dndm/types/core/types";
 
+// Type enum is the message type that follows after the header
 enum Type {
   UNSPECIFIED_TYPE = 0;
   MESSAGE = 1;
@@ -19,6 +20,7 @@ enum Type {
   USER_TYPES = 1000;
 }
 
+// Header is the message header
 message Header {
   uint64 receive_timestamp = 1; // Should not be set by remote. Is overwritten upon reception.
   uint64 timestamp = 2;
@@ -28,16 +30,19 @@ message Header {
   string route = 6;
 }
 
+// Result is the optional reply from remote peer to the message
 message Result {
   uint64 nonce = 1;
   uint64 error = 2;
   string description = 3;
 }
 
+// Ping is the message for latency measurement
 message Ping {
   bytes payload = 3;
 }
 
+// Pong is the message for latency measurement
 message Pong {
   uint64 receive_timestamp = 1; // local Timestamp when we received Ping message
   uint64 ping_timestamp = 3;    // remote timestamp when Ping was sent
