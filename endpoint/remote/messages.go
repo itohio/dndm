@@ -73,7 +73,7 @@ func (t *Endpoint) messageHandler() {
 func (t *Endpoint) handleMessage(hdr *types.Header, msg proto.Message) error {
 	switch hdr.Type {
 	case types.Type_HANDSHAKE:
-		return nil
+		return t.handleHandshake(hdr, msg)
 	case types.Type_PEERS:
 		return nil
 	case types.Type_ADDRBOOK:
@@ -161,11 +161,10 @@ func (t *Endpoint) handleHandshake(hdr *types.Header, m proto.Message) error {
 	if !ok {
 		return nil
 	}
+	t.Log.Info("HS", "handshake", handshake.Stage, "intents", len(handshake.Intents), "interests", len(handshake.Interests))
 	if handshake.Stage != p2ptypes.HandshakeStage_FINAL {
 		return nil
 	}
-
-	t.Log.Info("HS", "intents", handshake.Intents, "interests", handshake.Interests)
 
 	for _, i := range handshake.Intents {
 		if err := t.handleRemoteIntent(i); err != nil {
