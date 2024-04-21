@@ -1,0 +1,18 @@
+with-expecter: true
+packages:
+    github.com/itohio/dndm:
+        config:
+          filename: "mock_{{.InterfaceName}}.go"
+          dir: "testutil"
+          mockname: "Mock{{.InterfaceName}}"
+          outpkg: "testutil"
+        interfaces:
+            Intent:
+            IntentInternal:
+            Interest:
+            InterestInternal:
+            Endpoint:
+            Conn:
+            Dialer:
+            Node:
+            Server:

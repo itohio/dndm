@@ -26,10 +26,7 @@ proto:
 
 .PHONY: mocks
 mocks:
-	mockgen -source=intent.go -package testutil -destination=testutil/intent_mocks.go
-	mockgen -source=interest.go -package testutil -destination=testutil/interest_mocks.go
-	mockgen -source=endpoint.go -package testutil -destination=testutil/endpoint_mocks.go
-	mockgen -source=network/network.go -package testutil -destination=testutil/network_mocks.go
+	mockery
 
 .PHONY: gen
 gen:
@@ -73,6 +70,11 @@ run-bench:
 clean:
 	# Remove the build artifacts
 	rm -rf $(BUILDDIR)
+
+.PHONY: install-tools
+install-tools:
+	go install github.com/vektra/mockery/v2@v2.42.3
+
 
 
 .PHONY: help
