@@ -10,6 +10,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	_ Interest         = (*LocalInterest)(nil)
+	_ InterestInternal = (*LocalInterest)(nil)
+	_ Interest         = (*interestWrapper)(nil)
+	_ Interest         = (*InterestRouter)(nil)
+	_ CloseNotifier    = (*LocalInterest)(nil)
+	_ CloseNotifier    = (*InterestRouter)(nil)
+)
+
 // Interest is an interface to describe an interest in named data.
 // User should consume C of the interest until it is closed or no longer needed.
 // Messages will be delivered only when a corresponding Intent is discovered.
@@ -53,16 +62,28 @@ func (i *LocalInterest) Ctx() context.Context {
 }
 
 func (i *LocalInterest) Close() error {
-	err := i.closer()
-	if err != nil {
-		return err
+	if i.closer != nil {
+		err := i.closer()
+		if err != nil {
+			return err
+		}
 	}
 	i.once.Do(func() {
 		i.cancel()
 		close(i.msgC)
+		i.msgC = nil
 	})
-	i.msgC = nil
 	return nil
+}
+
+func (t *LocalInterest) OnClose(f func()) {
+	if f == nil {
+		return
+	}
+	go func() {
+		<-t.ctx.Done()
+		f()
+	}()
 }
 
 func (i *LocalInterest) Route() Route {
@@ -92,6 +113,7 @@ func (w *interestWrapper) C() <-chan proto.Message {
 	return w.c
 }
 
+// InterestRouter keeps track of same type interests and multiple subscribers.
 type InterestRouter struct {
 	mu        sync.RWMutex
 	wg        sync.WaitGroup
@@ -107,7 +129,7 @@ type InterestRouter struct {
 	once      sync.Once
 }
 
-func NewInterestRouter(ctx context.Context, route Route, closer func() error, size int, interests ...Interest) *InterestRouter {
+func NewInterestRouter(ctx context.Context, route Route, closer func() error, size int, interests ...Interest) (*InterestRouter, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	ret := &InterestRouter{
 		ctx:    ctx,
@@ -119,12 +141,18 @@ func NewInterestRouter(ctx context.Context, route Route, closer func() error, si
 	}
 
 	for _, i := range interests {
-		ret.AddInterest(i)
+		if !i.Route().Equal(route) {
+			return nil, errors.ErrInvalidRoute
+		}
+		if err := ret.AddInterest(i); err != nil {
+			return nil, err
+		}
 	}
 
-	return ret
+	return ret, nil
 }
 
+// Wrap returns a wrapped interest that collects messages from all registered interests.
 func (i *InterestRouter) Wrap() *interestWrapper {
 	ret := &interestWrapper{
 		router: i,
@@ -160,18 +188,19 @@ func (i *InterestRouter) removeWrapper(w *interestWrapper) error {
 	return i.Close()
 }
 
+// AddInterest registers an interest and sets up the routing.
 func (i *InterestRouter) AddInterest(interest Interest) error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
 	if !i.route.Equal(interest.Route()) {
 		return errors.ErrInvalidRoute
 	}
+	i.mu.Lock()
+	defer i.mu.Unlock()
 	if idx := slices.Index(i.interests, interest); idx >= 0 {
 		return nil
 	}
 
-	i.interests = append(i.interests, interest)
 	ctx, cancel := context.WithCancel(i.ctx)
+	i.interests = append(i.interests, interest)
 	i.cancels = append(i.cancels, cancel)
 	i.wg.Add(1)
 	go i.recvRunner(ctx, interest)
@@ -200,12 +229,14 @@ func (i *InterestRouter) recvRunner(ctx context.Context, interest Interest) {
 			return
 		case msg := <-interest.C():
 			if err := i.routeMsg(ctx, msg); err != nil {
+				i.RemoveInterest(interest)
 				return
 			}
 		}
 	}
 }
 
+// routeMsg routes message received by some interest to all wrappers.
 func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -223,13 +254,28 @@ func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 }
 
 func (i *InterestRouter) Close() error {
-	i.once.Do(func() { i.cancel() })
-	err := i.closer()
-	if err != nil {
-		return err
+	if i.closer != nil {
+		err := i.closer()
+		if err != nil {
+			return err
+		}
 	}
-	i.wg.Wait()
+	i.once.Do(func() {
+		i.cancel()
+		i.wg.Wait()
+		close(i.c)
+	})
 	return nil
+}
+
+func (i *InterestRouter) OnClose(f func()) {
+	if f == nil {
+		return
+	}
+	go func() {
+		<-i.ctx.Done()
+		f()
+	}()
 }
 
 func (i *InterestRouter) Route() Route {

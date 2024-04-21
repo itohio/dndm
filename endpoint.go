@@ -8,6 +8,10 @@ import (
 	"github.com/itohio/dndm/errors"
 )
 
+var (
+	_ CloseNotifier = (*Base)(nil)
+)
+
 // Endpoint is the interface that describes a End To End route.
 // Endpoint registers Interests and Intents and links them together when they match.
 type Endpoint interface {

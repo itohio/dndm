@@ -10,6 +10,11 @@ import (
 	"github.com/itohio/dndm/errors"
 )
 
+var (
+	_ Endpoint      = (*Container)(nil)
+	_ CloseNotifier = (*Container)(nil)
+)
+
 type Container struct {
 	*Base
 
@@ -147,7 +152,7 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir = NewIntentRouter(t.Ctx, route,
+	ir, err := NewIntentRouter(t.Ctx, route,
 		func() error {
 			t.mu.Lock()
 			defer t.mu.Unlock()
@@ -157,6 +162,10 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 		t.Size,
 		intents...,
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	t.intentRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
@@ -185,7 +194,7 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir = NewInterestRouter(t.Ctx, route,
+	ir, err := NewInterestRouter(t.Ctx, route,
 		func() error {
 			t.mu.Lock()
 			defer t.mu.Unlock()
@@ -195,6 +204,10 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 		t.Size,
 		interests...,
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	t.interestRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
