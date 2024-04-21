@@ -11,6 +11,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	_ Intent         = (*LocalIntent)(nil)
+	_ IntentInternal = (*LocalIntent)(nil)
+	_ Intent         = (*intentWrapper)(nil)
+	// _ IntentInternal = (*intentWrapper)(nil)
+	_ CloseNotifier = (*LocalIntent)(nil)
+	// _ CloseNotifier  = (*intentWrapper)(nil)
+)
+
 // Intent is an interface to describe an intent to provide named data.
 // Users can consume Interest channel to determine if it is worthwhile to send any data.
 type Intent interface {
@@ -61,9 +70,11 @@ func (i *LocalIntent) Ctx() context.Context {
 }
 
 func (i *LocalIntent) Close() error {
-	err := i.closer()
-	if err != nil {
-		return err
+	if i.closer != nil {
+		err := i.closer()
+		if err != nil {
+			return err
+		}
 	}
 	i.once.Do(func() {
 		i.cancel()
@@ -71,6 +82,16 @@ func (i *LocalIntent) Close() error {
 	})
 	i.linkedC = nil
 	return nil
+}
+
+func (t *LocalIntent) OnClose(f func()) {
+	if f == nil {
+		return
+	}
+	go func() {
+		<-t.ctx.Done()
+		f()
+	}()
 }
 
 func (i *LocalIntent) Route() Route {
@@ -151,6 +172,7 @@ func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
 	return w.router.Send(ctx, msg)
 }
 
+// IntentRouter keeps track of same type intents from different endpoints and multiple publishers.
 type IntentRouter struct {
 	mu       sync.RWMutex
 	wg       sync.WaitGroup
@@ -162,9 +184,10 @@ type IntentRouter struct {
 	cancels  []context.CancelFunc
 	wrappers []*intentWrapper
 	size     int
+	once     sync.Once
 }
 
-func NewIntentRouter(ctx context.Context, route Route, closer func() error, size int, intents ...Intent) *IntentRouter {
+func NewIntentRouter(ctx context.Context, route Route, closer func() error, size int, intents ...Intent) (*IntentRouter, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	ret := &IntentRouter{
 		ctx:    ctx,
@@ -174,11 +197,15 @@ func NewIntentRouter(ctx context.Context, route Route, closer func() error, size
 		closer: closer,
 	}
 	for _, i := range intents {
+		if !i.Route().Equal(route) {
+			return nil, errors.ErrInvalidRoute
+		}
 		ret.AddIntent(i)
 	}
-	return ret
+	return ret, nil
 }
 
+// Wrap returns a wrapped intent. Messages sent to this wrapped intent will be sent to all the registered intents.
 func (i *IntentRouter) Wrap() *intentWrapper {
 	ret := &intentWrapper{
 		router:  i,
@@ -213,6 +240,7 @@ func (i *IntentRouter) removeWrapper(w *intentWrapper) error {
 	return i.Close()
 }
 
+// AddIntent adds a new intent of the same type, creates a notify runner and links wrappers to it.
 func (i *IntentRouter) AddIntent(intent Intent) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -220,10 +248,10 @@ func (i *IntentRouter) AddIntent(intent Intent) error {
 		return errors.ErrInvalidRoute
 	}
 	ctx, cancel := context.WithCancel(i.ctx)
-	i.wg.Add(1)
-	go i.notifyRunner(ctx, intent)
 	i.intents = append(i.intents, intent)
 	i.cancels = append(i.cancels, cancel)
+	i.wg.Add(1)
+	go i.notifyRunner(ctx, intent)
 	return nil
 }
 
@@ -249,12 +277,14 @@ func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {
 			return
 		case notification := <-intent.Interest():
 			if err := i.notifyWrappers(ctx, notification); err != nil {
+				i.RemoveIntent(intent)
 				return
 			}
 		}
 	}
 }
 
+// notifyWrappers notifies all the registered wrappers
 func (i *IntentRouter) notifyWrappers(ctx context.Context, route Route) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
@@ -274,14 +304,28 @@ func (i *IntentRouter) notifyWrappers(ctx context.Context, route Route) error {
 }
 
 func (i *IntentRouter) Close() error {
-	i.closer()
-	i.cancel()
-	errarr := make([]error, len(i.intents))
-	for i, intent := range i.intents {
-		errarr[i] = intent.Close()
+	if i.closer != nil {
+		err := i.closer()
+		if err != nil {
+			return err
+		}
 	}
-	i.wg.Wait()
-	return errors.Join(errarr...)
+	i.cancel()
+	i.once.Do(func() {
+		i.cancel()
+		i.wg.Wait()
+	})
+	return nil
+}
+
+func (i *IntentRouter) OnClose(f func()) {
+	if f == nil {
+		return
+	}
+	go func() {
+		<-i.ctx.Done()
+		f()
+	}()
 }
 
 func (i *IntentRouter) Route() Route {
@@ -299,8 +343,8 @@ func (i *IntentRouter) Send(ctx context.Context, msg proto.Message) error {
 	for i, intent := range i.intents {
 		wg.Add(1)
 		go func(i int, intent Intent) {
-			defer wg.Done()
 			errarr[i] = intent.Send(ctx, msg)
+			wg.Done()
 		}(i, intent)
 	}
 	wg.Wait()

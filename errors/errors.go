@@ -9,6 +9,7 @@ var (
 	Unwrap = errors.Unwrap
 	New    = errors.New
 
+	ErrClosed          = errors.New("closed")
 	ErrNotEnoughBytes  = errors.New("not enough bytes")
 	ErrNotFound        = errors.New("not found")
 	ErrRetry           = errors.New("will retry")

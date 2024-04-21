@@ -69,7 +69,7 @@ func (d *Router) addInterest(interest Interest, t Endpoint) error {
 			return
 		}
 
-		ir = NewInterestRouter(d.ctx, route,
+		ir, err := NewInterestRouter(d.ctx, route,
 			func() error {
 				d.mu.Lock()
 				defer d.mu.Unlock()
@@ -79,6 +79,9 @@ func (d *Router) addInterest(interest Interest, t Endpoint) error {
 			d.size,
 			interest,
 		)
+		if err != nil {
+			panic(err)
+		}
 		d.interestRouters[route.ID()] = ir
 	}()
 
@@ -124,7 +127,7 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (Intent,
 		return ir.Wrap(), nil
 	}
 
-	ir = NewIntentRouter(d.ctx, route,
+	ir, err = NewIntentRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
@@ -134,6 +137,9 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (Intent,
 		d.size,
 		intents...,
 	)
+	if err != nil {
+		return nil, err
+	}
 	d.intentRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
@@ -163,7 +169,7 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (Inter
 		return ir.Wrap(), nil
 	}
 
-	ir = NewInterestRouter(d.ctx, route,
+	ir, err = NewInterestRouter(d.ctx, route,
 		func() error {
 			d.mu.Lock()
 			defer d.mu.Unlock()
@@ -173,6 +179,10 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (Inter
 		d.size,
 		interests...,
 	)
+	if err != nil {
+		return nil, err
+	}
+
 	d.interestRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
