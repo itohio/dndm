@@ -15,7 +15,8 @@ import (
 )
 
 func TestNewIntent(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 	called := false
@@ -83,7 +84,8 @@ func TestLocalIntent_Send(t *testing.T) {
 }
 
 func TestLocalIntent_Link(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 	intent := NewIntent(ctx, route, 10, nil)
@@ -166,12 +168,15 @@ func TestIntentRouter_WrapAndSend(t *testing.T) {
 	err = w2.Send(ctx, &testtypes.Foo{Text: "B"})
 	assert.NoError(t, err)
 
+	router.Close()
+
 	mockIntent1.AssertExpectations(t)
 	mockIntent2.AssertExpectations(t)
 }
 
 func TestIntentRouter_Close(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 	closerCalled := false
@@ -188,7 +193,8 @@ func TestIntentRouter_Close(t *testing.T) {
 }
 
 func TestIntentRouter_NotifyWrappers(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 	closer := func() error { return nil }
