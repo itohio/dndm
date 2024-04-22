@@ -18,6 +18,7 @@ import (
 
 var _ network.Conn = (*StreamContext)(nil)
 var _ network.Conn = (*Stream)(nil)
+var _ dndm.CloseNotifier = (*Stream)(nil)
 
 // StreamContext is a wrapper over ReadWriter that will read and decode messages from Reader as well as encode and write them to the Writer. It allows
 // using regular Reader/Writer interfaces with a context, however, it must be noted that the read/write loop will be leaked if Read/Write blocks.
@@ -215,6 +216,7 @@ func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[type
 		rw:         rw,
 		handlers:   handlers,
 		done:       make(chan struct{}),
+		routes:     make(map[string]dndm.Route),
 	}
 }
 

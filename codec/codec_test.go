@@ -8,6 +8,8 @@ import (
 	"github.com/itohio/dndm"
 	types "github.com/itohio/dndm/types/core"
 	testtypes "github.com/itohio/dndm/types/test"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -73,26 +75,18 @@ func TestDecodeMessage(t *testing.T) {
 					Ttl:   456,
 				}
 				r, err := dndm.NewRoute("my-route", &testtypes.Foo{})
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				buf, err := EncodeMessage(i, r)
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				return buf, map[string]dndm.Route{}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
-				if h.Type != types.Type_INTENT {
-					t.Errorf("DecodeMessage() type != Intent")
-				}
+				assert.Equal(t, types.Type_INTENT, h.Type)
 				mm, ok := m.(*types.Intent)
-				if !ok {
-					t.Errorf("DecodeMessage() != Intent")
-				}
-				if mm.Route != "id" || mm.Hops != 123 || mm.Ttl != 456 {
-					t.Errorf("DecodeMessage() = %v", mm)
-				}
+				assert.True(t, ok)
+				assert.Equal(t, "id", mm.Route)
+				assert.Equal(t, uint64(123), mm.Hops)
+				assert.Equal(t, uint64(456), mm.Ttl)
 			},
 			wantErr: false,
 		},
@@ -105,26 +99,18 @@ func TestDecodeMessage(t *testing.T) {
 					Ttl:   456,
 				}
 				r, err := dndm.NewRoute("my-route", &testtypes.Foo{})
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				buf, err := EncodeMessage(i, r)
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				return buf, map[string]dndm.Route{}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
-				if h.Type != types.Type_INTEREST {
-					t.Errorf("DecodeMessage() type != Interest")
-				}
+				assert.Equal(t, types.Type_INTEREST, h.Type)
 				mm, ok := m.(*types.Interest)
-				if !ok {
-					t.Errorf("DecodeMessage() != Interest")
-				}
-				if mm.Route != "id" || mm.Hops != 123 || mm.Ttl != 456 {
-					t.Errorf("DecodeMessage() = %v", mm)
-				}
+				assert.True(t, ok)
+				assert.Equal(t, "id", mm.Route)
+				assert.Equal(t, uint64(123), mm.Hops)
+				assert.Equal(t, uint64(456), mm.Ttl)
 			},
 			wantErr: false,
 		},
@@ -135,26 +121,16 @@ func TestDecodeMessage(t *testing.T) {
 					Text: "some-important-text",
 				}
 				r, err := dndm.NewRoute("my-route", &testtypes.Foo{})
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				buf, err := EncodeMessage(i, r)
-				if err != nil {
-					panic(err)
-				}
+				require.NoError(t, err)
 				return buf, map[string]dndm.Route{r.ID(): r}
 			},
 			inspect: func(t *testing.T, h *types.Header, m proto.Message) {
-				if h.Type != types.Type_MESSAGE {
-					t.Errorf("DecodeMessage() type != Message")
-				}
+				assert.Equal(t, types.Type_MESSAGE, h.Type)
 				mm, ok := m.(*testtypes.Foo)
-				if !ok {
-					t.Errorf("DecodeMessage() != TextMessage")
-				}
-				if mm.Text != "some-important-text" {
-					t.Errorf("DecodeMessage() = %v", mm)
-				}
+				assert.True(t, ok)
+				assert.Equal(t, "some-important-text", mm.Text)
 			},
 			wantErr: false,
 		},
@@ -165,14 +141,10 @@ func TestDecodeMessage(t *testing.T) {
 			defer buffers.Put(data)
 
 			tMagic := binary.BigEndian.Uint32(data)
-			if tMagic != MagicNumber {
-				t.Errorf("EncodeMessage() want MagicNumber=%d got %d", MagicNumber, tMagic)
-			}
+			assert.Equal(t, uint32(MagicNumber), tMagic)
 
 			tSize := binary.BigEndian.Uint32(data[4:])
-			if tSize+8 != uint32(len(data)) {
-				t.Errorf("EncodeMessage() want BufSize=%d got BufSize=%d", tSize+8, len(data))
-			}
+			assert.Equal(t, tSize+8, uint32(len(data)))
 
 			buf := bytes.NewBuffer(append(data, make([]byte, 1024)...))
 			data, _, err := ReadMessage(buf)

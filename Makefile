@@ -47,7 +47,8 @@ vulncheck: $(BUILDDIR)/
 
 .PHONY: cover
 cover:
-	go test -coverprofile=.coverage .
+	go test -coverprofile=.coverage.tmp ./...
+	cat .coverage.tmp | grep -Ev '/mock_|/.*options.go' > .coverage
 	go tool cover -func=.coverage
 
 .PHONY: test

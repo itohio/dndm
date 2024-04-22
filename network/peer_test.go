@@ -2,40 +2,88 @@ package network
 
 import (
 	"net/url"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+func TestPeer_String(t *testing.T) {
+	args := url.Values{}
+	args.Add("key", "value")
+	peer := Peer{
+		scheme: "tcp",
+		addr:   "example.com",
+		path:   "path",
+		args:   args,
+	}
+	expected := "tcp://example.com/path?key=value"
+	assert.Equal(t, expected, peer.String())
+}
+
+func TestNewPeer(t *testing.T) {
+	args := url.Values{}
+	args.Add("key", "value")
+	peer, err := NewPeer("tcp", "example.com", "path", args)
+	assert.NoError(t, err)
+	assert.Equal(t, "tcp", peer.Scheme())
+	assert.Equal(t, "example.com", peer.Address())
+	assert.Equal(t, "path", peer.Path())
+	assert.Equal(t, "value", peer.Values().Get("key"))
+}
+
 func TestPeerFromString(t *testing.T) {
-	tests := []struct {
-		name    string
-		want    Peer
-		wantErr bool
-	}{
-		{
-			name: "tcp://localhost:123/peer-id?value=val",
-			want: Peer{
-				scheme: "tcp",
-				addr:   "localhost:123",
-				path:   "peer-id",
-				args:   url.Values{"value": []string{"val"}},
-			},
-			wantErr: false,
-		},
+	input := "tcp://example.com:123/path?key=value"
+	peer, err := PeerFromString(input)
+	assert.NoError(t, err)
+	assert.Equal(t, "tcp", peer.Scheme())
+	assert.Equal(t, "example.com:123", peer.Address())
+	assert.Equal(t, "path", peer.Path())
+	assert.Equal(t, "value", peer.Values().Get("key"))
+}
+
+func TestPeer_Values(t *testing.T) {
+	args := url.Values{}
+	args.Add("key", "value")
+	peer := Peer{args: args}
+	assert.Equal(t, "value", peer.Values().Get("key"))
+}
+
+func TestPeer_Address(t *testing.T) {
+	peer := Peer{addr: "example.com:123"}
+	assert.Equal(t, "example.com:123", peer.Address())
+}
+
+func TestPeer_Path(t *testing.T) {
+	peer := Peer{path: "path"}
+	assert.Equal(t, "path", peer.Path())
+}
+
+func TestPeer_Scheme(t *testing.T) {
+	peer := Peer{scheme: "tcp"}
+	assert.Equal(t, "tcp", peer.Scheme())
+}
+
+func TestPeer_Equal(t *testing.T) {
+	args := url.Values{}
+	args.Add("key", "value")
+	peer1 := Peer{
+		scheme: "tcp",
+		addr:   "example.com",
+		path:   "path",
+		args:   args,
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := PeerFromString(tt.name)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("PeerFromString() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PeerFromString() = %v, want %v", got, tt.want)
-			}
-			if got.String() != tt.name {
-				t.Errorf("PeerFromString() = %v, want %v", got, tt.name)
-			}
-		})
+	peer2 := Peer{
+		scheme: "tcp",
+		addr:   "example.com",
+		path:   "different",
+		args:   args,
 	}
+	peer3 := Peer{
+		scheme: "udp",
+		addr:   "example.com",
+		path:   "path",
+		args:   args,
+	}
+	assert.True(t, peer1.Equal(peer2))
+	assert.False(t, peer1.Equal(peer3))
 }
