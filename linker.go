@@ -13,6 +13,7 @@ type InterestCallback func(interest Interest) error
 type IntentWrapperFunc func(IntentInternal) (IntentInternal, error)
 type InterestWrapperFunc func(InterestInternal) (InterestInternal, error)
 
+// Linker matches intents with interests and links them together.
 type Linker struct {
 	ctx            context.Context
 	log            *slog.Logger
@@ -24,6 +25,7 @@ type Linker struct {
 	removeCallback InterestCallback
 	beforeLink     func(Intent, Interest) error
 	links          map[string]*Link
+	once           sync.Once
 }
 
 func NewLinker(ctx context.Context, log *slog.Logger, size int, add, remove InterestCallback, beforeLink func(Intent, Interest) error) *Linker {
@@ -47,28 +49,26 @@ func NewLinker(ctx context.Context, log *slog.Logger, size int, add, remove Inte
 
 func (t *Linker) Close() error {
 	errarr := make([]error, 0, len(t.links))
-	for _, i := range t.interests {
-		err := i.Close()
-		if err != nil {
-			errarr = append(errarr, err)
-		}
-	}
-	for _, i := range t.intents {
-		err := i.Close()
-		if err != nil {
-			errarr = append(errarr, err)
-		}
-	}
 
-	t.mu.Lock()
-	t.intents = nil
-	t.interests = nil
-	t.links = nil
-	t.mu.Unlock()
+	t.once.Do(func() {
+		for _, i := range t.intents {
+			err := i.Close()
+			if err != nil {
+				errarr = append(errarr, err)
+			}
+		}
+		for _, i := range t.interests {
+			err := i.Close()
+			if err != nil {
+				errarr = append(errarr, err)
+			}
+		}
+	})
 
 	return errors.Join(errarr...)
 }
 
+// Intent returns an intent identified by a route if found.
 func (t *Linker) Intent(route Route) (Intent, bool) {
 	t.mu.Lock()
 	intent, ok := t.intents[route.ID()]
@@ -76,12 +76,14 @@ func (t *Linker) Intent(route Route) (Intent, bool) {
 	return intent, ok
 }
 
+// AddIntent registers an intent and if a match is found links it with an interest.
 func (t *Linker) AddIntent(route Route) (Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.addIntentLocked(route, func(ii IntentInternal) (IntentInternal, error) { return ii, nil })
 }
 
+// AddIntentWithWrapper same as AddIntent, but allows to provide a wrapper that wraps the intent.
 func (t *Linker) AddIntentWithWrapper(route Route, wrapper IntentWrapperFunc) (Intent, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -120,6 +122,7 @@ func (t *Linker) RemoveIntent(route Route) error {
 	return nil
 }
 
+// Interest returns an interest identified by a route if found.
 func (t *Linker) Interest(route Route) (Interest, bool) {
 	t.mu.Lock()
 	interest, ok := t.interests[route.ID()]
@@ -127,12 +130,14 @@ func (t *Linker) Interest(route Route) (Interest, bool) {
 	return interest, ok
 }
 
+// AddInterest registers an interest and if a match is found links it with an intent.
 func (t *Linker) AddInterest(route Route) (Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.addInterestLocked(route, func(ii InterestInternal) (InterestInternal, error) { return ii, nil })
 }
 
+// AddInterestWithWrapper same as AddInterest, but allows providing a wrapper for the interest.
 func (t *Linker) AddInterestWithWrapper(route Route, wrapper InterestWrapperFunc) (Interest, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -171,11 +176,22 @@ func (t *Linker) addInterestLocked(route Route, wrapper InterestWrapperFunc) (In
 	return interest, nil
 }
 
+// RemoveInterest removes and unlinks an interest. This should be called inside the closer of the interest.
 func (t *Linker) RemoveInterest(route Route) error {
 	t.mu.Lock()
-	t.unlink(route)
-	delete(t.interests, route.ID())
+	i, ok := t.interests[route.ID()]
+	var link *Link
+	if ok {
+		link = t.unlink(route)
+		delete(t.interests, route.ID())
+	}
 	t.mu.Unlock()
+	if link != nil {
+		link.Unlink()
+	}
+	if ok {
+		return t.removeCallback(i)
+	}
 	return nil
 }
 
@@ -195,7 +211,7 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 
 	link := NewLink(t.ctx, intent, interest, func() error {
 		t.mu.Lock()
-		t.unlink(route)
+		_ = t.unlink(route)
 		t.mu.Unlock()
 		return nil
 	})
@@ -205,12 +221,12 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 	return nil
 }
 
-func (t *Linker) unlink(route Route) {
+func (t *Linker) unlink(route Route) *Link {
 	link, ok := t.links[route.ID()]
 	if !ok {
-		return
+		return nil
 	}
-	link.Unlink()
 	delete(t.links, route.ID())
 	t.log.Info("unlinked", "route", route)
+	return link
 }

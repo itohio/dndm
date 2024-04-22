@@ -12,10 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func ctxRecv[T any](ctx context.Context, c <-chan T) {
+func ctxRecv[T any](ctx context.Context, c <-chan T) bool {
 	select {
 	case <-ctx.Done():
+		return false
 	case <-c:
+		return true
 	}
 }
 
@@ -48,7 +50,8 @@ func sendChan[T any](c chan<- T, v T, t time.Duration) error {
 }
 
 func TestNewInterest(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 	called := false
