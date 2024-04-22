@@ -133,6 +133,15 @@ func TestLinker_AddIntentInterest(t *testing.T) {
 	assert.Contains(t, linker.intents, route.ID())
 
 	assert.True(t, ctxRecv(ctx, beforeLinkCalled))
+	assert.True(t, ctxRecv(ctx, resultIntent.Interest()))
+
+	msg := &testtypes.Foo{Text: "text"}
+	err = resultIntent.Send(ctx, msg)
+	assert.NoError(t, err)
+
+	v, err := recvChan(resultInterest.C(), time.Millisecond)
+	assert.NoError(t, err)
+	assert.Equal(t, msg, v)
 
 	err = linker.RemoveInterest(route)
 	assert.NoError(t, err)
