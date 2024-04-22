@@ -14,6 +14,8 @@ import (
 
 var _ network.Node = (*Node)(nil)
 
+// var _ dndm.CloseNotifier = (*Node)(nil)
+
 type Node struct {
 	peer network.Peer
 }

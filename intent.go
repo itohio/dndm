@@ -197,10 +197,9 @@ func NewIntentRouter(ctx context.Context, route Route, closer func() error, size
 		closer: closer,
 	}
 	for _, i := range intents {
-		if !i.Route().Equal(route) {
-			return nil, errors.ErrInvalidRoute
+		if err := ret.AddIntent(i); err != nil {
+			return nil, err
 		}
-		ret.AddIntent(i)
 	}
 	return ret, nil
 }
@@ -276,6 +275,7 @@ func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {
 		case <-ctx.Done():
 			return
 		case notification := <-intent.Interest():
+			_ = notification
 			if err := i.notifyWrappers(ctx, notification); err != nil {
 				i.RemoveIntent(intent)
 				return
@@ -286,8 +286,8 @@ func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {
 
 // notifyWrappers notifies all the registered wrappers
 func (i *IntentRouter) notifyWrappers(ctx context.Context, route Route) error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
+	i.mu.RLock()
+	defer i.mu.RUnlock()
 	for _, w := range i.wrappers {
 		select {
 		case <-ctx.Done():
@@ -335,6 +335,11 @@ func (i *IntentRouter) Route() Route {
 func (i *IntentRouter) Send(ctx context.Context, msg proto.Message) error {
 	if reflect.TypeOf(msg) != i.route.Type() {
 		return errors.ErrInvalidType
+	}
+	select {
+	case <-i.ctx.Done():
+		return errors.ErrClosed
+	default:
 	}
 	i.mu.RLock()
 	defer i.mu.RUnlock()

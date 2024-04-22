@@ -141,9 +141,6 @@ func NewInterestRouter(ctx context.Context, route Route, closer func() error, si
 	}
 
 	for _, i := range interests {
-		if !i.Route().Equal(route) {
-			return nil, errors.ErrInvalidRoute
-		}
 		if err := ret.AddInterest(i); err != nil {
 			return nil, err
 		}
