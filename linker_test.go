@@ -95,7 +95,7 @@ func TestLinker_AddRemoveInterest(t *testing.T) {
 	assert.Equal(t, context.DeadlineExceeded, linker.ctx.Err())
 }
 
-func TestLinker_AddIntentInterest(t *testing.T) {
+func TestLinker_AddIntentInterestSend(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
@@ -131,6 +131,67 @@ func TestLinker_AddIntentInterest(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, resultIntent)
 	assert.Contains(t, linker.intents, route.ID())
+
+	assert.True(t, ctxRecv(ctx, beforeLinkCalled))
+	assert.True(t, ctxRecv(ctx, resultIntent.Interest()))
+
+	msg := &testtypes.Foo{Text: "text"}
+	err = resultIntent.Send(ctx, msg)
+	assert.NoError(t, err)
+
+	v, err := recvChan(resultInterest.C(), time.Millisecond)
+	assert.NoError(t, err)
+	assert.Equal(t, msg, v)
+
+	err = linker.RemoveInterest(route)
+	assert.NoError(t, err)
+	assert.NotContains(t, linker.interests, route.ID())
+
+	assert.True(t, ctxRecv(ctx, delCalled))
+
+	linker.Close()
+
+	<-linker.ctx.Done()
+
+	assert.Equal(t, context.DeadlineExceeded, linker.ctx.Err())
+}
+
+func TestLinker_AddInterestIntentSend(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	defer cancel()
+
+	addCalled := make(chan struct{})
+	delCalled := make(chan struct{})
+	beforeLinkCalled := make(chan struct{})
+	linker := NewLinker(ctx, slog.Default(), 10,
+		func(interest Interest) error {
+			close(addCalled)
+			return nil
+		},
+		func(interest Interest) error {
+			close(delCalled)
+			return nil
+		},
+		func(i1 Intent, i2 Interest) error {
+			close(beforeLinkCalled)
+			return nil
+		},
+	)
+
+	route, err := NewRoute("path", &testtypes.Foo{})
+	require.NoError(t, err)
+
+	resultIntent, err := linker.AddIntent(route)
+	assert.NoError(t, err)
+	assert.NotNil(t, resultIntent)
+	assert.Contains(t, linker.intents, route.ID())
+
+	resultInterest, err := linker.AddInterest(route)
+	assert.NoError(t, err)
+	assert.NotNil(t, resultInterest)
+	assert.Contains(t, linker.interests, route.ID())
+
+	assert.True(t, ctxRecv(ctx, addCalled))
 
 	assert.True(t, ctxRecv(ctx, beforeLinkCalled))
 	assert.True(t, ctxRecv(ctx, resultIntent.Interest()))
