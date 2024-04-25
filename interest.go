@@ -14,16 +14,16 @@ var (
 	_ Interest         = (*LocalInterest)(nil)
 	_ InterestInternal = (*LocalInterest)(nil)
 	_ Interest         = (*interestWrapper)(nil)
-	_ Interest         = (*InterestRouter)(nil)
-	_ CloseNotifier    = (*LocalInterest)(nil)
-	_ CloseNotifier    = (*InterestRouter)(nil)
 )
+
+type InterestCallback func(interest Interest, ep Endpoint) error
 
 // Interest is an interface to describe an interest in named data.
 // User should consume C of the interest until it is closed or no longer needed.
 // Messages will be delivered only when a corresponding Intent is discovered.
 type Interest interface {
 	io.Closer
+	OnClose(func()) Interest
 	Route() Route
 	// C returns a channel that contains messages. Users should typecast to specific message type that
 	// was registered with the interest.
@@ -38,52 +38,25 @@ type InterestInternal interface {
 }
 
 type LocalInterest struct {
-	ctx    context.Context
-	cancel context.CancelFunc
-	route  Route
-	msgC   chan proto.Message
-	closer func() error
-	once   sync.Once
+	BaseCtx
+	route Route
+	msgC  chan proto.Message
 }
 
-func NewInterest(ctx context.Context, route Route, size int, closer func() error) *LocalInterest {
-	ctx, cancel := context.WithCancel(ctx)
-	return &LocalInterest{
-		ctx:    ctx,
-		cancel: cancel,
-		route:  route,
-		closer: closer,
-		msgC:   make(chan proto.Message, size),
+func NewInterest(ctx context.Context, route Route, size int) *LocalInterest {
+	ret := &LocalInterest{
+		BaseCtx: NewBaseCtx(),
+		route:   route,
+		msgC:    make(chan proto.Message, size),
 	}
+	ret.Init(ctx)
+	ret.OnClose(func() { close(ret.msgC) })
+	return ret
 }
 
-func (i *LocalInterest) Ctx() context.Context {
-	return i.ctx
-}
-
-func (i *LocalInterest) Close() error {
-	if i.closer != nil {
-		err := i.closer()
-		if err != nil {
-			return err
-		}
-	}
-	i.once.Do(func() {
-		i.cancel()
-		close(i.msgC)
-		i.msgC = nil
-	})
-	return nil
-}
-
-func (t *LocalInterest) OnClose(f func()) {
-	if f == nil {
-		return
-	}
-	go func() {
-		<-t.ctx.Done()
-		f()
-	}()
+func (t *LocalInterest) OnClose(f func()) Interest {
+	t.AddOnClose(f)
+	return t
 }
 
 func (i *LocalInterest) Route() Route {
@@ -99,12 +72,14 @@ func (i *LocalInterest) MsgC() chan<- proto.Message {
 }
 
 type interestWrapper struct {
+	BaseCtx
 	router *InterestRouter
 	c      chan proto.Message
 }
 
-func (w *interestWrapper) Close() error {
-	return w.router.removeWrapper(w)
+func (w *interestWrapper) OnClose(f func()) Interest {
+	w.BaseCtx.AddOnClose(f)
+	return w
 }
 func (w *interestWrapper) Route() Route {
 	return w.router.route
@@ -115,30 +90,25 @@ func (w *interestWrapper) C() <-chan proto.Message {
 
 // InterestRouter keeps track of same type interests and multiple subscribers.
 type InterestRouter struct {
+	BaseCtx
 	mu        sync.RWMutex
 	wg        sync.WaitGroup
-	ctx       context.Context
-	cancel    context.CancelFunc
 	route     Route
-	closer    func() error
 	c         chan proto.Message
 	interests []Interest
 	cancels   []context.CancelFunc
 	wrappers  []*interestWrapper
 	size      int
-	once      sync.Once
 }
 
-func NewInterestRouter(ctx context.Context, route Route, closer func() error, size int, interests ...Interest) (*InterestRouter, error) {
-	ctx, cancel := context.WithCancel(ctx)
+func NewInterestRouter(ctx context.Context, route Route, size int, interests ...Interest) (*InterestRouter, error) {
 	ret := &InterestRouter{
-		ctx:    ctx,
-		cancel: cancel,
-		closer: closer,
-		route:  route,
-		c:      make(chan proto.Message, size),
-		size:   size,
+		BaseCtx: NewBaseCtx(),
+		route:   route,
+		c:       make(chan proto.Message, size),
+		size:    size,
 	}
+	ret.Init(ctx)
 
 	for _, i := range interests {
 		if err := ret.AddInterest(i); err != nil {
@@ -152,8 +122,9 @@ func NewInterestRouter(ctx context.Context, route Route, closer func() error, si
 // Wrap returns a wrapped interest that collects messages from all registered interests.
 func (i *InterestRouter) Wrap() *interestWrapper {
 	ret := &interestWrapper{
-		router: i,
-		c:      make(chan proto.Message, i.size),
+		BaseCtx: NewBaseCtxWithCtx(i.ctx),
+		router:  i,
+		c:       make(chan proto.Message, i.size),
 	}
 
 	i.addWrapper(ret)
@@ -164,6 +135,10 @@ func (i *InterestRouter) Wrap() *interestWrapper {
 func (i *InterestRouter) addWrapper(w *interestWrapper) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
+	w.OnClose(func() {
+		i.removeWrapper(w)
+		close(w.c)
+	})
 	i.wrappers = append(i.wrappers, w)
 }
 
@@ -176,7 +151,6 @@ func (i *InterestRouter) removeWrapper(w *interestWrapper) error {
 	if idx >= 0 {
 		i.wrappers = slices.Delete(i.wrappers, idx, idx+1)
 	}
-	close(w.c)
 
 	if len(i.wrappers) > 0 {
 		return nil
@@ -251,28 +225,17 @@ func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 }
 
 func (i *InterestRouter) Close() error {
-	if i.closer != nil {
-		err := i.closer()
-		if err != nil {
-			return err
-		}
-	}
-	i.once.Do(func() {
-		i.cancel()
+	i.AddOnClose(func() {
 		i.wg.Wait()
 		close(i.c)
 	})
+	i.BaseCtx.Close()
 	return nil
 }
 
-func (i *InterestRouter) OnClose(f func()) {
-	if f == nil {
-		return
-	}
-	go func() {
-		<-i.ctx.Done()
-		f()
-	}()
+func (i *InterestRouter) OnClose(f func()) *InterestRouter {
+	i.AddOnClose(f)
+	return i
 }
 
 func (i *InterestRouter) Route() Route {

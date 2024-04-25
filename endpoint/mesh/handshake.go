@@ -35,7 +35,7 @@ type Container interface {
 }
 
 type Handshaker struct {
-	*dndm.Base
+	*dndm.BaseEndpoint
 
 	state        HandshakeState
 	hsCount      int
@@ -63,7 +63,7 @@ type Handshaker struct {
 //	2. HS_DONE
 func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeout, pingDuration time.Duration, rw io.ReadWriter, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
-		Base:         dndm.NewBase(remotePeer.String(), size),
+		BaseEndpoint: dndm.NewBase(remotePeer.String(), size),
 		state:        state,
 		rw:           rw,
 		timeout:      timeout,
@@ -74,6 +74,11 @@ func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeou
 	}
 
 	return ret
+}
+
+func (h *Handshaker) OnClose(f func()) dndm.Endpoint {
+	h.AddOnClose(f)
+	return h
 }
 
 func (h *Handshaker) Close() error {
@@ -91,7 +96,7 @@ func (h *Handshaker) Close() error {
 		h.rw = nil
 	}
 
-	errarr = append(errarr, h.Base.Close())
+	errarr = append(errarr, h.BaseEndpoint.Close())
 
 	return errors.Join(errarr...)
 }
@@ -127,16 +132,16 @@ func (h *Handshaker) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Inter
 }
 
 // Init is used by the Router to initialize this transport.
-func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
+func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dndm.IntentCallback, addInterest dndm.InterestCallback) error {
 	if h.remote.Load() != nil {
 		panic("h.endpoint != nil")
 	}
 
-	if err := h.Base.Init(ctx, logger, add, remove); err != nil {
+	if err := h.BaseEndpoint.Init(ctx, logger, addIntent, addInterest); err != nil {
 		return err
 	}
 
-	h.conn = stream.NewWithContext(h.Ctx,
+	h.conn = stream.NewWithContext(h.Ctx(),
 		h.addrbook.Self(), h.remotePeer,
 		h.rw, map[types.Type]network.MessageHandler{
 			types.Type_HANDSHAKE: h.handshakeMsg,
@@ -147,7 +152,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 
 	tr := remote.New(h.remotePeer, h.conn, h.Size, h.timeout, h.pingDuration)
 
-	err := tr.Init(h.Ctx, logger, add, remove)
+	err := tr.Init(h.Ctx(), logger, addIntent, addInterest)
 	if err != nil {
 		return err
 	}
@@ -162,7 +167,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 		h.addrbook.AddConn(h.remotePeer, true, h.conn)
 		h.state = HS_WAIT
 		h.Log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
-		h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
+		h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
 			You:       h.remotePeer.String(),
 			Stage:     p2ptypes.HandshakeStage_INITIAL,
@@ -172,7 +177,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, add, remove 
 	}
 
 	go func() {
-		<-h.Ctx.Done()
+		<-h.Ctx().Done()
 		h.Close()
 	}()
 	return nil
@@ -211,7 +216,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		h.remotePeer = peer
 		h.addrbook.AddConn(h.remotePeer, false, h.conn)
 
-		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Handshake{
+		err = h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
 			You:       peer.String(),
 			Stage:     p2ptypes.HandshakeStage_FINAL,
@@ -231,7 +236,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 			return true, nil
 		}
 
-		err = h.conn.Write(h.Ctx, dndm.Route{}, &p2ptypes.Peers{
+		err = h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Peers{
 			Remove: false,
 			Ids:    activePeers,
 		})

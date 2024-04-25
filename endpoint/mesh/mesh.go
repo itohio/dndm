@@ -18,11 +18,10 @@ var _ dndm.Endpoint = (*Endpoint)(nil)
 const NumDialers = 10
 
 type Endpoint struct {
-	*dndm.Base
+	*dndm.Container
 	timeout      time.Duration
 	pingDuration time.Duration
 	dialer       network.Dialer
-	container    *dndm.Container
 	localPeer    network.Peer
 
 	addrbook *Addrbook
@@ -30,12 +29,11 @@ type Endpoint struct {
 
 func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Endpoint, error) {
 	ret := &Endpoint{
-		Base:         dndm.NewBase(localPeer.String(), size),
+		Container:    dndm.NewContainer(localPeer.String(), size),
 		localPeer:    localPeer,
 		timeout:      timeout,
 		pingDuration: pingDuration,
 		dialer:       node,
-		container:    dndm.NewContainer(localPeer.String(), size),
 	}
 	ret.addrbook = NewAddrbook(localPeer, peers, 3)
 
@@ -46,18 +44,15 @@ func (t *Endpoint) Addrbook() []*p2ptypes.AddrbookEntry {
 	return t.addrbook.Addrbook()
 }
 
-func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
+func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm.IntentCallback, addInterest dndm.InterestCallback) error {
 	eg, ctx := errgroup.WithContext(ctx)
-	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
-		return err
-	}
-	if err := t.container.Init(t.Ctx, logger, add, remove); err != nil {
+	if err := t.Container.Init(ctx, logger, addIntent, addInterest); err != nil {
 		return err
 	}
 
 	if server, ok := t.dialer.(network.Server); ok {
 		eg.Go(func() error {
-			err := server.Serve(t.Ctx, t.onConnect)
+			err := server.Serve(ctx, t.onConnect)
 			return err
 		})
 	}
@@ -72,8 +67,7 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 func (t *Endpoint) Close() error {
 	t.Log.Info("Mesh.Close")
 	errarr := make([]error, 0, 3)
-	errarr = append(errarr, t.Base.Close())
-	errarr = append(errarr, t.container.Close())
+	errarr = append(errarr, t.Container.Close())
 	if closer, ok := t.dialer.(io.Closer); ok {
 		errarr = append(errarr, closer.Close())
 	}
@@ -81,9 +75,9 @@ func (t *Endpoint) Close() error {
 }
 
 func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
-	return t.container.Publish(route, opt...)
+	return t.Container.Publish(route, opt...)
 }
 
 func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
-	return t.container.Subscribe(route, opt...)
+	return t.Container.Subscribe(route, opt...)
 }

@@ -209,8 +209,23 @@ func (_c *MockConn_Local_Call) RunAndReturn(run func() Peer) *MockConn_Local_Cal
 }
 
 // OnClose provides a mock function with given fields: _a0
-func (_m *MockConn) OnClose(_a0 func()) {
-	_m.Called(_a0)
+func (_m *MockConn) OnClose(_a0 func()) Conn {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnClose")
+	}
+
+	var r0 Conn
+	if rf, ok := ret.Get(0).(func(func()) Conn); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(Conn)
+		}
+	}
+
+	return r0
 }
 
 // MockConn_OnClose_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnClose'
@@ -231,12 +246,12 @@ func (_c *MockConn_OnClose_Call) Run(run func(_a0 func())) *MockConn_OnClose_Cal
 	return _c
 }
 
-func (_c *MockConn_OnClose_Call) Return() *MockConn_OnClose_Call {
-	_c.Call.Return()
+func (_c *MockConn_OnClose_Call) Return(_a0 Conn) *MockConn_OnClose_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockConn_OnClose_Call) RunAndReturn(run func(func())) *MockConn_OnClose_Call {
+func (_c *MockConn_OnClose_Call) RunAndReturn(run func(func()) Conn) *MockConn_OnClose_Call {
 	_c.Call.Return(run)
 	return _c
 }

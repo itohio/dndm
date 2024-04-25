@@ -11,12 +11,12 @@ import (
 )
 
 var (
-	_ Endpoint      = (*Container)(nil)
-	_ CloseNotifier = (*Container)(nil)
+	_ Endpoint = (*Container)(nil)
 )
 
+// Container stores endpoints, collects all intents and interests and acts as an aggregate Endpoint.
 type Container struct {
-	*Base
+	*BaseEndpoint
 
 	mu              sync.Mutex
 	endpoints       []Endpoint
@@ -26,7 +26,7 @@ type Container struct {
 
 func NewContainer(name string, size int) *Container {
 	return &Container{
-		Base:            NewBase(name, size),
+		BaseEndpoint:    NewBase(name, size),
 		endpoints:       make([]Endpoint, 0, 8),
 		intentRouters:   make(map[string]*IntentRouter),
 		interestRouters: make(map[string]*InterestRouter),
@@ -42,13 +42,18 @@ func (t *Container) Close() error {
 		}
 	}
 	t.endpoints = nil
-	errarr = append(errarr, t.Base.Close())
+	errarr = append(errarr, t.BaseEndpoint.Close())
 	return errors.Join(errarr...)
 }
 
+func (t *Container) OnClose(f func()) Endpoint {
+	t.AddOnClose(f)
+	return t
+}
+
 // Init is used by the Router to initialize this endpoint.
-func (t *Container) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest Interest, t Endpoint) error) error {
-	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
+func (t *Container) Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error {
+	if err := t.BaseEndpoint.Init(ctx, logger, addIntent, addInterest); err != nil {
 		return err
 	}
 
@@ -66,20 +71,18 @@ func (t *Container) Add(ep Endpoint) error {
 		return errors.ErrDuplicate
 	}
 	// TODO
-	err := ep.Init(t.Ctx, t.Log,
-		func(interest Interest, t Endpoint) error { return nil },
+	err := ep.Init(t.Ctx(), t.Log,
+		func(intent Intent, t Endpoint) error { return nil },
 		func(interest Interest, t Endpoint) error { return nil },
 	)
 	if err != nil {
 		return err
 	}
 	t.endpoints = append(t.endpoints, ep)
-	if notifier, ok := ep.(CloseNotifier); ok {
-		notifier.OnClose(func() {
-			t.Log.Info("Container OnClose", "name", ep.Name())
-			t.Remove(ep)
-		})
-	}
+	ep.OnClose(func() {
+		t.Log.Info("Container OnClose", "name", ep.Name())
+		t.Remove(ep)
+	})
 	return nil
 }
 
@@ -152,16 +155,15 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir, err := NewIntentRouter(t.Ctx, route,
-		func() error {
-			t.mu.Lock()
-			defer t.mu.Unlock()
-			delete(t.intentRouters, route.ID())
-			return nil
-		},
+	ir, err := NewIntentRouter(t.Ctx(), route,
 		t.Size,
 		intents...,
 	)
+	ir.OnClose(func() {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+		delete(t.intentRouters, route.ID())
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -194,16 +196,15 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 		return ir.Wrap(), nil
 	}
 
-	ir, err := NewInterestRouter(t.Ctx, route,
-		func() error {
-			t.mu.Lock()
-			defer t.mu.Unlock()
-			delete(t.interestRouters, route.ID())
-			return nil
-		},
+	ir, err := NewInterestRouter(t.Ctx(), route,
 		t.Size,
 		interests...,
 	)
+	ir.OnClose(func() {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+		delete(t.interestRouters, route.ID())
+	})
 	if err != nil {
 		return nil, err
 	}

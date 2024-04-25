@@ -29,12 +29,12 @@ func (t *Endpoint) messageHandler() {
 	defer t.wg.Done()
 	for {
 		select {
-		case <-t.Ctx.Done():
+		case <-t.Ctx().Done():
 			return
 		default:
 		}
 
-		hdr, msg, err := t.conn.Read(t.Ctx)
+		hdr, msg, err := t.conn.Read(t.Ctx())
 		if err != nil {
 			t.Log.Error("remote.Read", "err", err)
 			t.Close()
@@ -62,7 +62,7 @@ func (t *Endpoint) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.conn.Write(t.Ctx, dndm.Route{}, result)
+			err := t.conn.Write(t.Ctx(), dndm.Route{}, result)
 			if err != nil {
 				t.Log.Error("write result", "err", err, "result", result)
 			}
@@ -105,11 +105,11 @@ func (t *Endpoint) messageSender(d time.Duration) {
 	t.Log.Info("Remote.Pinging")
 	for {
 		select {
-		case <-t.Ctx.Done():
+		case <-t.Ctx().Done():
 			return
 		case <-ticker.C:
 			ping := t.latency.MakePing(1024)
-			err := t.conn.Write(t.Ctx, dndm.Route{}, ping)
+			err := t.conn.Write(t.Ctx(), dndm.Route{}, ping)
 			t.Log.Debug("Remote.Ping", "send", err)
 		}
 	}
@@ -139,7 +139,7 @@ func (t *Endpoint) handlePing(hdr *types.Header, m proto.Message) error {
 	}
 	pong := t.latency.MakePong(hdr, msg)
 
-	err := t.conn.Write(t.Ctx, dndm.Route{}, pong)
+	err := t.conn.Write(t.Ctx(), dndm.Route{}, pong)
 	t.Log.Debug("Remote.Pong", "send", err)
 
 	return nil
@@ -227,6 +227,8 @@ func (t *Endpoint) handleRemoteIntent(msg *types.Intent) error {
 		return errors.ErrLocalIntent
 	}
 
+	t.OnAddIntent(intent, t)
+
 	return nil
 }
 
@@ -291,7 +293,7 @@ func (t *Endpoint) handleRemoteInterest(msg *types.Interest) error {
 		return errors.ErrLocalInterest
 	}
 
-	t.AddCallback(interest, t)
+	t.OnAddInterest(interest, t)
 
 	return nil
 }
@@ -322,7 +324,7 @@ func (t *Endpoint) handleMsg(hdr *types.Header, m proto.Message) error {
 		return errors.ErrNoIntent
 	}
 
-	ctx, cancel := context.WithTimeout(t.Ctx, t.timeout)
+	ctx, cancel := context.WithTimeout(t.Ctx(), t.timeout)
 	err = intent.Send(ctx, m)
 	cancel()
 	return err

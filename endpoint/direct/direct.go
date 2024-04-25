@@ -10,36 +10,41 @@ import (
 var _ dndm.Endpoint = (*Endpoint)(nil)
 
 type Endpoint struct {
-	*dndm.Base
+	*dndm.BaseEndpoint
 	linker *dndm.Linker
 }
 
 func New(size int) *Endpoint {
 	return &Endpoint{
-		Base: dndm.NewBase("direct", size),
+		BaseEndpoint: dndm.NewBase("direct", size),
 	}
 }
 
+func (t *Endpoint) OnClose(f func()) dndm.Endpoint {
+	t.AddOnClose(f)
+	return t
+}
+
 func (t *Endpoint) Close() error {
-	t.Base.Close()
+	t.BaseEndpoint.Close()
 	if t.linker == nil {
 		return nil
 	}
 	return t.linker.Close()
 }
 
-func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
-	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
+func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm.IntentCallback, addInterest dndm.InterestCallback) error {
+	if err := t.BaseEndpoint.Init(ctx, logger, addIntent, addInterest); err != nil {
 		return err
 	}
 
 	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
-		func(interest dndm.Interest) error {
-			return add(interest, t)
+		func(intent dndm.Intent) error {
+			return addIntent(intent, t)
 		},
 		func(interest dndm.Interest) error {
-			return remove(interest, t)
+			return addInterest(interest, t)
 		},
 		nil,
 	)

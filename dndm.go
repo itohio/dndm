@@ -1,7 +1,6 @@
 package dndm
 
 import (
-	"context"
 	"log/slog"
 	"sync"
 
@@ -13,17 +12,10 @@ type CauseCloser interface {
 	CloseCause(e error) error
 }
 
-// CloseNotifier interface for objects that can notify about a closure
-type CloseNotifier interface {
-	// OnClose will be called when the connection closes
-	OnClose(func())
-}
-
 type Router struct {
+	BaseCtx
 	mu              sync.Mutex
 	log             *slog.Logger
-	ctx             context.Context
-	cancel          context.CancelFunc
 	size            int
 	endpoints       []Endpoint
 	intentRouters   map[string]*IntentRouter
@@ -36,10 +28,8 @@ func New(opts ...Option) (*Router, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(opt.ctx)
 	ret := &Router{
-		ctx:             ctx,
-		cancel:          cancel,
+		BaseCtx:         NewBaseCtxWithCtx(opt.ctx),
 		log:             opt.logger.With("module", "router"),
 		endpoints:       make([]Endpoint, len(opt.endpoints)),
 		intentRouters:   make(map[string]*IntentRouter),
@@ -49,7 +39,7 @@ func New(opts ...Option) (*Router, error) {
 
 	for i, t := range opt.endpoints {
 		log := opt.logger.With("endpoint", t.Name())
-		if err := t.Init(ret.ctx, log, ret.addInterest, ret.removeInterest); err != nil {
+		if err := t.Init(ret.ctx, log, func(intent Intent, ep Endpoint) error { return nil }, ret.addInterest); err != nil {
 			return nil, err
 		}
 		ret.endpoints[i] = t
@@ -70,15 +60,14 @@ func (d *Router) addInterest(interest Interest, t Endpoint) error {
 		}
 
 		ir, err := NewInterestRouter(d.ctx, route,
-			func() error {
-				d.mu.Lock()
-				defer d.mu.Unlock()
-				delete(d.interestRouters, route.ID())
-				return nil
-			},
 			d.size,
 			interest,
 		)
+		ir.OnClose(func() {
+			d.mu.Lock()
+			defer d.mu.Unlock()
+			delete(d.interestRouters, route.ID())
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -128,15 +117,14 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (Intent,
 	}
 
 	ir, err = NewIntentRouter(d.ctx, route,
-		func() error {
-			d.mu.Lock()
-			defer d.mu.Unlock()
-			delete(d.intentRouters, route.ID())
-			return nil
-		},
 		d.size,
 		intents...,
 	)
+	ir.OnClose(func() {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		delete(d.intentRouters, route.ID())
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -170,15 +158,14 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (Inter
 	}
 
 	ir, err = NewInterestRouter(d.ctx, route,
-		func() error {
-			d.mu.Lock()
-			defer d.mu.Unlock()
-			delete(d.interestRouters, route.ID())
-			return nil
-		},
 		d.size,
 		interests...,
 	)
+	ir.OnClose(func() {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		delete(d.interestRouters, route.ID())
+	})
 	if err != nil {
 		return nil, err
 	}
