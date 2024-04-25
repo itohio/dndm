@@ -9,48 +9,46 @@ import (
 	"github.com/itohio/dndm/errors"
 )
 
-type InterestCallback func(interest Interest) error
 type IntentWrapperFunc func(IntentInternal) (IntentInternal, error)
 type InterestWrapperFunc func(InterestInternal) (InterestInternal, error)
 
 // Linker matches intents with interests and links them together.
 type Linker struct {
-	ctx            context.Context
-	log            *slog.Logger
-	size           int
-	mu             sync.Mutex
-	intents        map[string]IntentInternal
-	interests      map[string]InterestInternal
-	addCallback    InterestCallback
-	removeCallback InterestCallback
-	beforeLink     func(Intent, Interest) error
-	links          map[string]*Link
-	once           sync.Once
+	BaseCtx
+	log           *slog.Logger
+	size          int
+	mu            sync.Mutex
+	intents       map[string]IntentInternal
+	interests     map[string]InterestInternal
+	onAddIntent   func(intent Intent) error
+	onAddInterest func(interest Interest) error
+	beforeLink    func(Intent, Interest) error
+	links         map[string]*Link
 }
 
-func NewLinker(ctx context.Context, log *slog.Logger, size int, add, remove InterestCallback, beforeLink func(Intent, Interest) error) *Linker {
+func NewLinker(ctx context.Context, log *slog.Logger, size int, addIntent func(intent Intent) error, addInterest func(interest Interest) error, beforeLink func(Intent, Interest) error) *Linker {
 	if beforeLink == nil {
 		beforeLink = func(i1 Intent, i2 Interest) error {
 			return nil
 		}
 	}
 	return &Linker{
-		ctx:            ctx,
-		log:            log,
-		size:           size,
-		intents:        make(map[string]IntentInternal),
-		interests:      make(map[string]InterestInternal),
-		links:          make(map[string]*Link),
-		addCallback:    add,
-		removeCallback: remove,
-		beforeLink:     beforeLink,
+		BaseCtx:       NewBaseCtxWithCtx(ctx),
+		log:           log,
+		size:          size,
+		intents:       make(map[string]IntentInternal),
+		interests:     make(map[string]InterestInternal),
+		links:         make(map[string]*Link),
+		onAddIntent:   addIntent,
+		onAddInterest: addInterest,
+		beforeLink:    beforeLink,
 	}
 }
 
 func (t *Linker) Close() error {
 	errarr := make([]error, 0, len(t.links))
 
-	t.once.Do(func() {
+	t.AddOnClose(func() {
 		for _, i := range t.intents {
 			err := i.Close()
 			if err != nil {
@@ -64,6 +62,7 @@ func (t *Linker) Close() error {
 			}
 		}
 	})
+	t.BaseCtx.Close()
 
 	return errors.Join(errarr...)
 }
@@ -97,11 +96,16 @@ func (t *Linker) addIntentLocked(route Route, wrapper IntentWrapperFunc) (Intent
 		return intent, nil
 	}
 
-	intent = NewIntent(t.ctx, route, t.size, func() error {
-		return t.RemoveIntent(route)
+	intent = NewIntent(t.ctx, route, t.size)
+	intent.OnClose(func() {
+		t.RemoveIntent(route)
 	})
 	intent, err := wrapper(intent)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := t.onAddIntent(intent); err != nil {
 		return nil, err
 	}
 
@@ -154,17 +158,16 @@ func (t *Linker) addInterestLocked(route Route, wrapper InterestWrapperFunc) (In
 		return interest, nil
 	}
 
-	interest = NewInterest(t.ctx, route, t.size, func() error {
-		riErr := t.RemoveInterest(route)
-		rcErr := t.removeCallback(interest)
-		return errors.Join(riErr, rcErr)
+	interest = NewInterest(t.Ctx(), route, t.size)
+	interest.OnClose(func() {
+		t.RemoveInterest(route)
 	})
 	interest, err := wrapper(interest)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := t.addCallback(interest); err != nil {
+	if err := t.onAddInterest(interest); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +182,7 @@ func (t *Linker) addInterestLocked(route Route, wrapper InterestWrapperFunc) (In
 // RemoveInterest removes and unlinks an interest. This should be called inside the closer of the interest.
 func (t *Linker) RemoveInterest(route Route) error {
 	t.mu.Lock()
-	i, ok := t.interests[route.ID()]
+	_, ok := t.interests[route.ID()]
 	var link *Link
 	if ok {
 		link = t.unlink(route)
@@ -188,9 +191,6 @@ func (t *Linker) RemoveInterest(route Route) error {
 	t.mu.Unlock()
 	if link != nil {
 		link.Unlink()
-	}
-	if ok {
-		return t.removeCallback(i)
 	}
 	return nil
 }

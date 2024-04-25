@@ -17,7 +17,7 @@ import (
 var _ dndm.Endpoint = (*Endpoint)(nil)
 
 type Endpoint struct {
-	*dndm.Base
+	*dndm.BaseEndpoint
 
 	wg   sync.WaitGroup
 	conn network.Conn
@@ -35,7 +35,7 @@ type Endpoint struct {
 // New creates a endpoint that communicates with a remote via Remote interface.
 func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
 	return &Endpoint{
-		Base:         dndm.NewBase(self.String(), size),
+		BaseEndpoint: dndm.NewBase(self.String(), size),
 		conn:         conn,
 		pingDuration: pingDuration,
 		timeout:      timeout,
@@ -43,8 +43,8 @@ func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration t
 	}
 }
 
-func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove func(interest dndm.Interest, t dndm.Endpoint) error) error {
-	if err := t.Base.Init(ctx, logger, add, remove); err != nil {
+func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm.IntentCallback, addInterest dndm.InterestCallback) error {
+	if err := t.BaseEndpoint.Init(ctx, logger, addIntent, addInterest); err != nil {
 		return err
 	}
 
@@ -52,8 +52,15 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 
 	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
+		func(intent dndm.Intent) error {
+			err := addIntent(intent, t)
+			if err != nil {
+				return err
+			}
+			return nil
+		},
 		func(interest dndm.Interest) error {
-			err := add(interest, t)
+			err := addInterest(interest, t)
 			if err != nil {
 				return err
 			}
@@ -62,18 +69,13 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 			if r.Type() != nil {
 				t.conn.AddRoute(r)
 			}
-			return nil
-		},
-		func(interest dndm.Interest) error {
-			err := remove(interest, t)
-			if err != nil {
-				return err
-			}
-			// Nil Type indicates remote interest
-			r := interest.Route()
-			if r.Type() != nil {
-				t.conn.DelRoute(r)
-			}
+
+			interest.OnClose(func() {
+				r := interest.Route()
+				if r.Type() != nil {
+					t.conn.DelRoute(r)
+				}
+			})
 			return nil
 		},
 		nil,
@@ -88,13 +90,18 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, add, remove fu
 	return nil
 }
 
+func (t *Endpoint) OnClose(f func()) dndm.Endpoint {
+	t.AddOnClose(f)
+	return t
+}
+
 func (t *Endpoint) Close() error {
 	t.Log.Info("Remote.Close")
 	errarr := make([]error, 0, 3)
 	if closer, ok := t.conn.(io.Closer); ok {
 		errarr = append(errarr, closer.Close())
 	}
-	errarr = append(errarr, t.Base.Close(), t.linker.Close())
+	errarr = append(errarr, t.BaseEndpoint.Close(), t.linker.Close())
 	t.wg.Wait()
 	return errors.Join(errarr...)
 }
@@ -135,7 +142,6 @@ func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interes
 		return nil, errors.ErrRemoteInterest
 	}
 
-	t.AddCallback(interest, t)
 	t.Log.Info("interest registered", "route", route.Route())
 	return interest, err
 }
@@ -145,7 +151,6 @@ func (t *Endpoint) subscribe(route dndm.Route, m *types.Interest) (dndm.Interest
 	if err != nil {
 		return nil, err
 	}
-	t.AddCallback(interest, t)
 	t.Log.Info("remote interest registered", "route", route.Route())
 	return interest, nil
 }

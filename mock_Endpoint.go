@@ -67,17 +67,17 @@ func (_c *MockEndpoint_Close_Call) RunAndReturn(run func() error) *MockEndpoint_
 	return _c
 }
 
-// Init provides a mock function with given fields: ctx, logger, add, remove
-func (_m *MockEndpoint) Init(ctx context.Context, logger *slog.Logger, add func(Interest, Endpoint) error, remove func(Interest, Endpoint) error) error {
-	ret := _m.Called(ctx, logger, add, remove)
+// Init provides a mock function with given fields: ctx, logger, addIntent, addInterest
+func (_m *MockEndpoint) Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error {
+	ret := _m.Called(ctx, logger, addIntent, addInterest)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Init")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *slog.Logger, func(Interest, Endpoint) error, func(Interest, Endpoint) error) error); ok {
-		r0 = rf(ctx, logger, add, remove)
+	if rf, ok := ret.Get(0).(func(context.Context, *slog.Logger, IntentCallback, InterestCallback) error); ok {
+		r0 = rf(ctx, logger, addIntent, addInterest)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -93,15 +93,15 @@ type MockEndpoint_Init_Call struct {
 // Init is a helper method to define mock.On call
 //   - ctx context.Context
 //   - logger *slog.Logger
-//   - add func(Interest , Endpoint) error
-//   - remove func(Interest , Endpoint) error
-func (_e *MockEndpoint_Expecter) Init(ctx interface{}, logger interface{}, add interface{}, remove interface{}) *MockEndpoint_Init_Call {
-	return &MockEndpoint_Init_Call{Call: _e.mock.On("Init", ctx, logger, add, remove)}
+//   - addIntent IntentCallback
+//   - addInterest InterestCallback
+func (_e *MockEndpoint_Expecter) Init(ctx interface{}, logger interface{}, addIntent interface{}, addInterest interface{}) *MockEndpoint_Init_Call {
+	return &MockEndpoint_Init_Call{Call: _e.mock.On("Init", ctx, logger, addIntent, addInterest)}
 }
 
-func (_c *MockEndpoint_Init_Call) Run(run func(ctx context.Context, logger *slog.Logger, add func(Interest, Endpoint) error, remove func(Interest, Endpoint) error)) *MockEndpoint_Init_Call {
+func (_c *MockEndpoint_Init_Call) Run(run func(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback)) *MockEndpoint_Init_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*slog.Logger), args[2].(func(Interest, Endpoint) error), args[3].(func(Interest, Endpoint) error))
+		run(args[0].(context.Context), args[1].(*slog.Logger), args[2].(IntentCallback), args[3].(InterestCallback))
 	})
 	return _c
 }
@@ -111,7 +111,7 @@ func (_c *MockEndpoint_Init_Call) Return(_a0 error) *MockEndpoint_Init_Call {
 	return _c
 }
 
-func (_c *MockEndpoint_Init_Call) RunAndReturn(run func(context.Context, *slog.Logger, func(Interest, Endpoint) error, func(Interest, Endpoint) error) error) *MockEndpoint_Init_Call {
+func (_c *MockEndpoint_Init_Call) RunAndReturn(run func(context.Context, *slog.Logger, IntentCallback, InterestCallback) error) *MockEndpoint_Init_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -157,6 +157,54 @@ func (_c *MockEndpoint_Name_Call) Return(_a0 string) *MockEndpoint_Name_Call {
 }
 
 func (_c *MockEndpoint_Name_Call) RunAndReturn(run func() string) *MockEndpoint_Name_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// OnClose provides a mock function with given fields: _a0
+func (_m *MockEndpoint) OnClose(_a0 func()) Endpoint {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnClose")
+	}
+
+	var r0 Endpoint
+	if rf, ok := ret.Get(0).(func(func()) Endpoint); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(Endpoint)
+		}
+	}
+
+	return r0
+}
+
+// MockEndpoint_OnClose_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnClose'
+type MockEndpoint_OnClose_Call struct {
+	*mock.Call
+}
+
+// OnClose is a helper method to define mock.On call
+//   - _a0 func()
+func (_e *MockEndpoint_Expecter) OnClose(_a0 interface{}) *MockEndpoint_OnClose_Call {
+	return &MockEndpoint_OnClose_Call{Call: _e.mock.On("OnClose", _a0)}
+}
+
+func (_c *MockEndpoint_OnClose_Call) Run(run func(_a0 func())) *MockEndpoint_OnClose_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *MockEndpoint_OnClose_Call) Return(_a0 Endpoint) *MockEndpoint_OnClose_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockEndpoint_OnClose_Call) RunAndReturn(run func(func()) Endpoint) *MockEndpoint_OnClose_Call {
 	_c.Call.Return(run)
 	return _c
 }

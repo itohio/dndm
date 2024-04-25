@@ -112,6 +112,54 @@ func (_c *MockInterest_Close_Call) RunAndReturn(run func() error) *MockInterest_
 	return _c
 }
 
+// OnClose provides a mock function with given fields: _a0
+func (_m *MockInterest) OnClose(_a0 func()) Interest {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnClose")
+	}
+
+	var r0 Interest
+	if rf, ok := ret.Get(0).(func(func()) Interest); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(Interest)
+		}
+	}
+
+	return r0
+}
+
+// MockInterest_OnClose_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnClose'
+type MockInterest_OnClose_Call struct {
+	*mock.Call
+}
+
+// OnClose is a helper method to define mock.On call
+//   - _a0 func()
+func (_e *MockInterest_Expecter) OnClose(_a0 interface{}) *MockInterest_OnClose_Call {
+	return &MockInterest_OnClose_Call{Call: _e.mock.On("OnClose", _a0)}
+}
+
+func (_c *MockInterest_OnClose_Call) Run(run func(_a0 func())) *MockInterest_OnClose_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *MockInterest_OnClose_Call) Return(_a0 Interest) *MockInterest_OnClose_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockInterest_OnClose_Call) RunAndReturn(run func(func()) Interest) *MockInterest_OnClose_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Route provides a mock function with given fields:
 func (_m *MockInterest) Route() Route {
 	ret := _m.Called()

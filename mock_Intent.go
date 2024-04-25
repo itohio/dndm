@@ -114,6 +114,54 @@ func (_c *MockIntent_Interest_Call) RunAndReturn(run func() <-chan Route) *MockI
 	return _c
 }
 
+// OnClose provides a mock function with given fields: _a0
+func (_m *MockIntent) OnClose(_a0 func()) Intent {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for OnClose")
+	}
+
+	var r0 Intent
+	if rf, ok := ret.Get(0).(func(func()) Intent); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(Intent)
+		}
+	}
+
+	return r0
+}
+
+// MockIntent_OnClose_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'OnClose'
+type MockIntent_OnClose_Call struct {
+	*mock.Call
+}
+
+// OnClose is a helper method to define mock.On call
+//   - _a0 func()
+func (_e *MockIntent_Expecter) OnClose(_a0 interface{}) *MockIntent_OnClose_Call {
+	return &MockIntent_OnClose_Call{Call: _e.mock.On("OnClose", _a0)}
+}
+
+func (_c *MockIntent_OnClose_Call) Run(run func(_a0 func())) *MockIntent_OnClose_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(func()))
+	})
+	return _c
+}
+
+func (_c *MockIntent_OnClose_Call) Return(_a0 Intent) *MockIntent_OnClose_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockIntent_OnClose_Call) RunAndReturn(run func(func()) Intent) *MockIntent_OnClose_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Route provides a mock function with given fields:
 func (_m *MockIntent) Route() Route {
 	ret := _m.Called()

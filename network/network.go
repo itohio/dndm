@@ -14,7 +14,7 @@ type MessageHandler func(hdr *types.Header, msg proto.Message, remote Conn) (pas
 // Conn interface represents a communication channel with the remote peer
 type Conn interface {
 	io.Closer
-	dndm.CloseNotifier
+	OnClose(func()) Conn
 	// Local returns the name of the local peer
 	Local() Peer
 	// Remote returns the name of the remote peer

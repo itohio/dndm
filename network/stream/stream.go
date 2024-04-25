@@ -18,7 +18,6 @@ import (
 
 var _ network.Conn = (*StreamContext)(nil)
 var _ network.Conn = (*Stream)(nil)
-var _ dndm.CloseNotifier = (*Stream)(nil)
 
 // StreamContext is a wrapper over ReadWriter that will read and decode messages from Reader as well as encode and write them to the Writer. It allows
 // using regular Reader/Writer interfaces with a context, however, it must be noted that the read/write loop will be leaked if Read/Write blocks.
@@ -29,16 +28,21 @@ var _ dndm.CloseNotifier = (*Stream)(nil)
 // - Write will set header Timestamp to the time when the header is constructed, so it will include the overhead of marshaling the message
 type StreamContext struct {
 	*Stream
-	cancel context.CancelFunc
-	read   contextRW
-	write  contextRW
-	once   sync.Once
+	read  contextRW
+	write contextRW
 }
 
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
 func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
-		Stream: New(localPeer, remotePeer, rw, handlers),
+		Stream: &Stream{
+			BaseCtx:    dndm.NewBaseCtxWithCtx(ctx),
+			localPeer:  localPeer,
+			remotePeer: remotePeer,
+			rw:         rw,
+			handlers:   handlers,
+			routes:     make(map[string]dndm.Route),
+		},
 		read: contextRW{
 			request: make(chan []byte),
 			result:  make(chan contextRWResult),
@@ -48,13 +52,11 @@ func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw 
 			result:  make(chan contextRWResult),
 		},
 	}
-	ret.run(ctx)
+	ret.run(ret.Ctx())
 	return ret
 }
 
 func (c *StreamContext) run(ctx context.Context) {
-	ctx, cancel := context.WithCancel(ctx)
-	c.cancel = cancel
 	go c.read.Run(ctx, c.rw.Read)
 	go c.write.Run(ctx, c.rw.Write)
 	go func() {
@@ -71,8 +73,7 @@ func (c *StreamContext) Reader(ctx context.Context) io.Reader {
 }
 
 func (w *StreamContext) Close() error {
-	w.once.Do(func() {
-		w.cancel()
+	w.AddOnClose(func() {
 		close(w.read.request)
 		close(w.write.request)
 		close(w.read.result)
@@ -183,6 +184,7 @@ func (r reader) Read(buf []byte) (int, error) {
 
 // Stream converts regular ReaderWriter into a Remote
 type Stream struct {
+	dndm.BaseCtx
 	handlers map[types.Type]network.MessageHandler
 	rw       io.ReadWriter
 
@@ -190,8 +192,6 @@ type Stream struct {
 	localPeer  network.Peer
 	remotePeer network.Peer
 	routes     map[string]dndm.Route
-	once       sync.Once
-	done       chan struct{}
 }
 
 type readWriter struct {
@@ -211,11 +211,11 @@ func NewIO(localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handler
 // New creates a Remote using provided ReaderWriter.
 func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
+		BaseCtx:    dndm.NewBaseCtxWithCtx(context.Background()),
 		localPeer:  localPeer,
 		remotePeer: remotePeer,
 		rw:         rw,
 		handlers:   handlers,
-		done:       make(chan struct{}),
 		routes:     make(map[string]dndm.Route),
 	}
 }
@@ -244,27 +244,18 @@ func (w *Stream) UpdateRemotePeer(p network.Peer) error {
 func (w *Stream) Close() error {
 	slog.Info("Stream.Close")
 	var err error
-	if closer, ok := w.rw.(io.Closer); ok {
-		err = closer.Close()
-	}
-	w.once.Do(func() { close(w.done) })
+	w.BaseCtx.AddOnClose(func() {
+		if closer, ok := w.rw.(io.Closer); ok {
+			err = closer.Close()
+		}
+	})
+	w.BaseCtx.Close()
 	return err
 }
 
-func (w *Stream) OnClose(f func()) {
-	if notifier, ok := w.rw.(dndm.CloseNotifier); ok {
-		notifier.OnClose(f)
-		return
-	}
-
-	if f == nil {
-		return
-	}
-
-	go func() {
-		<-w.done
-		f()
-	}()
+func (w *Stream) OnClose(f func()) network.Conn {
+	w.AddOnClose(f)
+	return w
 }
 
 func (w *Stream) AddRoute(routes ...dndm.Route) {
