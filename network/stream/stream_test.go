@@ -67,6 +67,10 @@ func TestStreamContext_Read(t *testing.T) {
 
 	_, _, err = streamContext.Read(ctx)
 	assert.Equal(t, io.EOF, err)
+
+	time.Sleep(time.Millisecond)
+
+	rw.AssertExpectations(t)
 }
 
 func TestStreamContext_Write(t *testing.T) {
@@ -86,6 +90,10 @@ func TestStreamContext_Write(t *testing.T) {
 
 	err = streamContext.Write(ctx, route, &testtypes.Foo{})
 	assert.NoError(t, err)
+
+	time.Sleep(time.Millisecond)
+
+	rw.AssertExpectations(t)
 }
 
 func TestStream_CreateClose(t *testing.T) {

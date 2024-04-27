@@ -34,14 +34,7 @@ type StreamContext struct {
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
 func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
-		Stream: &Stream{
-			Base:       dndm.NewBaseWithCtx(ctx),
-			localPeer:  localPeer,
-			remotePeer: remotePeer,
-			rw:         rw,
-			handlers:   handlers,
-			routes:     make(map[string]dndm.Route),
-		},
+		Stream: New(localPeer, remotePeer, rw, handlers),
 		read: contextRW{
 			request: make(chan contextRWRequest),
 		},
@@ -54,15 +47,15 @@ func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw 
 		close(ret.write.request)
 	})
 
-	ret.run(ret.Ctx())
+	ret.run()
 	return ret
 }
 
-func (c *StreamContext) run(ctx context.Context) {
-	go c.read.Run(ctx, c.rw.Read)
-	go c.write.Run(ctx, c.rw.Write)
+func (c *StreamContext) run() {
+	go c.read.Run(c.Ctx(), c.rw.Read)
+	go c.write.Run(c.Ctx(), c.rw.Write)
 	go func() {
-		<-ctx.Done()
+		<-c.Ctx().Done()
 		c.Close()
 	}()
 }
@@ -142,7 +135,8 @@ type contextRW struct {
 func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 	defer func() {
 		if err := recover(); err != nil {
-			slog.Error("contextRW.Run Panic TypeOf", err, reflect.TypeOf(err))
+			slog.Error("contextRW.Run Panic TypeOf", "err", err, "type", reflect.TypeOf(err))
+			panic(err)
 		}
 	}()
 
@@ -150,7 +144,11 @@ func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 		select {
 		case <-ctx.Done():
 			return
-		case r := <-c.request:
+		case r, ok := <-c.request:
+			if !ok {
+				continue
+			}
+
 			n, err := f(r.data)
 			select {
 			case <-ctx.Done():
@@ -168,7 +166,7 @@ func (c *contextRW) Request(ctx context.Context, buf []byte) (int, error) {
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
-	case c.request <- contextRWRequest{data: buf, resultCh: ch}:
+	case c.request <- contextRWRequest{data: buf, resultCh: ch, ctx: ctx}:
 		select {
 		case <-ctx.Done():
 			return 0, ctx.Err()
