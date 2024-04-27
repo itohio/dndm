@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"sync"
 
 	"github.com/itohio/dndm/errors"
 )
@@ -23,64 +22,57 @@ type Endpoint interface {
 	Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error
 }
 
-type BaseCtx struct {
+type Base struct {
 	ctx    context.Context
 	cancel context.CancelCauseFunc
-	done   chan struct{}
-	once   sync.Once
 }
 
-func NewBaseCtx() BaseCtx {
-	return BaseCtx{
-		done: make(chan struct{}),
-	}
+// NewBase creates Base. This must be used only once when initializing
+// the embedded Base struct.
+func NewBase() Base {
+	return Base{}
 }
 
-func NewBaseCtxWithCtx(ctx context.Context) BaseCtx {
-	ret := BaseCtx{
-		done: make(chan struct{}),
-	}
+// NewBaseWithCtx creates Base. This must be used only once when initializing
+// the embedded Base struct.
+func NewBaseWithCtx(ctx context.Context) Base {
+	ret := Base{}
 	ret.Init(ctx)
 	return ret
 }
 
-func (t *BaseCtx) Init(ctx context.Context) error {
+func (t *Base) Init(ctx context.Context) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	t.ctx = ctx
 	t.cancel = cancel
 	return nil
 }
 
-func (t *BaseCtx) Close() error {
+func (t *Base) Close() error {
 	return t.CloseCause(nil)
 }
 
-func (t *BaseCtx) CloseCause(err error) error {
+func (t *Base) CloseCause(err error) error {
 	t.cancel(err)
-	t.once.Do(func() { close(t.done) })
 	return nil
 }
 
-func (t *BaseCtx) Ctx() context.Context {
+func (t *Base) Ctx() context.Context {
 	return t.ctx
 }
 
-func (t *BaseCtx) AddOnClose(f func()) {
+func (t *Base) AddOnClose(f func()) {
 	if f == nil {
 		return
 	}
 	go func() {
-		select {
-		case <-t.ctx.Done():
-		case <-t.done:
-		}
+		<-t.ctx.Done()
 		f()
 	}()
-	return
 }
 
 type BaseEndpoint struct {
-	BaseCtx
+	Base
 	name          string
 	Log           *slog.Logger
 	OnAddIntent   IntentCallback
@@ -88,11 +80,11 @@ type BaseEndpoint struct {
 	Size          int
 }
 
-func NewBase(name string, size int) *BaseEndpoint {
-	return &BaseEndpoint{
-		BaseCtx: NewBaseCtx(),
-		name:    name,
-		Size:    size,
+func NewEndpointBase(name string, size int) BaseEndpoint {
+	return BaseEndpoint{
+		Base: NewBase(),
+		name: name,
+		Size: size,
 	}
 }
 
@@ -100,7 +92,7 @@ func (t *BaseEndpoint) Init(ctx context.Context, logger *slog.Logger, addIntent 
 	if logger == nil || addIntent == nil || addInterest == nil {
 		return errors.ErrBadArgument
 	}
-	t.BaseCtx.Init(ctx)
+	t.Base.Init(ctx)
 	t.Log = logger
 	t.OnAddIntent = addIntent
 	t.OnAddInterest = addInterest

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm/errors"
+	"github.com/itohio/dndm/testutil"
 	testtypes "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 
@@ -19,28 +20,20 @@ func TestNewIntent(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	called := false
-	closer := func() error {
-		called = true
-		return nil
-	}
-	intent := NewIntent(ctx, route, 10, closer)
+
+	intent := NewIntent(ctx, route, 10)
 	require.NotNil(t, intent)
 	assert.Equal(t, intent.Route(), route)
-	onCloseCalled := make(chan struct{})
-	intent.OnClose(func() {
-		close(onCloseCalled)
-	})
+	onClose := testutil.NewFunc(ctx)
+	intent.OnClose(onClose.F)
 	intent.OnClose(nil)
 	assert.Equal(t, route, intent.Route())
 	assert.NotNil(t, intent.Interest())
 	assert.Nil(t, intent.LinkedC())
 
-	assert.False(t, called)
-	assert.Equal(t, recvChan1(onCloseCalled, time.Millisecond), context.DeadlineExceeded)
+	onClose.NotCalled(t)
 	require.NoError(t, intent.Close())
-	assert.True(t, called)
-	assert.Equal(t, recvChan1(onCloseCalled, time.Millisecond), nil)
+	onClose.WaitCalled(t)
 }
 
 func TestLocalIntent_Send(t *testing.T) {
@@ -49,7 +42,7 @@ func TestLocalIntent_Send(t *testing.T) {
 
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	intent := NewIntent(ctx, route, 10, nil)
+	intent := NewIntent(ctx, route, 10)
 
 	err = intent.Send(ctx, &testtypes.Foo{Text: "Something"})
 	require.Equal(t, err, errors.ErrNoInterest)
@@ -76,8 +69,8 @@ func TestLocalIntent_Send(t *testing.T) {
 
 	intent.Notify()
 
-	ctxRecv(ctx, notifyDone)
-	ctxRecv(ctx, recvDone)
+	assert.True(t, testutil.CtxRecv(ctx, notifyDone))
+	assert.True(t, testutil.CtxRecv(ctx, recvDone))
 	<-intent.Ctx().Done()
 	require.Equal(t, context.Canceled, intent.Ctx().Err())
 	intent.Close()
@@ -88,7 +81,7 @@ func TestLocalIntent_Link(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	intent := NewIntent(ctx, route, 10, nil)
+	intent := NewIntent(ctx, route, 10)
 	msgC := make(chan proto.Message)
 	msgC1 := make(chan proto.Message)
 
@@ -103,34 +96,33 @@ func TestIntentRouter_Creation(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
 	mockIntent := &MockIntent{}
 	mockIntent.On("Route").Return(route)
 	ch := make(chan Route, 10)
 	mockIntent.On("Interest").Return((<-chan Route)(ch)) // Assuming a channel is returned here
 
-	router, err := NewIntentRouter(ctx, route, closer, 10, mockIntent)
+	router, err := NewIntentRouter(ctx, route, 10, mockIntent)
 	require.NoError(t, err)
 	require.NotNil(t, router)
 	assert.Contains(t, router.intents, mockIntent)
 	assert.Equal(t, router.Route(), route)
 
 	router.OnClose(nil)
-	onCloseCalled := make(chan struct{})
-	router.OnClose(func() { close(onCloseCalled) })
+	onClose := testutil.NewFunc(ctx)
+	router.OnClose(onClose.F)
 
 	w := router.Wrap()
 	assert.Equal(t, router, w.router)
 	assert.Equal(t, router.size, cap(w.notifyC))
 	assert.Equal(t, w.Route(), route)
-
+	time.Sleep(time.Millisecond * 10)
 	router.RemoveIntent(mockIntent)
 	assert.NotContains(t, router.intents, mockIntent)
 
 	assert.NoError(t, router.Close())
 
-	ctxRecv(ctx, onCloseCalled)
+	onClose.WaitCalled(t)
 
 	mockIntent.AssertExpectations(t)
 }
@@ -140,9 +132,8 @@ func TestIntentRouter_WrapAndSend(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
-	router, err := NewIntentRouter(ctx, route, closer, 10)
+	router, err := NewIntentRouter(ctx, route, 10)
 	require.NoError(t, err)
 
 	w1 := router.Wrap()
@@ -179,17 +170,13 @@ func TestIntentRouter_Close(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closerCalled := false
-	closer := func() error {
-		closerCalled = true
-		return nil
-	}
-
-	router, err := NewIntentRouter(ctx, route, closer, 10)
+	router, err := NewIntentRouter(ctx, route, 10)
 	require.NoError(t, err)
-	err = router.Close()
-	assert.NoError(t, err)
-	assert.True(t, closerCalled)
+	onClose := testutil.NewFunc(ctx)
+	router.OnClose(onClose.F)
+	onClose.NotCalled(t)
+	assert.NoError(t, router.Close())
+	onClose.WaitCalled(t)
 }
 
 func TestIntentRouter_NotifyWrappers(t *testing.T) {
@@ -197,10 +184,12 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
-	router, err := NewIntentRouter(ctx, route, closer, 10)
+	router, err := NewIntentRouter(ctx, route, 10)
 	require.NoError(t, err)
+	onClose := testutil.NewFunc(ctx)
+	router.OnClose(onClose.F)
+	router.OnClose(func() { t.Log("router OnClose") })
 
 	mockIntent1 := &MockIntent{}
 	mockIntent1.On("Route").Return(route)
@@ -215,6 +204,10 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 
 	t.Log("Register 1st wrapper")
 	w1 := router.Wrap()
+	onW1Close := testutil.NewFunc(ctx)
+	w1.OnClose(onW1Close.F)
+	w1.OnClose(func() { t.Log("w1 OnClose") })
+
 	w1Done := make(chan struct{})
 	go func() {
 		receivedNotification := []Route{<-w1.Interest(), <-w1.Interest()}
@@ -226,8 +219,11 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 	t.Log("register intent")
 	router.AddIntent(mockIntent2)
 
-	t.Log("register second wrapper")
+	t.Log("register 2nd wrapper")
 	w2 := router.Wrap()
+	onW2Close := testutil.NewFunc(ctx)
+	w2.OnClose(onW2Close.F)
+	w2.OnClose(func() { t.Log("w2 OnClose") })
 	w2Done := make(chan struct{})
 	go func() {
 		receivedNotification := []Route{<-w2.Interest(), <-w2.Interest()}
@@ -242,11 +238,19 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 		ch2 <- route
 	}()
 
-	ctxRecv(ctx, w1Done)
-	ctxRecv(ctx, w2Done)
+	router.OnClose(func() { t.Log("router ---- OnClose") })
+
+	assert.True(t, testutil.CtxRecv(ctx, w1Done))
+	assert.True(t, testutil.CtxRecv(ctx, w2Done))
 	w2.Close()
+	assert.False(t, testutil.IsClosed(router.Ctx().Done()))
+	onClose.NotCalled(t)
+	onW2Close.WaitCalled(t)
 	w1.Close()
-	<-router.ctx.Done()
+	onW1Close.WaitCalled(t)
+	onClose.WaitCalled(t)
+	assert.True(t, testutil.CtxRecv(ctx, router.Ctx().Done()))
+	<-router.Ctx().Done()
 	assert.Equal(t, context.Canceled, router.ctx.Err())
 	mockIntent1.AssertExpectations(t)
 	mockIntent2.AssertExpectations(t)

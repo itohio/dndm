@@ -53,17 +53,11 @@ func TestLinker_AddRemoveInterest(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
 	defer cancel()
 
-	addCalled := make(chan struct{})
-	delCalled := make(chan struct{})
+	addIntent := testutil.NewFunc()
+	addInterest := testutil.NewFunc()
 	linker := NewLinker(ctx, slog.Default(), 10,
-		func(interest Interest) error {
-			close(addCalled)
-			return nil
-		},
-		func(interest Interest) error {
-			close(delCalled)
-			return nil
-		},
+		addIntent,
+		addInterest,
 		nil,
 	)
 	route, err := NewRoute("path", &testtypes.Foo{})
@@ -73,24 +67,25 @@ func TestLinker_AddRemoveInterest(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, resultInterest)
 	assert.Contains(t, linker.interests, route.ID())
+
+	assert.True(t, ctxRecv(ctx, addInterestCalled))
+
 	foundInterest, ok := linker.Interest(route)
 	assert.True(t, ok)
 	assert.Equal(t, resultInterest, foundInterest)
 
-	_, ok = linker.Intent(route)
+	_, ok = linker.Interest(route)
 	assert.False(t, ok)
 
-	assert.True(t, ctxRecv(ctx, addCalled))
+	addIntent.WaitCalled(t)
 
 	err = linker.RemoveInterest(route)
 	assert.NoError(t, err)
 	assert.NotContains(t, linker.interests, route.ID())
 
-	assert.True(t, ctxRecv(ctx, delCalled))
-
 	linker.Close()
 
-	<-linker.ctx.Done()
+	<-linker.Ctx().Done()
 
 	assert.Equal(t, context.DeadlineExceeded, linker.ctx.Err())
 }
@@ -99,21 +94,14 @@ func TestLinker_AddIntentInterestSend(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	addCalled := make(chan struct{})
-	delCalled := make(chan struct{})
-	beforeLinkCalled := make(chan struct{})
+	addIntent := testutil.NewFunc())
+	addInterest := testutil.NewFunc())
+	beforeLink := testutil.NewFunc())
 	linker := NewLinker(ctx, slog.Default(), 10,
-		func(interest Interest) error {
-			close(addCalled)
-			return nil
-		},
-		func(interest Interest) error {
-			close(delCalled)
-			return nil
-		},
+		addIntent,
+		addInterest,
 		func(i1 Intent, i2 Interest) error {
-			close(beforeLinkCalled)
-			return nil
+			return beforeLink.FE()
 		},
 	)
 
@@ -125,12 +113,16 @@ func TestLinker_AddIntentInterestSend(t *testing.T) {
 	assert.NotNil(t, resultInterest)
 	assert.Contains(t, linker.interests, route.ID())
 
-	assert.True(t, ctxRecv(ctx, addCalled))
+	assert.True(t, ctxRecv(ctx, addInterestCalled))
+	onDelInterest := testutil.MakeFunc()
+	resultInterest.OnClose(onDelInterest)
 
 	resultIntent, err := linker.AddIntent(route)
 	assert.NoError(t, err)
 	assert.NotNil(t, resultIntent)
 	assert.Contains(t, linker.intents, route.ID())
+
+	assert.True(t, ctxRecv(ctx, addIntentCalled))
 
 	assert.True(t, ctxRecv(ctx, beforeLinkCalled))
 	assert.True(t, ctxRecv(ctx, resultIntent.Interest()))
@@ -150,6 +142,10 @@ func TestLinker_AddIntentInterestSend(t *testing.T) {
 	assert.True(t, ctxRecv(ctx, delCalled))
 
 	linker.Close()
+
+	addIntent.WaitCalled()
+	addInterest.WaitCalled()
+	onDelInterest.WaitCalled()
 
 	<-linker.ctx.Done()
 
@@ -160,16 +156,17 @@ func TestLinker_AddInterestIntentSend(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	addCalled := make(chan struct{})
+	addIntentCalled := make(chan struct{})
+	addInterestCalled := make(chan struct{})
 	delCalled := make(chan struct{})
 	beforeLinkCalled := make(chan struct{})
 	linker := NewLinker(ctx, slog.Default(), 10,
-		func(interest Interest) error {
-			close(addCalled)
+		func(intent Intent) error {
+			close(addIntentCalled)
 			return nil
 		},
 		func(interest Interest) error {
-			close(delCalled)
+			close(addInterestCalled)
 			return nil
 		},
 		func(i1 Intent, i2 Interest) error {
@@ -186,12 +183,14 @@ func TestLinker_AddInterestIntentSend(t *testing.T) {
 	assert.NotNil(t, resultIntent)
 	assert.Contains(t, linker.intents, route.ID())
 
+	assert.True(t, ctxRecv(ctx, addIntentCalled))
+
 	resultInterest, err := linker.AddInterest(route)
 	assert.NoError(t, err)
 	assert.NotNil(t, resultInterest)
 	assert.Contains(t, linker.interests, route.ID())
 
-	assert.True(t, ctxRecv(ctx, addCalled))
+	assert.True(t, ctxRecv(ctx, addInterestCalled))
 
 	assert.True(t, ctxRecv(ctx, beforeLinkCalled))
 	assert.True(t, ctxRecv(ctx, resultIntent.Interest()))
@@ -203,6 +202,8 @@ func TestLinker_AddInterestIntentSend(t *testing.T) {
 	v, err := recvChan(resultInterest.C(), time.Millisecond)
 	assert.NoError(t, err)
 	assert.Equal(t, msg, v)
+
+	resultInterest.OnClose(func() { close(delCalled) })
 
 	err = linker.RemoveInterest(route)
 	assert.NoError(t, err)

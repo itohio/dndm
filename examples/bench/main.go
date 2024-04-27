@@ -111,7 +111,7 @@ func testDirect(ctx context.Context, size int) {
 		panic(err)
 	}
 	rtr := direct.New(size)
-	err = rtr.Init(ctx, slog.Default(), func(interest dndm.Interest, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
+	err = rtr.Init(ctx, slog.Default(), func(intent dndm.Intent, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
@@ -146,11 +146,11 @@ func testRemote(ctx context.Context, size int) {
 	remoteA := remote.New(peerA, wireA, size, time.Second, 0)
 	remoteB := remote.New(peerB, wireB, size, time.Second, 0)
 
-	err = remoteA.Init(ctx, slog.Default(), func(interest dndm.Interest, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
+	err = remoteA.Init(ctx, slog.Default(), func(intent dndm.Intent, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
-	err = remoteB.Init(ctx, slog.Default(), func(interest dndm.Interest, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
+	err = remoteB.Init(ctx, slog.Default(), func(intent dndm.Intent, t dndm.Endpoint) error { return nil }, func(interest dndm.Interest, t dndm.Endpoint) error { return nil })
 	if err != nil {
 		panic(err)
 	}
@@ -177,7 +177,7 @@ func senderIntent(ctx context.Context, size int, path string, intent dndm.Intent
 	localC := false
 	var c chan proto.Message
 	if intent == nil {
-		intent = dndm.NewIntent(ctx, route, size, func() error { return nil })
+		intent = dndm.NewIntent(ctx, route, size)
 		c = make(chan proto.Message, size)
 		intent.Link(c)
 		localC = true

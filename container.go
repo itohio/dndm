@@ -16,7 +16,7 @@ var (
 
 // Container stores endpoints, collects all intents and interests and acts as an aggregate Endpoint.
 type Container struct {
-	*BaseEndpoint
+	BaseEndpoint
 
 	mu              sync.Mutex
 	endpoints       []Endpoint
@@ -26,7 +26,7 @@ type Container struct {
 
 func NewContainer(name string, size int) *Container {
 	return &Container{
-		BaseEndpoint:    NewBase(name, size),
+		BaseEndpoint:    NewEndpointBase(name, size),
 		endpoints:       make([]Endpoint, 0, 8),
 		intentRouters:   make(map[string]*IntentRouter),
 		interestRouters: make(map[string]*InterestRouter),

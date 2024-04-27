@@ -10,13 +10,13 @@ import (
 var _ dndm.Endpoint = (*Endpoint)(nil)
 
 type Endpoint struct {
-	*dndm.BaseEndpoint
+	dndm.BaseEndpoint
 	linker *dndm.Linker
 }
 
 func New(size int) *Endpoint {
 	return &Endpoint{
-		BaseEndpoint: dndm.NewBase("direct", size),
+		BaseEndpoint: dndm.NewEndpointBase("direct", size),
 	}
 }
 

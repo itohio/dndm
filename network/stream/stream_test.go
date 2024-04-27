@@ -4,10 +4,12 @@ import (
 	"context"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/codec"
 	"github.com/itohio/dndm/network"
+	"github.com/itohio/dndm/testutil"
 	types "github.com/itohio/dndm/types/core"
 	testtypes "github.com/itohio/dndm/types/test"
 	"github.com/stretchr/testify/assert"
@@ -87,6 +89,8 @@ func TestStreamContext_Write(t *testing.T) {
 }
 
 func TestStream_CreateClose(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
+	defer cancel()
 	rw := &mockReadWriter{}
 	localPeer, _ := network.NewPeer("scheme", "addr", "path", nil)
 	remotePeer, _ := network.NewPeer("scheme", "addr1", "path", nil)
@@ -112,12 +116,11 @@ func TestStream_CreateClose(t *testing.T) {
 	stream.DelRoute(route)
 	assert.NotContains(t, stream.routes, route.ID())
 
-	onCloseCalled := make(chan struct{})
-	stream.OnClose(func() { close(onCloseCalled) })
+	onClosed := testutil.NewFunc(ctx)
+	stream.OnClose(onClosed.F)
 	err = stream.Close()
 	assert.NoError(t, err)
-	_, ok := <-stream.done
-	assert.False(t, ok)
+	onClosed.WaitCalled(t)
 }
 
 func TestStream_Read(t *testing.T) {
