@@ -17,7 +17,7 @@ import (
 var _ dndm.Endpoint = (*Endpoint)(nil)
 
 type Endpoint struct {
-	*dndm.BaseEndpoint
+	dndm.BaseEndpoint
 
 	wg   sync.WaitGroup
 	conn network.Conn
@@ -35,7 +35,7 @@ type Endpoint struct {
 // New creates a endpoint that communicates with a remote via Remote interface.
 func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
 	return &Endpoint{
-		BaseEndpoint: dndm.NewBase(self.String(), size),
+		BaseEndpoint: dndm.NewEndpointBase(self.String(), size),
 		conn:         conn,
 		pingDuration: pingDuration,
 		timeout:      timeout,

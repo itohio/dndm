@@ -38,19 +38,22 @@ type InterestInternal interface {
 }
 
 type LocalInterest struct {
-	BaseCtx
+	Base
 	route Route
 	msgC  chan proto.Message
 }
 
 func NewInterest(ctx context.Context, route Route, size int) *LocalInterest {
 	ret := &LocalInterest{
-		BaseCtx: NewBaseCtx(),
-		route:   route,
-		msgC:    make(chan proto.Message, size),
+		Base:  NewBase(),
+		route: route,
+		msgC:  make(chan proto.Message, size),
 	}
 	ret.Init(ctx)
-	ret.OnClose(func() { close(ret.msgC) })
+	ret.OnClose(func() {
+		ret.cancel(nil)
+		close(ret.msgC)
+	})
 	return ret
 }
 
@@ -72,13 +75,13 @@ func (i *LocalInterest) MsgC() chan<- proto.Message {
 }
 
 type interestWrapper struct {
-	BaseCtx
+	Base
 	router *InterestRouter
 	c      chan proto.Message
 }
 
 func (w *interestWrapper) OnClose(f func()) Interest {
-	w.BaseCtx.AddOnClose(f)
+	w.Base.AddOnClose(f)
 	return w
 }
 func (w *interestWrapper) Route() Route {
@@ -90,7 +93,7 @@ func (w *interestWrapper) C() <-chan proto.Message {
 
 // InterestRouter keeps track of same type interests and multiple subscribers.
 type InterestRouter struct {
-	BaseCtx
+	Base
 	mu        sync.RWMutex
 	wg        sync.WaitGroup
 	route     Route
@@ -103,10 +106,10 @@ type InterestRouter struct {
 
 func NewInterestRouter(ctx context.Context, route Route, size int, interests ...Interest) (*InterestRouter, error) {
 	ret := &InterestRouter{
-		BaseCtx: NewBaseCtx(),
-		route:   route,
-		c:       make(chan proto.Message, size),
-		size:    size,
+		Base:  NewBase(),
+		route: route,
+		c:     make(chan proto.Message, size),
+		size:  size,
 	}
 	ret.Init(ctx)
 
@@ -116,15 +119,20 @@ func NewInterestRouter(ctx context.Context, route Route, size int, interests ...
 		}
 	}
 
+	ret.AddOnClose(func() {
+		ret.wg.Wait()
+		close(ret.c)
+	})
+
 	return ret, nil
 }
 
 // Wrap returns a wrapped interest that collects messages from all registered interests.
 func (i *InterestRouter) Wrap() *interestWrapper {
 	ret := &interestWrapper{
-		BaseCtx: NewBaseCtxWithCtx(i.ctx),
-		router:  i,
-		c:       make(chan proto.Message, i.size),
+		Base:   NewBaseWithCtx(i.ctx),
+		router: i,
+		c:      make(chan proto.Message, i.size),
 	}
 
 	i.addWrapper(ret)
@@ -225,11 +233,7 @@ func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 }
 
 func (i *InterestRouter) Close() error {
-	i.AddOnClose(func() {
-		i.wg.Wait()
-		close(i.c)
-	})
-	i.BaseCtx.Close()
+	i.Base.Close()
 	return nil
 }
 

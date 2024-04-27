@@ -35,7 +35,7 @@ type Container interface {
 }
 
 type Handshaker struct {
-	*dndm.BaseEndpoint
+	dndm.BaseEndpoint
 
 	state        HandshakeState
 	hsCount      int
@@ -63,7 +63,7 @@ type Handshaker struct {
 //	2. HS_DONE
 func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeout, pingDuration time.Duration, rw io.ReadWriter, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
-		BaseEndpoint: dndm.NewBase(remotePeer.String(), size),
+		BaseEndpoint: dndm.NewEndpointBase(remotePeer.String(), size),
 		state:        state,
 		rw:           rw,
 		timeout:      timeout,

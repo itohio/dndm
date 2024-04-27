@@ -14,7 +14,7 @@ type InterestWrapperFunc func(InterestInternal) (InterestInternal, error)
 
 // Linker matches intents with interests and links them together.
 type Linker struct {
-	BaseCtx
+	Base
 	log           *slog.Logger
 	size          int
 	mu            sync.Mutex
@@ -33,7 +33,7 @@ func NewLinker(ctx context.Context, log *slog.Logger, size int, addIntent func(i
 		}
 	}
 	return &Linker{
-		BaseCtx:       NewBaseCtxWithCtx(ctx),
+		Base:          NewBaseWithCtx(ctx),
 		log:           log,
 		size:          size,
 		intents:       make(map[string]IntentInternal),
@@ -61,8 +61,10 @@ func (t *Linker) Close() error {
 				errarr = append(errarr, err)
 			}
 		}
+		t.intents = nil
+		t.interests = nil
 	})
-	t.BaseCtx.Close()
+	t.Base.Close()
 
 	return errors.Join(errarr...)
 }

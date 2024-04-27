@@ -2,7 +2,6 @@ package stream
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"reflect"
@@ -36,7 +35,7 @@ type StreamContext struct {
 func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
 		Stream: &Stream{
-			BaseCtx:    dndm.NewBaseCtxWithCtx(ctx),
+			Base:       dndm.NewBaseWithCtx(ctx),
 			localPeer:  localPeer,
 			remotePeer: remotePeer,
 			rw:         rw,
@@ -44,14 +43,17 @@ func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw 
 			routes:     make(map[string]dndm.Route),
 		},
 		read: contextRW{
-			request: make(chan []byte),
-			result:  make(chan contextRWResult),
+			request: make(chan contextRWRequest),
 		},
 		write: contextRW{
-			request: make(chan []byte),
-			result:  make(chan contextRWResult),
+			request: make(chan contextRWRequest),
 		},
 	}
+	ret.AddOnClose(func() {
+		close(ret.read.request)
+		close(ret.write.request)
+	})
+
 	ret.run(ret.Ctx())
 	return ret
 }
@@ -67,18 +69,12 @@ func (c *StreamContext) run(ctx context.Context) {
 
 func (c *StreamContext) Reader(ctx context.Context) io.Reader {
 	return &reader{
-		c:   &c.read,
+		c:   c.read,
 		ctx: ctx,
 	}
 }
 
 func (w *StreamContext) Close() error {
-	w.AddOnClose(func() {
-		close(w.read.request)
-		close(w.write.request)
-		close(w.read.result)
-		close(w.write.result)
-	})
 	return w.Stream.Close()
 }
 
@@ -129,52 +125,61 @@ func (w *StreamContext) Write(ctx context.Context, route dndm.Route, msg proto.M
 	return err
 }
 
+type contextRWRequest struct {
+	ctx      context.Context
+	data     []byte
+	resultCh chan<- contextRWResult
+}
 type contextRWResult struct {
 	n   int
 	err error
 }
 
 type contextRW struct {
-	request chan []byte
-	result  chan contextRWResult
+	request chan contextRWRequest
 }
 
 func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("TypeOf", err, reflect.TypeOf(err))
+			slog.Error("contextRW.Run Panic TypeOf", err, reflect.TypeOf(err))
 		}
 	}()
 
-	for r := range c.request {
-		n, err := f(r)
+	for {
 		select {
 		case <-ctx.Done():
 			return
-		case c.result <- contextRWResult{
-			n:   n,
-			err: err,
-		}:
+		case r := <-c.request:
+			n, err := f(r.data)
+			select {
+			case <-ctx.Done():
+				return
+			case <-r.ctx.Done():
+			case r.resultCh <- contextRWResult{n: n, err: err}:
+			}
 		}
 	}
 }
 
 func (c *contextRW) Request(ctx context.Context, buf []byte) (int, error) {
+	ch := make(chan contextRWResult)
+	defer close(ch)
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
-	case c.request <- buf:
-	}
-	select {
-	case <-ctx.Done():
-		return 0, ctx.Err()
-	case result := <-c.result:
-		return result.n, result.err
+	case c.request <- contextRWRequest{data: buf, resultCh: ch}:
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case result := <-ch:
+			return result.n, result.err
+		}
 	}
 }
 
 type reader struct {
-	c   *contextRW
+	c   contextRW
 	ctx context.Context
 }
 
@@ -184,12 +189,12 @@ func (r reader) Read(buf []byte) (int, error) {
 
 // Stream converts regular ReaderWriter into a Remote
 type Stream struct {
-	dndm.BaseCtx
-	handlers map[types.Type]network.MessageHandler
-	rw       io.ReadWriter
+	dndm.Base
+	localPeer network.Peer
+	handlers  map[types.Type]network.MessageHandler
+	rw        io.ReadWriter
 
 	mu         sync.Mutex
-	localPeer  network.Peer
 	remotePeer network.Peer
 	routes     map[string]dndm.Route
 }
@@ -211,7 +216,7 @@ func NewIO(localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handler
 // New creates a Remote using provided ReaderWriter.
 func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
-		BaseCtx:    dndm.NewBaseCtxWithCtx(context.Background()),
+		Base:       dndm.NewBaseWithCtx(context.Background()),
 		localPeer:  localPeer,
 		remotePeer: remotePeer,
 		rw:         rw,
@@ -244,12 +249,12 @@ func (w *Stream) UpdateRemotePeer(p network.Peer) error {
 func (w *Stream) Close() error {
 	slog.Info("Stream.Close")
 	var err error
-	w.BaseCtx.AddOnClose(func() {
+	w.Base.AddOnClose(func() {
 		if closer, ok := w.rw.(io.Closer); ok {
 			err = closer.Close()
 		}
 	})
-	w.BaseCtx.Close()
+	w.Base.Close()
 	return err
 }
 

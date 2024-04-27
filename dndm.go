@@ -13,7 +13,7 @@ type CauseCloser interface {
 }
 
 type Router struct {
-	BaseCtx
+	Base
 	mu              sync.Mutex
 	log             *slog.Logger
 	size            int
@@ -29,7 +29,7 @@ func New(opts ...Option) (*Router, error) {
 	}
 
 	ret := &Router{
-		BaseCtx:         NewBaseCtxWithCtx(opt.ctx),
+		Base:            NewBaseWithCtx(opt.ctx),
 		log:             opt.logger.With("module", "router"),
 		endpoints:       make([]Endpoint, len(opt.endpoints)),
 		intentRouters:   make(map[string]*IntentRouter),

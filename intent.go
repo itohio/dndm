@@ -39,7 +39,7 @@ type IntentInternal interface {
 }
 
 type LocalIntent struct {
-	BaseCtx
+	Base
 	route   Route
 	notifyC chan Route
 	mu      sync.RWMutex
@@ -48,7 +48,7 @@ type LocalIntent struct {
 
 func NewIntent(ctx context.Context, route Route, size int) *LocalIntent {
 	intent := &LocalIntent{
-		BaseCtx: NewBaseCtxWithCtx(ctx),
+		Base:    NewBaseWithCtx(ctx),
 		route:   route,
 		notifyC: make(chan Route, size),
 	}
@@ -60,7 +60,7 @@ func NewIntent(ctx context.Context, route Route, size int) *LocalIntent {
 }
 
 func (t *LocalIntent) OnClose(f func()) Intent {
-	t.BaseCtx.AddOnClose(f)
+	t.Base.AddOnClose(f)
 	return t
 }
 
@@ -124,7 +124,7 @@ func (i *LocalIntent) Notify() {
 }
 
 type intentWrapper struct {
-	BaseCtx
+	Base
 	router  *IntentRouter
 	notifyC chan Route
 }
@@ -133,7 +133,7 @@ func (w *intentWrapper) Route() Route {
 	return w.router.route
 }
 func (w *intentWrapper) OnClose(f func()) Intent {
-	w.BaseCtx.AddOnClose(f)
+	w.Base.AddOnClose(f)
 	return w
 }
 func (w *intentWrapper) Interest() <-chan Route {
@@ -146,7 +146,7 @@ func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
 
 // IntentRouter keeps track of same type intents from different endpoints and multiple publishers.
 type IntentRouter struct {
-	BaseCtx
+	Base
 	mu       sync.RWMutex
 	wg       sync.WaitGroup
 	route    Route
@@ -158,22 +158,25 @@ type IntentRouter struct {
 
 func NewIntentRouter(ctx context.Context, route Route, size int, intents ...Intent) (*IntentRouter, error) {
 	ret := &IntentRouter{
-		BaseCtx: NewBaseCtxWithCtx(ctx),
-		route:   route,
-		size:    size,
+		Base:  NewBaseWithCtx(ctx),
+		route: route,
+		size:  size,
 	}
 	for _, i := range intents {
 		if err := ret.AddIntent(i); err != nil {
 			return nil, err
 		}
 	}
+	ret.AddOnClose(func() {
+		ret.wg.Wait()
+	})
 	return ret, nil
 }
 
 // Wrap returns a wrapped intent. Messages sent to this wrapped intent will be sent to all the registered intents.
 func (i *IntentRouter) Wrap() *intentWrapper {
 	ret := &intentWrapper{
-		BaseCtx: NewBaseCtxWithCtx(i.ctx),
+		Base:    NewBaseWithCtx(i.ctx),
 		router:  i,
 		notifyC: make(chan Route, i.size),
 	}
@@ -245,7 +248,6 @@ func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {
 		case <-ctx.Done():
 			return
 		case notification := <-intent.Interest():
-			_ = notification
 			if err := i.notifyWrappers(ctx, notification); err != nil {
 				i.RemoveIntent(intent)
 				return
@@ -270,12 +272,6 @@ func (i *IntentRouter) notifyWrappers(ctx context.Context, route Route) error {
 			// slog.Info("SKIP notify", "route", route)
 		}
 	}
-	return nil
-}
-
-func (i *IntentRouter) Close() error {
-	i.AddOnClose(func() { i.wg.Wait() })
-	i.Close()
 	return nil
 }
 

@@ -5,21 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/itohio/dndm/testutil"
 	testtypes "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func ctxRecv[T any](ctx context.Context, c <-chan T) bool {
-	select {
-	case <-ctx.Done():
-		return false
-	case <-c:
-		return true
-	}
-}
 
 func recvChan[T any](c <-chan T, t time.Duration) (T, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), t)
@@ -54,28 +46,20 @@ func TestNewInterest(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	called := false
-	closer := func() error {
-		called = true
-		return nil
-	}
-	interest := NewInterest(ctx, route, 10, closer)
+	interest := NewInterest(ctx, route, 10)
 	require.NotNil(t, interest)
-	onCloseCalled := make(chan struct{})
+	onClose := testutil.NewFunc(ctx)
 	interest.OnClose(nil)
-	interest.OnClose(func() {
-		close(onCloseCalled)
-	})
+	interest.OnClose(onClose.F)
+	onClose.NotCalled(t)
 	assert.Equal(t, route, interest.Route())
 	assert.Equal(t, 10, cap(interest.MsgC()))
 	assert.NotNil(t, interest.C())
 
-	assert.False(t, called)
-	assert.Equal(t, context.DeadlineExceeded, recvChan1(onCloseCalled, time.Millisecond))
+	onClose.NotCalled(t)
 	require.NoError(t, interest.Close())
-	assert.True(t, called)
-	assert.Equal(t, nil, recvChan1(onCloseCalled, time.Millisecond))
-	assert.Nil(t, interest.C())
+	onClose.WaitCalled(t)
+	assert.True(t, testutil.CtxRecv(ctx, interest.C()))
 }
 
 func TestLocalInterest_ConcurrentAccess(t *testing.T) {
@@ -83,7 +67,7 @@ func TestLocalInterest_ConcurrentAccess(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	interest := NewInterest(ctx, route, 10, nil)
+	interest := NewInterest(ctx, route, 1000)
 
 	done1 := make(chan bool)
 	done2 := make(chan bool)
@@ -103,12 +87,13 @@ func TestLocalInterest_ConcurrentAccess(t *testing.T) {
 
 	// Concurrent closing
 	go func() {
+		<-done1
 		interest.Close()
 		close(done2)
 	}()
 
-	ctxRecv(ctx, done1)
-	ctxRecv(ctx, done2)
+	assert.True(t, testutil.CtxRecv(ctx, done1))
+	assert.True(t, testutil.CtxRecv(ctx, done2))
 	require.Equal(t, context.Canceled, interest.Ctx().Err())
 }
 
@@ -119,7 +104,6 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
 	// // Mocking Interest for testing
 	mockInterest := &MockInterest{}
@@ -127,14 +111,14 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 	ch := make(chan proto.Message, 10)
 	mockInterest.On("C").Return((<-chan proto.Message)(ch)) // Assuming a channel is returned here
 
-	router, err := NewInterestRouter(ctx, route, closer, 10, mockInterest)
+	router, err := NewInterestRouter(ctx, route, 10, mockInterest)
 	require.NoError(t, err)
 	require.NotNil(t, router)
 	assert.Equal(t, router.Route(), route)
 
 	router.OnClose(nil)
-	onCloseCalled := make(chan struct{})
-	router.OnClose(func() { close(onCloseCalled) })
+	onClose := testutil.NewFunc(ctx)
+	router.OnClose(onClose.F)
 
 	w := router.Wrap()
 	assert.Equal(t, router, w.router)
@@ -148,7 +132,7 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 
 	assert.NoError(t, router.Close())
 
-	ctxRecv(ctx, onCloseCalled)
+	onClose.WaitCalled(t)
 
 	mockInterest.AssertExpectations(t)
 }
@@ -159,9 +143,8 @@ func TestInterestWrapperOperations(t *testing.T) {
 
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
-	router, _ := NewInterestRouter(ctx, route, closer, 10)
+	router, _ := NewInterestRouter(ctx, route, 10)
 	wrapper := router.Wrap()
 
 	// Test route retrieval and close operation
@@ -180,19 +163,15 @@ func TestInterestRouter_Close(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closerCalled := false
-	closer := func() error {
-		closerCalled = true
-		return nil
-	}
-
-	router, _ := NewInterestRouter(ctx, route, closer, 10)
+	onClose := testutil.NewFunc(ctx)
+	router, _ := NewInterestRouter(ctx, route, 10)
+	router.OnClose(onClose.F)
 	assert.NoError(t, router.Close())
-	assert.True(t, closerCalled)
+
+	onClose.WaitCalled(t)
 
 	// Ensure the main message channel is closed
-	_, ok := <-router.C()
-	assert.False(t, ok)
+	assert.True(t, testutil.CtxRecv(ctx, router.C()))
 }
 
 func TestInterestRouter_MessageRouting(t *testing.T) {
@@ -200,9 +179,8 @@ func TestInterestRouter_MessageRouting(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	closer := func() error { return nil }
 
-	router, _ := NewInterestRouter(ctx, route, closer, 10)
+	router, _ := NewInterestRouter(ctx, route, 10)
 
 	mockInterest1 := &MockInterest{}
 	mockInterest1.On("Route").Return(route)
@@ -248,10 +226,12 @@ func TestInterestRouter_MessageRouting(t *testing.T) {
 		ch2 <- msg2
 	}()
 
-	ctxRecv(ctx, w1Done)
-	ctxRecv(ctx, w2Done)
+	testutil.CtxRecv(ctx, w1Done)
+	testutil.CtxRecv(ctx, w2Done)
 	w2.Close()
+	assert.False(t, testutil.IsClosed(router.Ctx().Done()))
 	w1.Close()
+	assert.True(t, testutil.CtxRecv(ctx, router.Ctx().Done()))
 	<-router.ctx.Done()
 	assert.Equal(t, context.Canceled, router.ctx.Err())
 	mockInterest1.AssertExpectations(t)
