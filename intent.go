@@ -189,7 +189,7 @@ func (i *IntentRouter) Wrap() *intentWrapper {
 func (i *IntentRouter) addWrapper(w *intentWrapper) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	i.AddOnClose(func() {
+	w.AddOnClose(func() {
 		i.removeWrapper(w)
 		close(w.notifyC)
 	})
@@ -237,6 +237,12 @@ func (i *IntentRouter) RemoveIntent(intent Intent) {
 	i.cancels[idx]()
 	i.intents = slices.Delete(i.intents, idx, idx+1)
 	i.cancels = slices.Delete(i.cancels, idx, idx+1)
+
+	if len(i.intents) > 0 {
+		return
+	}
+
+	i.Close()
 }
 
 func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {

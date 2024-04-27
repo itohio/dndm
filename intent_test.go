@@ -24,16 +24,16 @@ func TestNewIntent(t *testing.T) {
 	intent := NewIntent(ctx, route, 10)
 	require.NotNil(t, intent)
 	assert.Equal(t, intent.Route(), route)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close intent")
 	intent.OnClose(onClose.F)
 	intent.OnClose(nil)
 	assert.Equal(t, route, intent.Route())
 	assert.NotNil(t, intent.Interest())
 	assert.Nil(t, intent.LinkedC())
 
-	onClose.NotCalled(t)
+	onClose.NotCalled()
 	require.NoError(t, intent.Close())
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
 }
 
 func TestLocalIntent_Send(t *testing.T) {
@@ -109,7 +109,7 @@ func TestIntentRouter_Creation(t *testing.T) {
 	assert.Equal(t, router.Route(), route)
 
 	router.OnClose(nil)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close router")
 	router.OnClose(onClose.F)
 
 	w := router.Wrap()
@@ -122,7 +122,7 @@ func TestIntentRouter_Creation(t *testing.T) {
 
 	assert.NoError(t, router.Close())
 
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
 
 	mockIntent.AssertExpectations(t)
 }
@@ -172,11 +172,11 @@ func TestIntentRouter_Close(t *testing.T) {
 	require.NoError(t, err)
 	router, err := NewIntentRouter(ctx, route, 10)
 	require.NoError(t, err)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close router")
 	router.OnClose(onClose.F)
-	onClose.NotCalled(t)
+	onClose.NotCalled()
 	assert.NoError(t, router.Close())
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
 }
 
 func TestIntentRouter_NotifyWrappers(t *testing.T) {
@@ -187,9 +187,8 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 
 	router, err := NewIntentRouter(ctx, route, 10)
 	require.NoError(t, err)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close router")
 	router.OnClose(onClose.F)
-	router.OnClose(func() { t.Log("router OnClose") })
 
 	mockIntent1 := &MockIntent{}
 	mockIntent1.On("Route").Return(route)
@@ -204,7 +203,7 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 
 	t.Log("Register 1st wrapper")
 	w1 := router.Wrap()
-	onW1Close := testutil.NewFunc(ctx)
+	onW1Close := testutil.NewFunc(ctx, t, "close wrapper 1")
 	w1.OnClose(onW1Close.F)
 	w1.OnClose(func() { t.Log("w1 OnClose") })
 
@@ -221,9 +220,8 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 
 	t.Log("register 2nd wrapper")
 	w2 := router.Wrap()
-	onW2Close := testutil.NewFunc(ctx)
+	onW2Close := testutil.NewFunc(ctx, t, "close wrapper 2")
 	w2.OnClose(onW2Close.F)
-	w2.OnClose(func() { t.Log("w2 OnClose") })
 	w2Done := make(chan struct{})
 	go func() {
 		receivedNotification := []Route{<-w2.Interest(), <-w2.Interest()}
@@ -238,17 +236,31 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 		ch2 <- route
 	}()
 
-	router.OnClose(func() { t.Log("router ---- OnClose") })
+	go func() {
+		select {
+		case <-ctx.Done():
+			t.Log("timeout")
+		case <-router.Ctx().Done():
+			t.Log("router ctx done")
+		}
+	}()
 
 	assert.True(t, testutil.CtxRecv(ctx, w1Done))
 	assert.True(t, testutil.CtxRecv(ctx, w2Done))
+	assert.Len(t, router.wrappers, 2)
 	w2.Close()
 	assert.False(t, testutil.IsClosed(router.Ctx().Done()))
-	onClose.NotCalled(t)
-	onW2Close.WaitCalled(t)
+	onClose.NotCalled()
+	onW2Close.WaitCalled()
+	time.Sleep(time.Millisecond) // NOTE: Allow for removal to complete
+	assert.Len(t, router.wrappers, 1)
 	w1.Close()
-	onW1Close.WaitCalled(t)
-	onClose.WaitCalled(t)
+	onW1Close.WaitCalled()
+	time.Sleep(time.Millisecond) // NOTE: Allow for removal to complete
+	assert.Len(t, router.wrappers, 0)
+	t.Log("Before WaitCalled")
+	onClose.WaitCalled()
+	t.Log("After WaitCalled")
 	assert.True(t, testutil.CtxRecv(ctx, router.Ctx().Done()))
 	<-router.Ctx().Done()
 	assert.Equal(t, context.Canceled, router.ctx.Err())

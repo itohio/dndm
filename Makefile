@@ -51,9 +51,13 @@ cover:
 	cat .coverage.tmp | grep -Ev '/mock_|/.*options.go' > .coverage
 	go tool cover -func=.coverage
 
+ifeq (,$(COUNT))
+  COUNT := 3
+endif
+
 .PHONY: test
 test:
-	go test ./...
+	go test ./... -vet=all -v -count $(COUNT)
 
 .PHONY: bench
 bench:

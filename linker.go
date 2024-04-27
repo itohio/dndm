@@ -192,7 +192,7 @@ func (t *Linker) RemoveInterest(route Route) error {
 	}
 	t.mu.Unlock()
 	if link != nil {
-		link.Unlink()
+		link.Close()
 	}
 	return nil
 }
@@ -211,11 +211,11 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 		return err
 	}
 
-	link := NewLink(t.ctx, intent, interest, func() error {
+	link := NewLink(t.ctx, intent, interest)
+	link.AddOnClose(func() {
 		t.mu.Lock()
 		_ = t.unlink(route)
 		t.mu.Unlock()
-		return nil
 	})
 	t.links[route.ID()] = link
 	link.Link()
