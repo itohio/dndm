@@ -2,27 +2,30 @@ package dndm
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
+	"github.com/itohio/dndm/testutil"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
 
 func Test_NewLink(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
 	defer cancel()
 	intent := &MockIntentInternal{}
 	interest := &MockInterestInternal{}
-	closer := func() error { return nil }
+	intent.On("Link", (chan<- proto.Message)(nil))
 	intent.On("Ctx").Return(ctx)
 	interest.On("Ctx").Return(ctx)
 
-	link := NewLink(ctx, intent, interest, closer)
+	link := NewLink(ctx, intent, interest)
+	onClose := testutil.NewFunc(ctx, t, "close link")
+	link.AddOnClose(onClose.F)
 	assert.NotNil(t, link)
 	assert.Equal(t, intent, link.intent)
 	assert.Equal(t, interest, link.interest)
+	onClose.NotCalled()
 }
 
 func TestLink_Link(t *testing.T) {
@@ -39,19 +42,19 @@ func TestLink_Link(t *testing.T) {
 	interest.On("MsgC").Return((chan<- proto.Message)(ch))
 	interest.On("Ctx").Return(ctx)
 
-	closer := func() error { return nil }
-
-	link := NewLink(ctx, intent, interest, closer)
+	link := NewLink(ctx, intent, interest)
 	link.Link()
 
 	link.Notify()
 
-	link.Unlink()
-	_, ok := <-link.done
-	assert.False(t, ok)
+	onClose := testutil.NewFunc(ctx, t, "close link")
+	link.AddOnClose(onClose.F)
 
-	fmt.Println(intent.Calls)
+	link.Close()
 
+	onClose.WaitCalled()
+	assert.True(t, testutil.CtxRecv(ctx, link.Ctx().Done()))
+	time.Sleep(time.Millisecond)
 	// Expect Link to have been called with msgC and nil
 	intent.AssertExpectations(t)
 	interest.AssertExpectations(t)

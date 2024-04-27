@@ -116,11 +116,11 @@ func TestStream_CreateClose(t *testing.T) {
 	stream.DelRoute(route)
 	assert.NotContains(t, stream.routes, route.ID())
 
-	onClosed := testutil.NewFunc(ctx)
+	onClosed := testutil.NewFunc(ctx, t, "close stream")
 	stream.OnClose(onClosed.F)
 	err = stream.Close()
 	assert.NoError(t, err)
-	onClosed.WaitCalled(t)
+	onClosed.WaitCalled()
 }
 
 func TestStream_Read(t *testing.T) {

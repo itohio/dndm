@@ -48,17 +48,17 @@ func TestNewInterest(t *testing.T) {
 	require.NoError(t, err)
 	interest := NewInterest(ctx, route, 10)
 	require.NotNil(t, interest)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close interest")
 	interest.OnClose(nil)
 	interest.OnClose(onClose.F)
-	onClose.NotCalled(t)
+	onClose.NotCalled()
 	assert.Equal(t, route, interest.Route())
 	assert.Equal(t, 10, cap(interest.MsgC()))
 	assert.NotNil(t, interest.C())
 
-	onClose.NotCalled(t)
+	onClose.NotCalled()
 	require.NoError(t, interest.Close())
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
 	assert.True(t, testutil.CtxRecv(ctx, interest.C()))
 }
 
@@ -117,7 +117,7 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 	assert.Equal(t, router.Route(), route)
 
 	router.OnClose(nil)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close router")
 	router.OnClose(onClose.F)
 
 	w := router.Wrap()
@@ -132,7 +132,8 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 
 	assert.NoError(t, router.Close())
 
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
+	time.Sleep(time.Millisecond)
 
 	mockInterest.AssertExpectations(t)
 }
@@ -163,12 +164,12 @@ func TestInterestRouter_Close(t *testing.T) {
 	defer cancel()
 	route, err := NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
-	onClose := testutil.NewFunc(ctx)
+	onClose := testutil.NewFunc(ctx, t, "close router")
 	router, _ := NewInterestRouter(ctx, route, 10)
 	router.OnClose(onClose.F)
 	assert.NoError(t, router.Close())
 
-	onClose.WaitCalled(t)
+	onClose.WaitCalled()
 
 	// Ensure the main message channel is closed
 	assert.True(t, testutil.CtxRecv(ctx, router.C()))
