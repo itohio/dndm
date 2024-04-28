@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 	"log/slog"
-	"reflect"
 	"sync"
+	"time"
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/codec"
@@ -34,17 +34,19 @@ type StreamContext struct {
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
 func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
-		Stream: New(localPeer, remotePeer, rw, handlers),
-		read: contextRW{
-			request: make(chan contextRWRequest),
-		},
-		write: contextRW{
-			request: make(chan contextRWRequest),
-		},
+		Stream: New(ctx, localPeer, remotePeer, rw, handlers),
+	}
+	ret.read = contextRW{
+		Base:    dndm.NewBaseWithCtx(ctx),
+		request: make(chan contextRWRequest),
+	}
+	ret.write = contextRW{
+		Base:    dndm.NewBaseWithCtx(ctx),
+		request: make(chan contextRWRequest),
 	}
 	ret.AddOnClose(func() {
-		close(ret.read.request)
-		close(ret.write.request)
+		ret.read.Close()
+		ret.write.Close()
 	})
 
 	ret.run()
@@ -129,20 +131,29 @@ type contextRWResult struct {
 }
 
 type contextRW struct {
+	dndm.Base
 	request chan contextRWRequest
 }
 
-func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
-	defer func() {
-		if err := recover(); err != nil {
-			slog.Error("contextRW.Run Panic TypeOf", "err", err, "type", reflect.TypeOf(err))
-			panic(err)
+func (c *contextRW) Close() error {
+	c.Base.Close()
+	time.Sleep(time.Microsecond)
+	for {
+		select {
+		case <-c.request:
+		default:
+			close(c.request)
+			return nil
 		}
-	}()
+	}
+}
 
+func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-c.Ctx().Done():
 			return
 		case r, ok := <-c.request:
 			if !ok {
@@ -152,25 +163,48 @@ func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 			n, err := f(r.data)
 			select {
 			case <-ctx.Done():
+				close(r.resultCh)
+				return
+			case <-c.Ctx().Done():
+				close(r.resultCh)
 				return
 			case <-r.ctx.Done():
 			case r.resultCh <- contextRWResult{n: n, err: err}:
 			}
+			close(r.resultCh)
 		}
 	}
 }
 
-func (c *contextRW) Request(ctx context.Context, buf []byte) (int, error) {
+func (c *contextRW) Request(ctx context.Context, buf []byte) (n int, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			// NOTE: This panic is unavoidable sometimes: we close the channel onClose, however, someone might have
+			// pending request on this channel due to previous call not returning yet.
+			// Since onClosed is sometimes called before context cancel, there is no way to safely
+			// unblock the sending to a channel that is about to be closed.
+			if e, ok := e.(error); !ok || e.Error() != "send on closed channel" {
+				panic(e)
+			}
+			err = context.Canceled
+		}
+	}()
 	ch := make(chan contextRWResult)
-	defer close(ch)
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
+	case <-c.Ctx().Done():
+		return 0, c.Ctx().Err()
 	case c.request <- contextRWRequest{data: buf, resultCh: ch, ctx: ctx}:
 		select {
 		case <-ctx.Done():
 			return 0, ctx.Err()
-		case result := <-ch:
+		case <-c.Ctx().Done():
+			return 0, c.Ctx().Err()
+		case result, ok := <-ch:
+			if !ok {
+				return 0, context.Canceled
+			}
 			return result.n, result.err
 		}
 	}
@@ -206,15 +240,15 @@ func (rw readWriter) Read(buf []byte) (int, error)  { return rw.r.Read(buf) }
 func (rw readWriter) Write(buf []byte) (int, error) { return rw.w.Write(buf) }
 
 // NewIO creates a Remote using io.Reader and io.Writer.
-func NewIO(localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
+func NewIO(ctx context.Context, localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
 	rw := readWriter{r: r, w: w}
-	return New(localPeer, remotePeer, rw, handlers)
+	return New(ctx, localPeer, remotePeer, rw, handlers)
 }
 
 // New creates a Remote using provided ReaderWriter.
-func New(localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
+func New(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
-		Base:       dndm.NewBaseWithCtx(context.Background()),
+		Base:       dndm.NewBaseWithCtx(ctx),
 		localPeer:  localPeer,
 		remotePeer: remotePeer,
 		rw:         rw,

@@ -15,6 +15,12 @@ var (
 )
 
 // Container stores endpoints, collects all intents and interests and acts as an aggregate Endpoint.
+// Container does not link intents and purposes.
+//
+// Actions:
+//   - Add/Remove endpoints look for existing intents and interests and registers them to respective routers.
+//   - Add calls initialize on new endpoint
+//   - Publish/Subscribe look for existing endpoints and registers intents/interests respectively.
 type Container struct {
 	BaseEndpoint
 
@@ -72,8 +78,8 @@ func (t *Container) Add(ep Endpoint) error {
 	}
 	// TODO
 	err := ep.Init(t.Ctx(), t.Log,
-		func(intent Intent, t Endpoint) error { return nil },
-		func(interest Interest, t Endpoint) error { return nil },
+		func(intent Intent, ep Endpoint) error { return t.OnAddIntent(intent, ep) },
+		func(interest Interest, ep Endpoint) error { return t.OnAddInterest(interest, ep) },
 	)
 	if err != nil {
 		return err
