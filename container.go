@@ -15,7 +15,7 @@ var (
 )
 
 // Container stores endpoints, collects all intents and interests and acts as an aggregate Endpoint.
-// Container does not link intents and purposes.
+// Container does not link intents and interests.
 //
 // Actions:
 //   - Add/Remove endpoints look for existing intents and interests and registers them to respective routers.
@@ -89,6 +89,32 @@ func (t *Container) Add(ep Endpoint) error {
 		t.Log.Info("Container OnClose", "name", ep.Name())
 		t.Remove(ep)
 	})
+
+	// Add endpoint to intents
+	for _, ir := range t.intentRouters {
+		intent, err := ep.Publish(ir.Route())
+		if err != nil {
+			t.Log.Warn("AddIntent.Publish", "err", err, "route", ir.Route())
+			continue
+		}
+		err = ir.AddIntent(intent)
+		if err != nil {
+			t.Log.Warn("AddIntent.AddIntent", "err", err, "route", ir.Route())
+		}
+	}
+
+	// Add enpoint to interests
+	for _, ir := range t.interestRouters {
+		interest, err := ep.Subscribe(ir.Route())
+		if err != nil {
+			t.Log.Warn("AddIntent.Subscribe", "err", err, "route", ir.Route())
+			continue
+		}
+		err = ir.AddInterest(interest)
+		if err != nil {
+			t.Log.Warn("AddIntent.AddInterest", "err", err, "route", ir.Route())
+		}
+	}
 	return nil
 }
 
@@ -122,11 +148,23 @@ func (t *Container) Endpoint(compare func(Endpoint) bool) []Endpoint {
 }
 
 func (t *Container) Intent(compare func(Intent) bool) []Intent {
-	return nil
+	t.mu.Lock()
+	r := make([]Intent, 0, len(t.intentRouters))
+	for _, v := range t.intentRouters {
+		r = append(r, v.intents...)
+	}
+	t.mu.Unlock()
+	return finderFunc(r, compare)
 }
 
 func (t *Container) Interest(compare func(Interest) bool) []Interest {
-	return nil
+	t.mu.Lock()
+	r := make([]Interest, 0, len(t.interestRouters))
+	for _, v := range t.interestRouters {
+		r = append(r, v.interests...)
+	}
+	t.mu.Unlock()
+	return finderFunc(r, compare)
 }
 
 func closeAll[T io.Closer](closers ...T) error {
