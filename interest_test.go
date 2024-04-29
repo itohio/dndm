@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stretchr/testify/assert"
+	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -110,6 +111,7 @@ func TestInterestRouter_CreationAndOperation(t *testing.T) {
 	mockInterest.On("Route").Return(route)
 	ch := make(chan proto.Message, 10)
 	mockInterest.On("C").Return((<-chan proto.Message)(ch)) // Assuming a channel is returned here
+	mockInterest.On("OnClose", mock.Anything).Return(mockInterest)
 
 	router, err := NewInterestRouter(ctx, route, 10, mockInterest)
 	require.NoError(t, err)
@@ -187,6 +189,7 @@ func TestInterestRouter_MessageRouting(t *testing.T) {
 	mockInterest1.On("Route").Return(route)
 	ch1 := make(chan proto.Message, 10)
 	mockInterest1.On("C").Return((<-chan proto.Message)(ch1)) // Assuming a channel is returned here
+	mockInterest1.On("OnClose", mock.Anything).Return(mockInterest1)
 
 	msg1 := &testtypes.Foo{}
 
@@ -194,6 +197,7 @@ func TestInterestRouter_MessageRouting(t *testing.T) {
 	mockInterest2.On("Route").Return(route)
 	ch2 := make(chan proto.Message, 10)
 	mockInterest2.On("C").Return((<-chan proto.Message)(ch2)) // Assuming a channel is returned here
+	mockInterest2.On("OnClose", mock.Anything).Return(mockInterest2)
 
 	msg2 := &testtypes.Foo{Text: "msg2"}
 
@@ -233,8 +237,8 @@ func TestInterestRouter_MessageRouting(t *testing.T) {
 	assert.False(t, testutil.IsClosed(router.Ctx().Done()))
 	w1.Close()
 	assert.True(t, testutil.CtxRecv(ctx, router.Ctx().Done()))
-	<-router.ctx.Done()
-	assert.Equal(t, context.Canceled, router.ctx.Err())
+	<-router.Ctx().Done()
+	assert.Equal(t, context.Canceled, router.Ctx().Err())
 	mockInterest1.AssertExpectations(t)
 	mockInterest2.AssertExpectations(t)
 }
