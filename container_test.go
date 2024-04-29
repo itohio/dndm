@@ -41,6 +41,8 @@ func Test_NewContainer(t *testing.T) {
 	onClose.WaitCalled()
 	addIntent.NotCalled()
 	addInterest.NotCalled()
+
+	<-ctx.Done()
 }
 
 func TestContainer_AddEndpoint(t *testing.T) {
