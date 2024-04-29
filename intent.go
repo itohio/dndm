@@ -3,6 +3,7 @@ package dndm
 import (
 	"context"
 	"io"
+	"log/slog"
 	"reflect"
 	"slices"
 	"sync"
@@ -14,6 +15,8 @@ import (
 var (
 	_ Intent         = (*LocalIntent)(nil)
 	_ IntentInternal = (*LocalIntent)(nil)
+	_ Intent         = (*FanOutIntent)(nil)
+	_ Intent         = (*IntentRouter)(nil)
 	_ Intent         = (*intentWrapper)(nil)
 )
 
@@ -38,6 +41,8 @@ type IntentInternal interface {
 	Ctx() context.Context
 }
 
+// LocalIntent represents a simple intent that is local to the process.
+// LocalIntent can be linked with LocalInterest or RemoteInterest.
 type LocalIntent struct {
 	Base
 	route   Route
@@ -123,6 +128,147 @@ func (i *LocalIntent) Notify() {
 	}
 }
 
+// FanOutIntent is a Intent collection that sends out intents and messages to other intents belonging to different endpoints.
+type FanOutIntent struct {
+	li       *LocalIntent
+	mu       sync.RWMutex
+	intents  []Intent
+	cancels  []context.CancelFunc
+	wg       sync.WaitGroup
+	onNotify func()
+}
+
+func NewFanOutIntent(ctx context.Context, route Route, size int, intents ...Intent) (*FanOutIntent, error) {
+	ret := &FanOutIntent{
+		li: NewIntent(ctx, route, size),
+	}
+	for _, i := range intents {
+		if err := ret.AddIntent(i); err != nil {
+			return nil, err
+		}
+	}
+	ret.li.AddOnClose(func() {
+		ret.wg.Wait()
+	})
+	return ret, nil
+}
+
+func (i *FanOutIntent) OnClose(f func()) Intent {
+	i.li.Base.AddOnClose(f)
+	return i
+}
+
+func (i *FanOutIntent) Route() Route {
+	return i.li.Route()
+}
+
+func (i *FanOutIntent) Interest() <-chan Route {
+	return i.li.Interest()
+}
+
+func (i *FanOutIntent) Close() error {
+	err := i.li.Close()
+	i.wg.Wait()
+	return err
+}
+
+func (i *FanOutIntent) Ctx() context.Context {
+	return i.li.ctx
+}
+
+func (i *FanOutIntent) Send(ctx context.Context, msg proto.Message) error {
+	if reflect.TypeOf(msg) != i.Route().Type() {
+		return errors.ErrInvalidType
+	}
+	select {
+	case <-i.li.Ctx().Done():
+		return errors.ErrClosed
+	default:
+	}
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	var wg sync.WaitGroup
+	errarr := make([]error, len(i.intents))
+	for i, intent := range i.intents {
+		wg.Add(1)
+		go func(i int, intent Intent) {
+			errarr[i] = intent.Send(ctx, msg)
+			wg.Done()
+		}(i, intent)
+	}
+	wg.Wait()
+	noInterest := 0
+	for i, err := range errarr {
+		if errors.Is(err, errors.ErrNoInterest) {
+			noInterest++
+			errarr[i] = nil
+		}
+	}
+	if noInterest == len(i.intents) {
+		return errors.ErrNoInterest
+	}
+	return errors.Join(errarr...)
+}
+
+// AddIntent adds a new intent of the same type, creates a notify runner and links wrappers to it.
+func (i *FanOutIntent) AddIntent(intent Intent) error {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if !i.Route().Equal(intent.Route()) {
+		return errors.ErrInvalidRoute
+	}
+	ctx, cancel := context.WithCancel(i.li.Ctx())
+	i.intents = append(i.intents, intent)
+	i.cancels = append(i.cancels, cancel)
+	i.wg.Add(1)
+	intent.OnClose(cancel)
+	go i.notifyRunner(ctx, intent)
+	return nil
+}
+
+func (i *FanOutIntent) RemoveIntent(intent Intent) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	idx := slices.Index(i.intents, intent)
+	if idx < 0 {
+		return
+	}
+	i.cancels[idx]()
+	i.intents = slices.Delete(i.intents, idx, idx+1)
+	i.cancels = slices.Delete(i.cancels, idx, idx+1)
+
+	if len(i.intents) > 0 {
+		return
+	}
+
+	i.Close()
+}
+
+func (i *FanOutIntent) notifyRunner(ctx context.Context, intent Intent) {
+	defer i.wg.Done()
+	for {
+		select {
+		case <-i.li.Ctx().Done():
+			return
+		case <-ctx.Done():
+			return
+		case <-intent.Interest():
+			if i.onNotify != nil {
+				i.onNotify()
+				continue
+			}
+			i.Notify()
+		}
+	}
+}
+
+func (i *FanOutIntent) Notify() {
+	slog.Info("FanOutIntent", "route", i.Route())
+	i.li.Notify()
+}
+
+// intentWrapper is a wrapper over IntentRouter that acts as multiple-in-multiple-out between multiple user-facing intents
+// and e.g. a collection of same intents that belong to different endpoints.
 type intentWrapper struct {
 	Base
 	router  *IntentRouter
@@ -130,7 +276,7 @@ type intentWrapper struct {
 }
 
 func (w *intentWrapper) Route() Route {
-	return w.router.route
+	return w.router.Route()
 }
 func (w *intentWrapper) OnClose(f func()) Intent {
 	w.Base.AddOnClose(f)
@@ -146,37 +292,29 @@ func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
 
 // IntentRouter keeps track of same type intents from different endpoints and multiple publishers.
 type IntentRouter struct {
-	Base
-	mu       sync.RWMutex
-	wg       sync.WaitGroup
-	route    Route
-	intents  []Intent
-	cancels  []context.CancelFunc
-	wrappers []*intentWrapper
+	*FanOutIntent
 	size     int
+	mu       sync.RWMutex
+	wrappers []*intentWrapper
 }
 
 func NewIntentRouter(ctx context.Context, route Route, size int, intents ...Intent) (*IntentRouter, error) {
+	foi, err := NewFanOutIntent(ctx, route, size, intents...)
+	if err != nil {
+		return nil, err
+	}
 	ret := &IntentRouter{
-		Base:  NewBaseWithCtx(ctx),
-		route: route,
-		size:  size,
+		FanOutIntent: foi,
+		size:         size,
 	}
-	for _, i := range intents {
-		if err := ret.AddIntent(i); err != nil {
-			return nil, err
-		}
-	}
-	ret.AddOnClose(func() {
-		ret.wg.Wait()
-	})
+	foi.onNotify = ret.Notify
 	return ret, nil
 }
 
 // Wrap returns a wrapped intent. Messages sent to this wrapped intent will be sent to all the registered intents.
 func (i *IntentRouter) Wrap() *intentWrapper {
 	ret := &intentWrapper{
-		Base:    NewBaseWithCtx(i.ctx),
+		Base:    NewBaseWithCtx(i.li.Ctx()),
 		router:  i,
 		notifyC: make(chan Route, i.size),
 	}
@@ -212,114 +350,19 @@ func (i *IntentRouter) removeWrapper(w *intentWrapper) error {
 	return i.Close()
 }
 
-// AddIntent adds a new intent of the same type, creates a notify runner and links wrappers to it.
-func (i *IntentRouter) AddIntent(intent Intent) error {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if !i.route.Equal(intent.Route()) {
-		return errors.ErrInvalidRoute
-	}
-	ctx, cancel := context.WithCancel(i.ctx)
-	i.intents = append(i.intents, intent)
-	i.cancels = append(i.cancels, cancel)
-	i.wg.Add(1)
-	go i.notifyRunner(ctx, intent)
-	return nil
-}
-
-func (i *IntentRouter) RemoveIntent(intent Intent) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	idx := slices.Index(i.intents, intent)
-	if idx < 0 {
-		return
-	}
-	i.cancels[idx]()
-	i.intents = slices.Delete(i.intents, idx, idx+1)
-	i.cancels = slices.Delete(i.cancels, idx, idx+1)
-
-	if len(i.intents) > 0 {
-		return
-	}
-
-	i.Close()
-}
-
-func (i *IntentRouter) notifyRunner(ctx context.Context, intent Intent) {
-	defer i.wg.Done()
-	for {
-		select {
-		case <-i.Ctx().Done():
-			return
-		case <-ctx.Done():
-			return
-		case notification := <-intent.Interest():
-			if err := i.notifyWrappers(ctx, notification); err != nil {
-				i.RemoveIntent(intent)
-				return
-			}
-		}
-	}
-}
-
-// notifyWrappers notifies all the registered wrappers
-func (i *IntentRouter) notifyWrappers(ctx context.Context, route Route) error {
+func (i *IntentRouter) Notify() {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
+	route := i.Route()
+	slog.Info("Notify wrappers", "route", route)
 	for _, w := range i.wrappers {
 		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-i.Ctx().Done():
-			return i.Ctx().Err()
+		case <-i.li.Ctx().Done():
+			return
 		case w.notifyC <- route:
 			// slog.Info("SEND notify", "route", route)
 		default:
 			// slog.Info("SKIP notify", "route", route)
 		}
 	}
-	return nil
-}
-
-func (i *IntentRouter) OnClose(f func()) *IntentRouter {
-	i.AddOnClose(f)
-	return i
-}
-
-func (i *IntentRouter) Route() Route {
-	return i.route
-}
-
-func (i *IntentRouter) Send(ctx context.Context, msg proto.Message) error {
-	if reflect.TypeOf(msg) != i.route.Type() {
-		return errors.ErrInvalidType
-	}
-	select {
-	case <-i.Ctx().Done():
-		return errors.ErrClosed
-	default:
-	}
-	i.mu.RLock()
-	defer i.mu.RUnlock()
-	var wg sync.WaitGroup
-	errarr := make([]error, len(i.intents))
-	for i, intent := range i.intents {
-		wg.Add(1)
-		go func(i int, intent Intent) {
-			errarr[i] = intent.Send(ctx, msg)
-			wg.Done()
-		}(i, intent)
-	}
-	wg.Wait()
-	noInterest := 0
-	for i, err := range errarr {
-		if errors.Is(err, errors.ErrNoInterest) {
-			noInterest++
-			errarr[i] = nil
-		}
-	}
-	if noInterest == len(i.intents) {
-		return errors.ErrNoInterest
-	}
-	return errors.Join(errarr...)
 }

@@ -203,14 +203,14 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 		t.Size,
 		intents...,
 	)
+	if err != nil {
+		return nil, err
+	}
 	ir.OnClose(func() {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		delete(t.intentRouters, route.ID())
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	t.intentRouters[route.ID()] = ir
 	return ir.Wrap(), nil
@@ -244,14 +244,14 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 		t.Size,
 		interests...,
 	)
+	if err != nil {
+		return nil, err
+	}
 	ir.OnClose(func() {
 		t.mu.Lock()
 		defer t.mu.Unlock()
 		delete(t.interestRouters, route.ID())
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	t.interestRouters[route.ID()] = ir
 	return ir.Wrap(), nil

@@ -101,6 +101,7 @@ func TestIntentRouter_Creation(t *testing.T) {
 	mockIntent.On("Route").Return(route)
 	ch := make(chan Route, 10)
 	mockIntent.On("Interest").Return((<-chan Route)(ch)) // Assuming a channel is returned here
+	mockIntent.On("OnClose", mock.Anything).Return(mockIntent)
 
 	router, err := NewIntentRouter(ctx, route, 10, mockIntent)
 	require.NoError(t, err)
@@ -141,6 +142,7 @@ func TestIntentRouter_WrapAndSend(t *testing.T) {
 	mockIntent1 := &MockIntent{}
 	mockIntent1.On("Route").Return(route)
 	mockIntent1.On("Send", mock.Anything, mock.Anything).Return(nil).Times(2)
+	mockIntent1.On("OnClose", mock.Anything).Return(mockIntent1)
 	ch1 := make(chan Route, 10)
 	mockIntent1.On("Interest").Return((<-chan Route)(ch1)) // Assuming a channel is returned here
 	router.AddIntent(mockIntent1)
@@ -152,6 +154,7 @@ func TestIntentRouter_WrapAndSend(t *testing.T) {
 	mockIntent2.On("Send", mock.Anything, mock.Anything).Return(nil).Times(2)
 	ch2 := make(chan Route, 10)
 	mockIntent2.On("Interest").Return((<-chan Route)(ch2)) // Assuming a channel is returned here
+	mockIntent2.On("OnClose", mock.Anything).Return(mockIntent2)
 	router.AddIntent(mockIntent2)
 
 	err = w1.Send(ctx, &testtypes.Foo{Text: "A"})
@@ -194,12 +197,14 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 	mockIntent1.On("Route").Return(route)
 	ch1 := make(chan Route, 10)
 	mockIntent1.On("Interest").Return((<-chan Route)(ch1)) // Assuming a channel is returned here
+	mockIntent1.On("OnClose", mock.Anything).Return(mockIntent1)
 	router.AddIntent(mockIntent1)
 
 	mockIntent2 := &MockIntent{}
 	mockIntent2.On("Route").Return(route)
 	ch2 := make(chan Route, 10)
 	mockIntent2.On("Interest").Return((<-chan Route)(ch2)) // Assuming a channel is returned here
+	mockIntent2.On("OnClose", mock.Anything).Return(mockIntent2)
 
 	t.Log("Register 1st wrapper")
 	w1 := router.Wrap()
@@ -263,7 +268,7 @@ func TestIntentRouter_NotifyWrappers(t *testing.T) {
 	t.Log("After WaitCalled")
 	assert.True(t, testutil.CtxRecv(ctx, router.Ctx().Done()))
 	<-router.Ctx().Done()
-	assert.Equal(t, context.Canceled, router.ctx.Err())
+	assert.Equal(t, context.Canceled, router.Ctx().Err())
 	mockIntent1.AssertExpectations(t)
 	mockIntent2.AssertExpectations(t)
 }

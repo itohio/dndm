@@ -13,6 +13,8 @@ import (
 var (
 	_ Interest         = (*LocalInterest)(nil)
 	_ InterestInternal = (*LocalInterest)(nil)
+	_ Interest         = (*FanInInterest)(nil)
+	_ Interest         = (*InterestRouter)(nil)
 	_ Interest         = (*interestWrapper)(nil)
 )
 
@@ -74,6 +76,113 @@ func (i *LocalInterest) MsgC() chan<- proto.Message {
 	return i.msgC
 }
 
+type FanInInterest struct {
+	li        *LocalInterest
+	mu        sync.RWMutex
+	wg        sync.WaitGroup
+	interests []Interest
+	cancels   []context.CancelFunc
+	onRecv    func(ctx context.Context, msg proto.Message) error
+}
+
+func NewFanInInterest(ctx context.Context, route Route, size int, interests ...Interest) (*FanInInterest, error) {
+	ret := &FanInInterest{
+		li: NewInterest(ctx, route, size),
+	}
+	for _, i := range interests {
+		if err := ret.AddInterest(i); err != nil {
+			return nil, err
+		}
+	}
+
+	return ret, nil
+}
+
+func (i *FanInInterest) Close() error {
+	err := i.li.Close()
+	i.wg.Wait()
+	return err
+}
+
+func (i *FanInInterest) OnClose(f func()) Interest {
+	i.li.AddOnClose(f)
+	return i
+}
+
+func (i *FanInInterest) Route() Route {
+	return i.li.Route()
+}
+
+func (i *FanInInterest) C() <-chan proto.Message {
+	return i.li.C()
+}
+
+func (i *FanInInterest) Ctx() context.Context {
+	return i.li.Ctx()
+}
+
+// AddInterest registers an interest and sets up the routing.
+func (i *FanInInterest) AddInterest(interest Interest) error {
+	if !i.Route().Equal(interest.Route()) {
+		return errors.ErrInvalidRoute
+	}
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if idx := slices.Index(i.interests, interest); idx >= 0 {
+		return nil
+	}
+
+	ctx, cancel := context.WithCancel(i.Ctx())
+	i.interests = append(i.interests, interest)
+	i.cancels = append(i.cancels, cancel)
+	i.wg.Add(1)
+	interest.OnClose(cancel)
+	go i.recvRunner(ctx, interest)
+	return nil
+}
+
+func (i *FanInInterest) RemoveInterest(interest Interest) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	idx := slices.Index(i.interests, interest)
+	if idx < 0 {
+		return
+	}
+	i.cancels[idx]()
+	i.interests = slices.Delete(i.interests, idx, idx+1)
+	i.cancels = slices.Delete(i.cancels, idx, idx+1)
+}
+
+func (i *FanInInterest) recvRunner(ctx context.Context, interest Interest) {
+	defer i.wg.Done()
+	for {
+		select {
+		case <-i.Ctx().Done():
+			return
+		case <-ctx.Done():
+			return
+		case msg := <-interest.C():
+
+			if i.onRecv != nil {
+				err := i.onRecv(ctx, msg)
+				if err != nil {
+					i.RemoveInterest(interest)
+					return
+				}
+				continue
+			}
+
+			select {
+			case <-i.Ctx().Done():
+				return
+			case <-ctx.Done():
+				return
+			case i.li.MsgC() <- msg:
+			}
+		}
+	}
+}
+
 type interestWrapper struct {
 	Base
 	router *InterestRouter
@@ -85,7 +194,7 @@ func (w *interestWrapper) OnClose(f func()) Interest {
 	return w
 }
 func (w *interestWrapper) Route() Route {
-	return w.router.route
+	return w.router.Route()
 }
 func (w *interestWrapper) C() <-chan proto.Message {
 	return w.c
@@ -93,36 +202,22 @@ func (w *interestWrapper) C() <-chan proto.Message {
 
 // InterestRouter keeps track of same type interests and multiple subscribers.
 type InterestRouter struct {
-	Base
-	mu        sync.RWMutex
-	wg        sync.WaitGroup
-	route     Route
-	c         chan proto.Message
-	interests []Interest
-	cancels   []context.CancelFunc
-	wrappers  []*interestWrapper
-	size      int
+	*FanInInterest
+	size     int
+	mu       sync.RWMutex
+	wrappers []*interestWrapper
 }
 
 func NewInterestRouter(ctx context.Context, route Route, size int, interests ...Interest) (*InterestRouter, error) {
+	fii, err := NewFanInInterest(ctx, route, size, interests...)
+	if err != nil {
+		return nil, err
+	}
 	ret := &InterestRouter{
-		Base:  NewBase(),
-		route: route,
-		c:     make(chan proto.Message, size),
-		size:  size,
+		FanInInterest: fii,
+		size:          size,
 	}
-	ret.Init(ctx)
-
-	for _, i := range interests {
-		if err := ret.AddInterest(i); err != nil {
-			return nil, err
-		}
-	}
-
-	ret.AddOnClose(func() {
-		ret.wg.Wait()
-		close(ret.c)
-	})
+	fii.onRecv = ret.routeMsg
 
 	return ret, nil
 }
@@ -130,7 +225,7 @@ func NewInterestRouter(ctx context.Context, route Route, size int, interests ...
 // Wrap returns a wrapped interest that collects messages from all registered interests.
 func (i *InterestRouter) Wrap() *interestWrapper {
 	ret := &interestWrapper{
-		Base:   NewBaseWithCtx(i.ctx),
+		Base:   NewBaseWithCtx(i.Ctx()),
 		router: i,
 		c:      make(chan proto.Message, i.size),
 	}
@@ -167,54 +262,6 @@ func (i *InterestRouter) removeWrapper(w *interestWrapper) error {
 	return i.Close()
 }
 
-// AddInterest registers an interest and sets up the routing.
-func (i *InterestRouter) AddInterest(interest Interest) error {
-	if !i.route.Equal(interest.Route()) {
-		return errors.ErrInvalidRoute
-	}
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if idx := slices.Index(i.interests, interest); idx >= 0 {
-		return nil
-	}
-
-	ctx, cancel := context.WithCancel(i.ctx)
-	i.interests = append(i.interests, interest)
-	i.cancels = append(i.cancels, cancel)
-	i.wg.Add(1)
-	go i.recvRunner(ctx, interest)
-	return nil
-}
-
-func (i *InterestRouter) RemoveInterest(interest Interest) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	idx := slices.Index(i.interests, interest)
-	if idx < 0 {
-		return
-	}
-	i.cancels[idx]()
-	i.interests = slices.Delete(i.interests, idx, idx+1)
-	i.cancels = slices.Delete(i.cancels, idx, idx+1)
-}
-
-func (i *InterestRouter) recvRunner(ctx context.Context, interest Interest) {
-	defer i.wg.Done()
-	for {
-		select {
-		case <-i.ctx.Done():
-			return
-		case <-ctx.Done():
-			return
-		case msg := <-interest.C():
-			if err := i.routeMsg(ctx, msg); err != nil {
-				i.RemoveInterest(interest)
-				return
-			}
-		}
-	}
-}
-
 // routeMsg routes message received by some interest to all wrappers.
 func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error {
 	i.mu.Lock()
@@ -223,29 +270,11 @@ func (i *InterestRouter) routeMsg(ctx context.Context, msg proto.Message) error 
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-i.ctx.Done():
-			return i.ctx.Err()
+		case <-i.Ctx().Done():
+			return i.Ctx().Err()
 		case w.c <- msg:
 		default:
 		}
 	}
 	return nil
-}
-
-func (i *InterestRouter) Close() error {
-	i.Base.Close()
-	return nil
-}
-
-func (i *InterestRouter) OnClose(f func()) *InterestRouter {
-	i.AddOnClose(f)
-	return i
-}
-
-func (i *InterestRouter) Route() Route {
-	return i.route
-}
-
-func (i *InterestRouter) C() <-chan proto.Message {
-	return i.c
 }
