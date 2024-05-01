@@ -19,6 +19,8 @@ type Peer interface {
 	// Equal compares this Peer to another Peer interface to determine if they represent
 	// the same peer.
 	Equal(v Peer) bool
+	// HasPrefix compares this Peer path to Route Path.
+	HasPrefix(r Route) bool
 }
 
 type PeerImpl struct {
@@ -70,4 +72,7 @@ func (p PeerImpl) Path() string       { return p.path }
 func (p PeerImpl) Scheme() string     { return p.scheme }
 func (p PeerImpl) Equal(v Peer) bool {
 	return p.scheme == v.Scheme() && p.addr == v.Address()
+}
+func (p PeerImpl) HasPrefix(r Route) bool {
+	return strings.HasPrefix(r.Path(), p.path)
 }

@@ -14,7 +14,7 @@ import (
 	types "github.com/itohio/dndm/types/core"
 )
 
-var _ dndm.Endpoint = (*Endpoint)(nil)
+var _ dndm.RemoteEndpoint = (*Endpoint)(nil)
 
 type Endpoint struct {
 	dndm.BaseEndpoint
@@ -41,6 +41,14 @@ func New(self dndm.Peer, conn network.Conn, size int, timeout, pingDuration time
 		timeout:      timeout,
 		latency:      NewLatencyTracker(10),
 	}
+}
+
+func (t *Endpoint) Local() dndm.Peer {
+	return t.conn.Local()
+}
+
+func (t *Endpoint) Remote() dndm.Peer {
+	return t.conn.Remote()
 }
 
 func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm.IntentCallback, addInterest dndm.InterestCallback) error {

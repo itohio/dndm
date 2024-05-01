@@ -37,43 +37,48 @@ func TestRoute_Equal(t *testing.T) {
 	}
 }
 
-func TestRoute_ID(t *testing.T) {
-	route := PlainRoute{route: "MessageType@path"}
-	assert.Equal(t, "MessageType@path", route.ID())
-}
-
-func TestRoute_String(t *testing.T) {
-	route := PlainRoute{route: "MessageType@path"}
-	assert.Equal(t, "MessageType@path", route.String())
-}
-
-func TestRoute_Bytes(t *testing.T) {
-	route := PlainRoute{route: "MessageType@path"}
-	assert.Equal(t, []byte("MessageType@path"), route.Bytes())
-}
-
 func TestNewRoute(t *testing.T) {
 	msg := &testtypes.Foo{}
 	route, err := NewRoute("path", msg)
 	assert.NoError(t, err)
 	expectedRoute := PlainRoute{route: "types.Foo@path", path: "path", msgType: reflect.TypeOf(msg)}
 	assert.Equal(t, expectedRoute, route)
+
+	assert.Equal(t, "types.Foo@path", route.ID())
+	assert.Equal(t, "types.Foo@path", route.String())
+	assert.Equal(t, "path", route.Path())
+	assert.Equal(t, reflect.TypeOf(msg), route.Type())
+}
+
+func TestNewHashedRoute(t *testing.T) {
+	msg := &testtypes.Foo{}
+	route, err := NewHashedRoute("example", "example.path", msg)
+	assert.NoError(t, err)
+	expectedRoute := HashedRoute{route: "m1F+jLCmA+RQL1TkllbKW4cFj8I", prefix: "example", msgType: reflect.TypeOf(msg)}
+	assert.Equal(t, expectedRoute, route)
+
+	assert.Equal(t, "m1F+jLCmA+RQL1TkllbKW4cFj8I", route.ID())
+	assert.Equal(t, "example#m1F+jLCmA+RQL1TkllbKW4cFj8I", route.String())
+	assert.Equal(t, "example", route.Path())
+	assert.Equal(t, reflect.TypeOf(msg), route.Type())
 }
 
 func TestRouteFromString(t *testing.T) {
 	route, err := RouteFromString("MessageType@path")
 	assert.NoError(t, err)
-	expectedRoute := PlainRoute{route: "MessageType@path"}
-	assert.Equal(t, expectedRoute, route)
-}
 
-func TestRoute_Path(t *testing.T) {
-	route := PlainRoute{route: "MessageType@path", path: "path"}
+	assert.Equal(t, "MessageType@path", route.ID())
+	assert.Equal(t, "MessageType@path", route.String())
 	assert.Equal(t, "path", route.Path())
+	assert.Equal(t, nil, route.Type())
 }
 
-func TestRoute_Type(t *testing.T) {
-	msg := &testtypes.Bar{}
-	route := PlainRoute{route: "YourMessageType@path", msgType: reflect.TypeOf(msg)}
-	assert.Equal(t, reflect.TypeOf(msg), route.Type())
+func TestRouteFromStringHashed(t *testing.T) {
+	route, err := RouteFromString("example#m1F+jLCmA+RQL1TkllbKW4cFj8I")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "m1F+jLCmA+RQL1TkllbKW4cFj8I", route.ID())
+	assert.Equal(t, "example#m1F+jLCmA+RQL1TkllbKW4cFj8I", route.String())
+	assert.Equal(t, "example", route.Path())
+	assert.Equal(t, nil, route.Type())
 }
