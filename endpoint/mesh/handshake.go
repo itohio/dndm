@@ -167,7 +167,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 		h.addrbook.AddConn(h.remotePeer, true, h.conn)
 		h.state = HS_WAIT
 		h.Log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
-		h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Handshake{
+		h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
 			You:       h.remotePeer.String(),
 			Stage:     p2ptypes.HandshakeStage_INITIAL,
@@ -216,7 +216,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		h.remotePeer = peer
 		h.addrbook.AddConn(h.remotePeer, false, h.conn)
 
-		err = h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Handshake{
+		err = h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
 			You:       peer.String(),
 			Stage:     p2ptypes.HandshakeStage_FINAL,
@@ -236,7 +236,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 			return true, nil
 		}
 
-		err = h.conn.Write(h.Ctx(), dndm.Route{}, &p2ptypes.Peers{
+		err = h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Peers{
 			Remove: false,
 			Ids:    activePeers,
 		})

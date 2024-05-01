@@ -4,18 +4,21 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/itohio/dndm/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPeer_String(t *testing.T) {
 	args := url.Values{}
 	args.Add("key", "value")
-	peer := Peer{
-		scheme: "tcp",
-		addr:   "example.com",
-		path:   "path",
-		args:   args,
-	}
+	peer, err := NewPeer(
+		"tcp",
+		"example.com",
+		"path",
+		args,
+	)
+	require.NoError(t, err)
 	expected := "tcp://example.com/path?key=value"
 	assert.Equal(t, expected, peer.String())
 }
@@ -41,49 +44,37 @@ func TestPeerFromString(t *testing.T) {
 	assert.Equal(t, "value", peer.Values().Get("key"))
 }
 
-func TestPeer_Values(t *testing.T) {
+func TestPeer_Methods(t *testing.T) {
 	args := url.Values{}
 	args.Add("key", "value")
-	peer := Peer{args: args}
+	peer := errors.Must(NewPeer("tcp", "example.com:123", "path", args))
 	assert.Equal(t, "value", peer.Values().Get("key"))
-}
-
-func TestPeer_Address(t *testing.T) {
-	peer := Peer{addr: "example.com:123"}
-	assert.Equal(t, "example.com:123", peer.Address())
-}
-
-func TestPeer_Path(t *testing.T) {
-	peer := Peer{path: "path"}
 	assert.Equal(t, "path", peer.Path())
-}
-
-func TestPeer_Scheme(t *testing.T) {
-	peer := Peer{scheme: "tcp"}
 	assert.Equal(t, "tcp", peer.Scheme())
+	assert.Equal(t, "example.com:123", peer.Address())
 }
 
 func TestPeer_Equal(t *testing.T) {
 	args := url.Values{}
 	args.Add("key", "value")
-	peer1 := Peer{
-		scheme: "tcp",
-		addr:   "example.com",
-		path:   "path",
-		args:   args,
-	}
-	peer2 := Peer{
-		scheme: "tcp",
-		addr:   "example.com",
-		path:   "different",
-		args:   args,
-	}
-	peer3 := Peer{
-		scheme: "udp",
-		addr:   "example.com",
-		path:   "path",
-		args:   args,
-	}
+	peer1 := errors.Must(NewPeer(
+		"tcp",
+		"example.com",
+		"path",
+		args,
+	))
+	peer2 := errors.Must(NewPeer(
+		"tcp",
+		"example.com",
+		"different",
+		args,
+	))
+	peer3 := errors.Must(NewPeer(
+		"udp",
+		"example.com",
+		"path",
+		args,
+	))
 	assert.True(t, peer1.Equal(peer2))
 	assert.False(t, peer1.Equal(peer3))
 }

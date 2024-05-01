@@ -48,6 +48,7 @@ func (o *Options) addEndpoint(t Endpoint) error {
 	return nil
 }
 
+// WithContext option configures context.
 func WithContext(ctx context.Context) Option {
 	return func(o *Options) error {
 		o.ctx = ctx
@@ -55,6 +56,7 @@ func WithContext(ctx context.Context) Option {
 	}
 }
 
+// WithLogger option configures Logger.
 func WithLogger(l *slog.Logger) Option {
 	return func(o *Options) error {
 		if l == nil {
@@ -65,6 +67,7 @@ func WithLogger(l *slog.Logger) Option {
 	}
 }
 
+// WithQueueSize configures the size of send/receive/notification chan sizes.
 func WithQueueSize(size int) Option {
 	return func(o *Options) error {
 		if size < 0 {
@@ -75,12 +78,14 @@ func WithQueueSize(size int) Option {
 	}
 }
 
+// WithEndpoint adds an endpoint to the collection.
 func WithEndpoint(t Endpoint) Option {
 	return func(o *Options) error {
 		return o.addEndpoint(t)
 	}
 }
 
+// WithEndpoints sets the collection to specified endpoints.
 func WithEndpoints(t ...Endpoint) Option {
 	return func(o *Options) error {
 		o.endpoints = t
@@ -88,18 +93,12 @@ func WithEndpoints(t ...Endpoint) Option {
 	}
 }
 
+// Subscription options
 type SubOptStruct struct {
 }
 type SubOpt func(*SubOptStruct) error
 
+// Publishing options
 type PubOptStruct struct {
-	blocking bool
 }
 type PubOpt func(*PubOptStruct) error
-
-func Blocking(b bool) PubOpt {
-	return func(o *PubOptStruct) error {
-		o.blocking = b
-		return nil
-	}
-}

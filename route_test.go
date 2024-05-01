@@ -17,14 +17,14 @@ func TestRoute_Equal(t *testing.T) {
 	}{
 		{
 			name:     "Equal routes",
-			route1:   Route{route: "path@MessageType"},
-			route2:   Route{route: "path@MessageType"},
+			route1:   PlainRoute{route: "MessageType@path"},
+			route2:   PlainRoute{route: "MessageType@path"},
 			expected: true,
 		},
 		{
 			name:     "Different routes",
-			route1:   Route{route: "path1@MessageType"},
-			route2:   Route{route: "path2@MessageType"},
+			route1:   PlainRoute{route: "MessageType@path1"},
+			route2:   PlainRoute{route: "MessageType@path2"},
 			expected: false,
 		},
 	}
@@ -38,47 +38,42 @@ func TestRoute_Equal(t *testing.T) {
 }
 
 func TestRoute_ID(t *testing.T) {
-	route := Route{route: "path@MessageType"}
-	assert.Equal(t, "path@MessageType", route.ID())
+	route := PlainRoute{route: "MessageType@path"}
+	assert.Equal(t, "MessageType@path", route.ID())
 }
 
 func TestRoute_String(t *testing.T) {
-	route := Route{route: "path@MessageType"}
-	assert.Equal(t, "path@MessageType", route.String())
+	route := PlainRoute{route: "MessageType@path"}
+	assert.Equal(t, "MessageType@path", route.String())
 }
 
 func TestRoute_Bytes(t *testing.T) {
-	route := Route{route: "path@MessageType"}
-	assert.Equal(t, []byte("path@MessageType"), route.Bytes())
+	route := PlainRoute{route: "MessageType@path"}
+	assert.Equal(t, []byte("MessageType@path"), route.Bytes())
 }
 
 func TestNewRoute(t *testing.T) {
 	msg := &testtypes.Foo{}
 	route, err := NewRoute("path", msg)
 	assert.NoError(t, err)
-	expectedRoute := Route{route: "path@types.Foo", path: "path", msgType: reflect.TypeOf(msg)}
+	expectedRoute := PlainRoute{route: "types.Foo@path", path: "path", msgType: reflect.TypeOf(msg)}
 	assert.Equal(t, expectedRoute, route)
 }
 
 func TestRouteFromString(t *testing.T) {
-	route, err := RouteFromString("path@MessageType")
+	route, err := RouteFromString("MessageType@path")
 	assert.NoError(t, err)
-	expectedRoute := Route{route: "path@MessageType"}
+	expectedRoute := PlainRoute{route: "MessageType@path"}
 	assert.Equal(t, expectedRoute, route)
 }
 
-func TestRoute_Route(t *testing.T) {
-	route := Route{route: "path@MessageType"}
-	assert.Equal(t, route, route.Route())
-}
-
 func TestRoute_Path(t *testing.T) {
-	route := Route{route: "path@MessageType", path: "path"}
+	route := PlainRoute{route: "MessageType@path", path: "path"}
 	assert.Equal(t, "path", route.Path())
 }
 
 func TestRoute_Type(t *testing.T) {
 	msg := &testtypes.Bar{}
-	route := Route{route: "path@YourMessageType", msgType: reflect.TypeOf(msg)}
+	route := PlainRoute{route: "YourMessageType@path", msgType: reflect.TypeOf(msg)}
 	assert.Equal(t, reflect.TypeOf(msg), route.Type())
 }
