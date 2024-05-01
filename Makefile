@@ -37,9 +37,6 @@ $(BUILD_TARGETS):
 	# Build the production binary
 	go build $(BUILD_FLAGS) -o $(BUILDDIR)/$(@:build-%=%) ./cmd/$(@:build-%=%)
 
-
-.PHONY: vulncheck
-
 .PHONY: vulncheck
 vulncheck: $(BUILDDIR)/
 	GOBIN=$(BUILDDIR) go install golang.org/x/vuln/cmd/govulncheck@latest

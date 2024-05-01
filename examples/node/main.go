@@ -44,7 +44,7 @@ func main() {
 
 	flag.Parse()
 
-	selfPeer := errors.Must(network.PeerFromString(*self))
+	selfPeer := errors.Must(dndm.PeerFromString(*self))
 
 	d := errors.Must(network.New(
 		errors.Must(net.New(slog.Default(), selfPeer)),

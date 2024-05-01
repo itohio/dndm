@@ -70,13 +70,27 @@ func (t *Container) Add(ep Endpoint) error {
 	if ep == nil {
 		return errors.ErrInvalidEndpoint
 	}
+
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	idx := slices.Index(t.endpoints, ep)
-	if idx >= 0 {
+
+	if idx := slices.Index(t.endpoints, ep); idx >= 0 {
 		return errors.ErrDuplicate
 	}
-	// TODO
+
+	if err := t.initializeEndpoint(ep); err != nil {
+		return err
+	}
+
+	t.endpoints = append(t.endpoints, ep)
+
+	t.registerEndpointWithRouters(ep)
+
+	return nil
+}
+
+// initializeEndpoint handles the initialization and setup of an endpoint.
+func (t *Container) initializeEndpoint(ep Endpoint) error {
 	err := ep.Init(t.Ctx(), t.Log,
 		func(intent Intent, ep Endpoint) error { return t.OnAddIntent(intent, ep) },
 		func(interest Interest, ep Endpoint) error { return t.OnAddInterest(interest, ep) },
@@ -84,12 +98,17 @@ func (t *Container) Add(ep Endpoint) error {
 	if err != nil {
 		return err
 	}
-	t.endpoints = append(t.endpoints, ep)
+
 	ep.OnClose(func() {
 		t.Log.Info("Container OnClose", "name", ep.Name())
 		t.Remove(ep)
 	})
 
+	return nil
+}
+
+// registerEndpointWithRouters links the endpoint with all existing routers.
+func (t *Container) registerEndpointWithRouters(ep Endpoint) {
 	// Add endpoint to intents
 	for _, ir := range t.intentRouters {
 		intent, err := ep.Publish(ir.Route())
@@ -115,7 +134,6 @@ func (t *Container) Add(ep Endpoint) error {
 			t.Log.Warn("AddIntent.AddInterest", "err", err, "route", ir.Route())
 		}
 	}
-	return nil
 }
 
 func (t *Container) Remove(ep Endpoint) error {
@@ -226,8 +244,8 @@ func (t *Container) Subscribe(route Route, opt ...SubOpt) (Interest, error) {
 func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 	// Advertise interests anyway (even if we are already subscribed)
 	interests := make([]Interest, 0, len(t.endpoints))
-	for _, t := range t.endpoints {
-		interest, err := t.Subscribe(route)
+	for _, ep := range t.endpoints {
+		interest, err := ep.Subscribe(route)
 		if err != nil {
 			closeAll(interests...)
 			return nil, err

@@ -33,7 +33,7 @@ type Endpoint struct {
 }
 
 // New creates a endpoint that communicates with a remote via Remote interface.
-func New(self network.Peer, conn network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
+func New(self dndm.Peer, conn network.Conn, size int, timeout, pingDuration time.Duration) *Endpoint {
 	return &Endpoint{
 		BaseEndpoint: dndm.NewEndpointBase(self.String(), size),
 		conn:         conn,

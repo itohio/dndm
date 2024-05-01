@@ -5,6 +5,7 @@ import (
 	"io"
 	"testing"
 
+	dndm "github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,7 +39,7 @@ func TestNewFactoryDuplicateError(t *testing.T) {
 
 func TestFactoryDialNotFound(t *testing.T) {
 	factory, _ := New() // No dialers
-	_, err := factory.Dial(context.Background(), Peer{scheme: "tcp"})
+	_, err := factory.Dial(context.Background(), errors.Must(dndm.NewPeer("tcp", "addr", "path", nil)))
 	assert.Error(t, err)
 	assert.Equal(t, errors.ErrNotFound, err)
 }
@@ -49,7 +50,7 @@ func TestFactoryDialSuccess(t *testing.T) {
 	dialer.On("Dial", mock.Anything, mock.AnythingOfType("Peer")).Return(nil, nil)
 
 	factory, _ := New(dialer)
-	_, err := factory.Dial(context.Background(), Peer{scheme: "tcp"})
+	_, err := factory.Dial(context.Background(), errors.Must(dndm.NewPeer("tcp", "addr", "path", nil)))
 	assert.NoError(t, err)
 	dialer.AssertExpectations(t)
 }
@@ -60,7 +61,7 @@ func TestFactoryServe(t *testing.T) {
 	server.On("Serve", mock.Anything, mock.Anything).Return(nil)
 
 	factory, _ := New(server)
-	err := factory.Serve(context.Background(), func(peer Peer, r io.ReadWriteCloser) error {
+	err := factory.Serve(context.Background(), func(peer dndm.Peer, r io.ReadWriteCloser) error {
 		return nil
 	})
 	assert.NoError(t, err)

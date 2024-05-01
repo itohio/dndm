@@ -4,6 +4,9 @@ package network
 
 import (
 	context "context"
+
+	dndm "github.com/itohio/dndm"
+
 	io "io"
 
 	mock "github.com/stretchr/testify/mock"
@@ -23,7 +26,7 @@ func (_m *MockNode) EXPECT() *MockNode_Expecter {
 }
 
 // Dial provides a mock function with given fields: ctx, peer, o
-func (_m *MockNode) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
+func (_m *MockNode) Dial(ctx context.Context, peer dndm.Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
 	_va := make([]interface{}, len(o))
 	for _i := range o {
 		_va[_i] = o[_i]
@@ -39,10 +42,10 @@ func (_m *MockNode) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadW
 
 	var r0 io.ReadWriteCloser
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, Peer, ...DialOpt) (io.ReadWriteCloser, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dndm.Peer, ...DialOpt) (io.ReadWriteCloser, error)); ok {
 		return rf(ctx, peer, o...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, Peer, ...DialOpt) io.ReadWriteCloser); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dndm.Peer, ...DialOpt) io.ReadWriteCloser); ok {
 		r0 = rf(ctx, peer, o...)
 	} else {
 		if ret.Get(0) != nil {
@@ -50,7 +53,7 @@ func (_m *MockNode) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadW
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, Peer, ...DialOpt) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, dndm.Peer, ...DialOpt) error); ok {
 		r1 = rf(ctx, peer, o...)
 	} else {
 		r1 = ret.Error(1)
@@ -66,14 +69,14 @@ type MockNode_Dial_Call struct {
 
 // Dial is a helper method to define mock.On call
 //   - ctx context.Context
-//   - peer Peer
+//   - peer dndm.Peer
 //   - o ...DialOpt
 func (_e *MockNode_Expecter) Dial(ctx interface{}, peer interface{}, o ...interface{}) *MockNode_Dial_Call {
 	return &MockNode_Dial_Call{Call: _e.mock.On("Dial",
 		append([]interface{}{ctx, peer}, o...)...)}
 }
 
-func (_c *MockNode_Dial_Call) Run(run func(ctx context.Context, peer Peer, o ...DialOpt)) *MockNode_Dial_Call {
+func (_c *MockNode_Dial_Call) Run(run func(ctx context.Context, peer dndm.Peer, o ...DialOpt)) *MockNode_Dial_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]DialOpt, len(args)-2)
 		for i, a := range args[2:] {
@@ -81,7 +84,7 @@ func (_c *MockNode_Dial_Call) Run(run func(ctx context.Context, peer Peer, o ...
 				variadicArgs[i] = a.(DialOpt)
 			}
 		}
-		run(args[0].(context.Context), args[1].(Peer), variadicArgs...)
+		run(args[0].(context.Context), args[1].(dndm.Peer), variadicArgs...)
 	})
 	return _c
 }
@@ -91,7 +94,7 @@ func (_c *MockNode_Dial_Call) Return(_a0 io.ReadWriteCloser, _a1 error) *MockNod
 	return _c
 }
 
-func (_c *MockNode_Dial_Call) RunAndReturn(run func(context.Context, Peer, ...DialOpt) (io.ReadWriteCloser, error)) *MockNode_Dial_Call {
+func (_c *MockNode_Dial_Call) RunAndReturn(run func(context.Context, dndm.Peer, ...DialOpt) (io.ReadWriteCloser, error)) *MockNode_Dial_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -142,7 +145,7 @@ func (_c *MockNode_Scheme_Call) RunAndReturn(run func() string) *MockNode_Scheme
 }
 
 // Serve provides a mock function with given fields: ctx, onConnect, o
-func (_m *MockNode) Serve(ctx context.Context, onConnect func(Peer, io.ReadWriteCloser) error, o ...SrvOpt) error {
+func (_m *MockNode) Serve(ctx context.Context, onConnect func(dndm.Peer, io.ReadWriteCloser) error, o ...SrvOpt) error {
 	_va := make([]interface{}, len(o))
 	for _i := range o {
 		_va[_i] = o[_i]
@@ -157,7 +160,7 @@ func (_m *MockNode) Serve(ctx context.Context, onConnect func(Peer, io.ReadWrite
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, func(Peer, io.ReadWriteCloser) error, ...SrvOpt) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, func(dndm.Peer, io.ReadWriteCloser) error, ...SrvOpt) error); ok {
 		r0 = rf(ctx, onConnect, o...)
 	} else {
 		r0 = ret.Error(0)
@@ -173,14 +176,14 @@ type MockNode_Serve_Call struct {
 
 // Serve is a helper method to define mock.On call
 //   - ctx context.Context
-//   - onConnect func(Peer , io.ReadWriteCloser) error
+//   - onConnect func(dndm.Peer , io.ReadWriteCloser) error
 //   - o ...SrvOpt
 func (_e *MockNode_Expecter) Serve(ctx interface{}, onConnect interface{}, o ...interface{}) *MockNode_Serve_Call {
 	return &MockNode_Serve_Call{Call: _e.mock.On("Serve",
 		append([]interface{}{ctx, onConnect}, o...)...)}
 }
 
-func (_c *MockNode_Serve_Call) Run(run func(ctx context.Context, onConnect func(Peer, io.ReadWriteCloser) error, o ...SrvOpt)) *MockNode_Serve_Call {
+func (_c *MockNode_Serve_Call) Run(run func(ctx context.Context, onConnect func(dndm.Peer, io.ReadWriteCloser) error, o ...SrvOpt)) *MockNode_Serve_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]SrvOpt, len(args)-2)
 		for i, a := range args[2:] {
@@ -188,7 +191,7 @@ func (_c *MockNode_Serve_Call) Run(run func(ctx context.Context, onConnect func(
 				variadicArgs[i] = a.(SrvOpt)
 			}
 		}
-		run(args[0].(context.Context), args[1].(func(Peer, io.ReadWriteCloser) error), variadicArgs...)
+		run(args[0].(context.Context), args[1].(func(dndm.Peer, io.ReadWriteCloser) error), variadicArgs...)
 	})
 	return _c
 }
@@ -198,7 +201,7 @@ func (_c *MockNode_Serve_Call) Return(_a0 error) *MockNode_Serve_Call {
 	return _c
 }
 
-func (_c *MockNode_Serve_Call) RunAndReturn(run func(context.Context, func(Peer, io.ReadWriteCloser) error, ...SrvOpt) error) *MockNode_Serve_Call {
+func (_c *MockNode_Serve_Call) RunAndReturn(run func(context.Context, func(dndm.Peer, io.ReadWriteCloser) error, ...SrvOpt) error) *MockNode_Serve_Call {
 	_c.Call.Return(run)
 	return _c
 }

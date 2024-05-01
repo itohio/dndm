@@ -33,8 +33,8 @@ func (m *mockReadWriter) Write(p []byte) (n int, err error) {
 
 func TestNewWithContext(t *testing.T) {
 	ctx := context.Background()
-	localPeer, _ := network.NewPeer("scheme", "addr", "path", nil)
-	remotePeer, _ := network.NewPeer("scheme1", "addr", "path", nil)
+	localPeer, _ := dndm.NewPeer("scheme", "addr", "path", nil)
+	remotePeer, _ := dndm.NewPeer("scheme1", "addr", "path", nil)
 	rw := &mockReadWriter{}
 	handlers := make(map[types.Type]network.MessageHandler)
 
@@ -48,7 +48,7 @@ func TestNewWithContext(t *testing.T) {
 func TestStreamContext_Close(t *testing.T) {
 	ctx := context.Background()
 	rw := &mockReadWriter{}
-	streamContext := NewWithContext(ctx, network.Peer{}, network.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
 
 	err := streamContext.Close()
 	assert.NoError(t, err)
@@ -59,7 +59,7 @@ func TestStreamContext_Read(t *testing.T) {
 	rw := &mockReadWriter{}
 
 	rw.On("Read", mock.Anything).Return(10, io.EOF)
-	streamContext := NewWithContext(ctx, network.Peer{}, network.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
 
 	route, err := dndm.NewRoute("path", &testtypes.Foo{})
 	assert.NoError(t, err)
@@ -86,7 +86,7 @@ func TestStreamContext_Write(t *testing.T) {
 	codec.Release(b)
 
 	rw.On("Write", mock.Anything).Return(N, nil)
-	streamContext := NewWithContext(ctx, network.Peer{}, network.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
 
 	err = streamContext.Write(ctx, route, &testtypes.Foo{})
 	assert.NoError(t, err)
@@ -100,10 +100,10 @@ func TestStream_CreateClose(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
 	defer cancel()
 	rw := &mockReadWriter{}
-	localPeer, _ := network.NewPeer("scheme", "addr", "path", nil)
-	remotePeer, _ := network.NewPeer("scheme", "addr1", "path", nil)
-	newRemotePeer, _ := network.NewPeer("scheme", "addr15", "path", nil)
-	badRemotePeer, _ := network.NewPeer("scheme1", "addr15", "path", nil)
+	localPeer, _ := dndm.NewPeer("scheme", "addr", "path", nil)
+	remotePeer, _ := dndm.NewPeer("scheme", "addr1", "path", nil)
+	newRemotePeer, _ := dndm.NewPeer("scheme", "addr15", "path", nil)
+	badRemotePeer, _ := dndm.NewPeer("scheme1", "addr15", "path", nil)
 	stream := New(ctx, localPeer, remotePeer, rw, nil)
 
 	assert.Equal(t, localPeer, stream.Local())
@@ -134,7 +134,7 @@ func TestStream_CreateClose(t *testing.T) {
 func TestStream_Read(t *testing.T) {
 	ctx := context.Background()
 	rw := &mockReadWriter{}
-	stream := New(ctx, network.Peer{}, network.Peer{}, rw, nil)
+	stream := New(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
 
 	rw.On("Read", mock.Anything).Return(0, io.EOF)
 
@@ -149,7 +149,7 @@ func TestStream_Write(t *testing.T) {
 	route, err := dndm.NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 
-	stream := New(ctx, network.Peer{}, network.Peer{}, rw, nil)
+	stream := New(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
 	b, err := codec.EncodeMessage(&testtypes.Foo{}, route)
 	require.NoError(t, err)
 	N := len(b)

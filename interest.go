@@ -32,7 +32,14 @@ type Interest interface {
 	C() <-chan proto.Message
 }
 
-// InterestInternal is an interface to describe an internal interest data structure. Should not be used by users.
+// RemoteInterest interface represent a remote interest.
+type RemoteInterest interface {
+	Interest
+	Peer() Peer
+}
+
+// InterestInternal is an interface to describe an internal interest data structure.
+// This interface is used internally by endpoints.
 type InterestInternal interface {
 	Interest
 	Ctx() context.Context

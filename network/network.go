@@ -16,11 +16,11 @@ type Conn interface {
 	io.Closer
 	OnClose(func()) Conn
 	// Local returns the name of the local peer
-	Local() Peer
+	Local() dndm.Peer
 	// Remote returns the name of the remote peer
-	Remote() Peer
+	Remote() dndm.Peer
 	// UpdateRemotePeer sets the remote peer name. Peer scheme and address must match to take effect.
-	UpdateRemotePeer(Peer) error
+	UpdateRemotePeer(dndm.Peer) error
 	// Read reads a message sent by the peer
 	Read(ctx context.Context) (*types.Header, proto.Message, error)
 	// Write sends a message to the peer
@@ -37,12 +37,12 @@ type Dialer interface {
 	// Scheme returns the scheme this dialer handles
 	Scheme() string
 	// Dial dials the remote peer and returns a ReadeWriteCloser object
-	Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWriteCloser, error)
+	Dial(ctx context.Context, peer dndm.Peer, o ...DialOpt) (io.ReadWriteCloser, error)
 }
 
 // Server interface describes objects that can listen for connections.
 type Server interface {
-	Serve(ctx context.Context, onConnect func(peer Peer, r io.ReadWriteCloser) error, o ...SrvOpt) error
+	Serve(ctx context.Context, onConnect func(peer dndm.Peer, r io.ReadWriteCloser) error, o ...SrvOpt) error
 }
 
 // Node interface describes both a dialer and a server.

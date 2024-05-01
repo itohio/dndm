@@ -32,7 +32,7 @@ type StreamContext struct {
 }
 
 // NewWithContext will use ReadWriter and allow for context cancellation in Read and Write methods.
-func NewWithContext(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
+func NewWithContext(ctx context.Context, localPeer, remotePeer dndm.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *StreamContext {
 	ret := &StreamContext{
 		Stream: New(ctx, localPeer, remotePeer, rw, handlers),
 	}
@@ -222,12 +222,12 @@ func (r reader) Read(buf []byte) (int, error) {
 // Stream converts regular ReaderWriter into a Remote
 type Stream struct {
 	dndm.Base
-	localPeer network.Peer
+	localPeer dndm.Peer
 	handlers  map[types.Type]network.MessageHandler
 	rw        io.ReadWriter
 
 	mu         sync.Mutex
-	remotePeer network.Peer
+	remotePeer dndm.Peer
 	routes     map[string]dndm.Route
 }
 
@@ -240,13 +240,13 @@ func (rw readWriter) Read(buf []byte) (int, error)  { return rw.r.Read(buf) }
 func (rw readWriter) Write(buf []byte) (int, error) { return rw.w.Write(buf) }
 
 // NewIO creates a Remote using io.Reader and io.Writer.
-func NewIO(ctx context.Context, localPeer, remotePeer network.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
+func NewIO(ctx context.Context, localPeer, remotePeer dndm.Peer, r io.Reader, w io.Writer, handlers map[types.Type]network.MessageHandler) *Stream {
 	rw := readWriter{r: r, w: w}
 	return New(ctx, localPeer, remotePeer, rw, handlers)
 }
 
 // New creates a Remote using provided ReaderWriter.
-func New(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
+func New(ctx context.Context, localPeer, remotePeer dndm.Peer, rw io.ReadWriter, handlers map[types.Type]network.MessageHandler) *Stream {
 	return &Stream{
 		Base:       dndm.NewBaseWithCtx(ctx),
 		localPeer:  localPeer,
@@ -257,18 +257,18 @@ func New(ctx context.Context, localPeer, remotePeer network.Peer, rw io.ReadWrit
 	}
 }
 
-func (w *Stream) Local() network.Peer {
+func (w *Stream) Local() dndm.Peer {
 	return w.localPeer
 }
 
-func (w *Stream) Remote() network.Peer {
+func (w *Stream) Remote() dndm.Peer {
 	w.mu.Lock()
 	p := w.remotePeer
 	w.mu.Unlock()
 	return p
 }
 
-func (w *Stream) UpdateRemotePeer(p network.Peer) error {
+func (w *Stream) UpdateRemotePeer(p dndm.Peer) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	if p.Scheme() != w.remotePeer.Scheme() {

@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
 	p2ptypes "github.com/itohio/dndm/types/p2p"
@@ -16,14 +17,14 @@ import (
 type Addrbook struct {
 	ctx             context.Context
 	log             *slog.Logger
-	self            network.Peer
+	self            dndm.Peer
 	minConnected    int
 	mu              sync.Mutex
 	peers           map[string]*AddrbookEntry
 	peerDialerQueue chan *AddrbookEntry
 }
 
-func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry, minConnected int) *Addrbook {
+func NewAddrbook(self dndm.Peer, peers []*p2ptypes.AddrbookEntry, minConnected int) *Addrbook {
 	pm := make(map[string]*AddrbookEntry, len(peers))
 	for _, p := range peers {
 		peer := NewAddrbookEntry(slog.Default(), p)
@@ -41,7 +42,7 @@ func NewAddrbook(self network.Peer, peers []*p2ptypes.AddrbookEntry, minConnecte
 	return ret
 }
 
-func (b *Addrbook) Self() network.Peer {
+func (b *Addrbook) Self() dndm.Peer {
 	return b.self
 }
 
@@ -112,7 +113,7 @@ func (b *Addrbook) NumConnectedPeers() int {
 	return n
 }
 
-func (b *Addrbook) AddPeers(outbound bool, peers ...network.Peer) error {
+func (b *Addrbook) AddPeers(outbound bool, peers ...dndm.Peer) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	for _, p := range peers {
@@ -134,7 +135,7 @@ func (b *Addrbook) AddPeers(outbound bool, peers ...network.Peer) error {
 
 // SetSharedPeers sets the list of peers that was shared with the target peer.
 // The peers returned by ActivePeers will be excluded from the returned list
-func (b *Addrbook) SetSharedPeers(remote network.Peer, activePeers []string) {
+func (b *Addrbook) SetSharedPeers(remote dndm.Peer, activePeers []string) {
 	entry, ok := b.Entry(remote)
 	if !ok {
 		return
@@ -145,7 +146,7 @@ func (b *Addrbook) SetSharedPeers(remote network.Peer, activePeers []string) {
 
 // ActivePeers returns a list of active peers to be shared to the remote peer.
 // The remote peer itself will be excluded as well as any peers that were already shared with the remote.
-func (b *Addrbook) ActivePeers(remote network.Peer) []string {
+func (b *Addrbook) ActivePeers(remote dndm.Peer) []string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -207,14 +208,14 @@ func (b *Addrbook) Addrbook() []*p2ptypes.AddrbookEntry {
 
 }
 
-func (b *Addrbook) Entry(p network.Peer) (*AddrbookEntry, bool) {
+func (b *Addrbook) Entry(p dndm.Peer) (*AddrbookEntry, bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	e, ok := b.peers[p.Address()]
 	return e, ok
 }
 
-func (b *Addrbook) AddConn(p network.Peer, outbound bool, c network.Conn) error {
+func (b *Addrbook) AddConn(p dndm.Peer, outbound bool, c network.Conn) error {
 	if b.self.Equal(p) {
 		return nil
 	}
@@ -235,7 +236,7 @@ func (b *Addrbook) AddConn(p network.Peer, outbound bool, c network.Conn) error 
 	return e.SetConn(c)
 }
 
-func (b *Addrbook) DelConn(p network.Peer, c network.Conn) {
+func (b *Addrbook) DelConn(p dndm.Peer, c network.Conn) {
 	if e, ok := b.Entry(p); ok {
 		e.SetConn(nil)
 	}
@@ -246,7 +247,7 @@ type AddrbookEntry struct {
 
 	outbound bool
 
-	Peer              network.Peer
+	Peer              dndm.Peer
 	Persistent        bool
 	MaxAttempts       int
 	DefaultBackoff    time.Duration
@@ -268,7 +269,7 @@ type AddrbookEntry struct {
 
 func NewAddrbookEntry(log *slog.Logger, p *p2ptypes.AddrbookEntry) *AddrbookEntry {
 	ret := &AddrbookEntry{
-		Peer:              errors.Must(network.PeerFromString(p.Peer)),
+		Peer:              errors.Must(dndm.PeerFromString(p.Peer)),
 		MaxAttempts:       int(p.MaxAttempts),
 		DefaultBackoff:    time.Duration(p.DefaultBackoff),
 		MaxBackoff:        time.Duration(p.MaxBackoff),

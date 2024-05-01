@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	dndm "github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"golang.org/x/sync/errgroup"
 )
@@ -44,7 +45,7 @@ func (f *Factory) Scheme() string {
 	return ""
 }
 
-func (f *Factory) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
+func (f *Factory) Dial(ctx context.Context, peer dndm.Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
 	d, ok := f.dialers[peer.Scheme()]
 	if !ok {
 		return nil, errors.ErrNotFound
@@ -52,7 +53,7 @@ func (f *Factory) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWri
 	return d.Dial(ctx, peer)
 }
 
-func (f *Factory) Serve(ctx context.Context, onConnect func(peer Peer, r io.ReadWriteCloser) error, o ...SrvOpt) error {
+func (f *Factory) Serve(ctx context.Context, onConnect func(peer dndm.Peer, r io.ReadWriteCloser) error, o ...SrvOpt) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	for _, s := range f.servers {

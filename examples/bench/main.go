@@ -15,7 +15,6 @@ import (
 	"github.com/itohio/dndm/endpoint/direct"
 	"github.com/itohio/dndm/endpoint/remote"
 	"github.com/itohio/dndm/errors"
-	"github.com/itohio/dndm/network"
 	"github.com/itohio/dndm/network/stream"
 	types "github.com/itohio/dndm/types/test"
 	"google.golang.org/protobuf/proto"
@@ -138,8 +137,8 @@ func testRemote(ctx context.Context, size int) {
 		panic(err)
 	}
 	bridge := makeBridge(ctx)
-	peerA := errors.Must(network.PeerFromString("pipe://local/remoteA?some_param=123"))
-	peerB := errors.Must(network.PeerFromString("pipe://local/remoteB?some_param=123"))
+	peerA := errors.Must(dndm.PeerFromString("pipe://local/remoteA?some_param=123"))
+	peerB := errors.Must(dndm.PeerFromString("pipe://local/remoteB?some_param=123"))
 	wireA := stream.NewWithContext(ctx, peerA, peerB, bridge.A(), nil)
 	wireB := stream.NewWithContext(ctx, peerB, peerA, bridge.B(), nil)
 

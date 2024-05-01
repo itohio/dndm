@@ -4,6 +4,9 @@ package network
 
 import (
 	context "context"
+
+	dndm "github.com/itohio/dndm"
+
 	io "io"
 
 	mock "github.com/stretchr/testify/mock"
@@ -23,7 +26,7 @@ func (_m *MockDialer) EXPECT() *MockDialer_Expecter {
 }
 
 // Dial provides a mock function with given fields: ctx, peer, o
-func (_m *MockDialer) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
+func (_m *MockDialer) Dial(ctx context.Context, peer dndm.Peer, o ...DialOpt) (io.ReadWriteCloser, error) {
 	_va := make([]interface{}, len(o))
 	for _i := range o {
 		_va[_i] = o[_i]
@@ -39,10 +42,10 @@ func (_m *MockDialer) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.Rea
 
 	var r0 io.ReadWriteCloser
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, Peer, ...DialOpt) (io.ReadWriteCloser, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dndm.Peer, ...DialOpt) (io.ReadWriteCloser, error)); ok {
 		return rf(ctx, peer, o...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, Peer, ...DialOpt) io.ReadWriteCloser); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dndm.Peer, ...DialOpt) io.ReadWriteCloser); ok {
 		r0 = rf(ctx, peer, o...)
 	} else {
 		if ret.Get(0) != nil {
@@ -50,7 +53,7 @@ func (_m *MockDialer) Dial(ctx context.Context, peer Peer, o ...DialOpt) (io.Rea
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, Peer, ...DialOpt) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, dndm.Peer, ...DialOpt) error); ok {
 		r1 = rf(ctx, peer, o...)
 	} else {
 		r1 = ret.Error(1)
@@ -66,14 +69,14 @@ type MockDialer_Dial_Call struct {
 
 // Dial is a helper method to define mock.On call
 //   - ctx context.Context
-//   - peer Peer
+//   - peer dndm.Peer
 //   - o ...DialOpt
 func (_e *MockDialer_Expecter) Dial(ctx interface{}, peer interface{}, o ...interface{}) *MockDialer_Dial_Call {
 	return &MockDialer_Dial_Call{Call: _e.mock.On("Dial",
 		append([]interface{}{ctx, peer}, o...)...)}
 }
 
-func (_c *MockDialer_Dial_Call) Run(run func(ctx context.Context, peer Peer, o ...DialOpt)) *MockDialer_Dial_Call {
+func (_c *MockDialer_Dial_Call) Run(run func(ctx context.Context, peer dndm.Peer, o ...DialOpt)) *MockDialer_Dial_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]DialOpt, len(args)-2)
 		for i, a := range args[2:] {
@@ -81,7 +84,7 @@ func (_c *MockDialer_Dial_Call) Run(run func(ctx context.Context, peer Peer, o .
 				variadicArgs[i] = a.(DialOpt)
 			}
 		}
-		run(args[0].(context.Context), args[1].(Peer), variadicArgs...)
+		run(args[0].(context.Context), args[1].(dndm.Peer), variadicArgs...)
 	})
 	return _c
 }
@@ -91,7 +94,7 @@ func (_c *MockDialer_Dial_Call) Return(_a0 io.ReadWriteCloser, _a1 error) *MockD
 	return _c
 }
 
-func (_c *MockDialer_Dial_Call) RunAndReturn(run func(context.Context, Peer, ...DialOpt) (io.ReadWriteCloser, error)) *MockDialer_Dial_Call {
+func (_c *MockDialer_Dial_Call) RunAndReturn(run func(context.Context, dndm.Peer, ...DialOpt) (io.ReadWriteCloser, error)) *MockDialer_Dial_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/tarm/serial"
 
+	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
 )
@@ -17,10 +18,10 @@ var _ network.Node = (*Node)(nil)
 // var _ dndm.CloseNotifier = (*Node)(nil)
 
 type Node struct {
-	peer network.Peer
+	peer dndm.Peer
 }
 
-func New(peer network.Peer) (*Node, error) {
+func New(peer dndm.Peer) (*Node, error) {
 	return &Node{
 		peer: peer,
 	}, nil
@@ -34,7 +35,7 @@ func defaultConfig() *serial.Config {
 	return &serial.Config{Baud: 115200}
 }
 
-func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt) (io.ReadWriteCloser, error) {
+func (f *Node) Dial(ctx context.Context, peer dndm.Peer, o ...network.DialOpt) (io.ReadWriteCloser, error) {
 	if f.peer.Scheme() != peer.Scheme() {
 		return nil, errors.ErrBadArgument
 	}
@@ -77,7 +78,7 @@ func (f *Node) Dial(ctx context.Context, peer network.Peer, o ...network.DialOpt
 	return port, err
 }
 
-func (f *Node) Serve(ctx context.Context, onConnect func(peer network.Peer, r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
+func (f *Node) Serve(ctx context.Context, onConnect func(peer dndm.Peer, r io.ReadWriteCloser) error, o ...network.SrvOpt) error {
 	rwc, err := f.Dial(ctx, f.peer)
 	if err != nil {
 		return err
