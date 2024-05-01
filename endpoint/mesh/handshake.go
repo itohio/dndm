@@ -45,7 +45,7 @@ type Handshaker struct {
 	conn         network.Conn
 	remote       atomic.Pointer[remote.Endpoint]
 	addrbook     *Addrbook
-	remotePeer   network.Peer
+	remotePeer   dndm.Peer
 	isSeed       bool
 }
 
@@ -61,7 +61,7 @@ type Handshaker struct {
 //	Remote connects to us:
 //	1. HS_WAIT
 //	2. HS_DONE
-func NewHandshaker(addrbook *Addrbook, remotePeer network.Peer, size int, timeout, pingDuration time.Duration, rw io.ReadWriter, state HandshakeState) *Handshaker {
+func NewHandshaker(addrbook *Addrbook, remotePeer dndm.Peer, size int, timeout, pingDuration time.Duration, rw io.ReadWriter, state HandshakeState) *Handshaker {
 	ret := &Handshaker{
 		BaseEndpoint: dndm.NewEndpointBase(remotePeer.String(), size),
 		state:        state,
@@ -204,7 +204,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 	case HS_WAIT:
 		h.hsCount = 0
 		h.state = HS_DONE
-		peer, err := network.PeerFromString(hs.Me)
+		peer, err := dndm.PeerFromString(hs.Me)
 		if err != nil {
 			return false, err
 		}
@@ -270,7 +270,7 @@ func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote netwo
 	h.Log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", peers)
 
 	for _, p := range peers.Ids {
-		peer, err := network.PeerFromString(p)
+		peer, err := dndm.PeerFromString(p)
 		if err != nil {
 			h.Log.Error("Parsing peer", "err", err, "peer", p)
 			return false, err

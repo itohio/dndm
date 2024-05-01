@@ -1,4 +1,4 @@
-package network
+package dndm
 
 import (
 	"net/url"

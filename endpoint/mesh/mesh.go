@@ -22,12 +22,12 @@ type Endpoint struct {
 	timeout      time.Duration
 	pingDuration time.Duration
 	dialer       network.Dialer
-	localPeer    network.Peer
+	localPeer    dndm.Peer
 
 	addrbook *Addrbook
 }
 
-func New(localPeer network.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Endpoint, error) {
+func New(localPeer dndm.Peer, size, numDialers int, timeout, pingDuration time.Duration, node network.Dialer, peers []*p2ptypes.AddrbookEntry) (*Endpoint, error) {
 	ret := &Endpoint{
 		Container:    dndm.NewContainer(localPeer.String(), size),
 		localPeer:    localPeer,

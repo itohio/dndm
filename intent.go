@@ -34,6 +34,15 @@ type Intent interface {
 	// Send will send a message to any recepient that indicated an interest.
 	Send(context.Context, proto.Message) error
 }
+
+// RemoteIntent interface represents remote intent.
+type RemoteIntent interface {
+	Intent
+	Peer() Peer
+}
+
+// IntentInternal interface extends an intent that can be linked with an interest.
+// This interface is used internally by endpoints.
 type IntentInternal interface {
 	Intent
 	Link(chan<- proto.Message)

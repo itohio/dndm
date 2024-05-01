@@ -4,6 +4,9 @@ package network
 
 import (
 	context "context"
+
+	dndm "github.com/itohio/dndm"
+
 	io "io"
 
 	mock "github.com/stretchr/testify/mock"
@@ -23,7 +26,7 @@ func (_m *MockServer) EXPECT() *MockServer_Expecter {
 }
 
 // Serve provides a mock function with given fields: ctx, onConnect, o
-func (_m *MockServer) Serve(ctx context.Context, onConnect func(Peer, io.ReadWriteCloser) error, o ...SrvOpt) error {
+func (_m *MockServer) Serve(ctx context.Context, onConnect func(dndm.Peer, io.ReadWriteCloser) error, o ...SrvOpt) error {
 	_va := make([]interface{}, len(o))
 	for _i := range o {
 		_va[_i] = o[_i]
@@ -38,7 +41,7 @@ func (_m *MockServer) Serve(ctx context.Context, onConnect func(Peer, io.ReadWri
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, func(Peer, io.ReadWriteCloser) error, ...SrvOpt) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, func(dndm.Peer, io.ReadWriteCloser) error, ...SrvOpt) error); ok {
 		r0 = rf(ctx, onConnect, o...)
 	} else {
 		r0 = ret.Error(0)
@@ -54,14 +57,14 @@ type MockServer_Serve_Call struct {
 
 // Serve is a helper method to define mock.On call
 //   - ctx context.Context
-//   - onConnect func(Peer , io.ReadWriteCloser) error
+//   - onConnect func(dndm.Peer , io.ReadWriteCloser) error
 //   - o ...SrvOpt
 func (_e *MockServer_Expecter) Serve(ctx interface{}, onConnect interface{}, o ...interface{}) *MockServer_Serve_Call {
 	return &MockServer_Serve_Call{Call: _e.mock.On("Serve",
 		append([]interface{}{ctx, onConnect}, o...)...)}
 }
 
-func (_c *MockServer_Serve_Call) Run(run func(ctx context.Context, onConnect func(Peer, io.ReadWriteCloser) error, o ...SrvOpt)) *MockServer_Serve_Call {
+func (_c *MockServer_Serve_Call) Run(run func(ctx context.Context, onConnect func(dndm.Peer, io.ReadWriteCloser) error, o ...SrvOpt)) *MockServer_Serve_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]SrvOpt, len(args)-2)
 		for i, a := range args[2:] {
@@ -69,7 +72,7 @@ func (_c *MockServer_Serve_Call) Run(run func(ctx context.Context, onConnect fun
 				variadicArgs[i] = a.(SrvOpt)
 			}
 		}
-		run(args[0].(context.Context), args[1].(func(Peer, io.ReadWriteCloser) error), variadicArgs...)
+		run(args[0].(context.Context), args[1].(func(dndm.Peer, io.ReadWriteCloser) error), variadicArgs...)
 	})
 	return _c
 }
@@ -79,7 +82,7 @@ func (_c *MockServer_Serve_Call) Return(_a0 error) *MockServer_Serve_Call {
 	return _c
 }
 
-func (_c *MockServer_Serve_Call) RunAndReturn(run func(context.Context, func(Peer, io.ReadWriteCloser) error, ...SrvOpt) error) *MockServer_Serve_Call {
+func (_c *MockServer_Serve_Call) RunAndReturn(run func(context.Context, func(dndm.Peer, io.ReadWriteCloser) error, ...SrvOpt) error) *MockServer_Serve_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -164,18 +164,18 @@ func (_c *MockConn_DelRoute_Call) RunAndReturn(run func(...dndm.Route)) *MockCon
 }
 
 // Local provides a mock function with given fields:
-func (_m *MockConn) Local() Peer {
+func (_m *MockConn) Local() dndm.Peer {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Local")
 	}
 
-	var r0 Peer
-	if rf, ok := ret.Get(0).(func() Peer); ok {
+	var r0 dndm.Peer
+	if rf, ok := ret.Get(0).(func() dndm.Peer); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(Peer)
+		r0 = ret.Get(0).(dndm.Peer)
 	}
 
 	return r0
@@ -198,12 +198,12 @@ func (_c *MockConn_Local_Call) Run(run func()) *MockConn_Local_Call {
 	return _c
 }
 
-func (_c *MockConn_Local_Call) Return(_a0 Peer) *MockConn_Local_Call {
+func (_c *MockConn_Local_Call) Return(_a0 dndm.Peer) *MockConn_Local_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockConn_Local_Call) RunAndReturn(run func() Peer) *MockConn_Local_Call {
+func (_c *MockConn_Local_Call) RunAndReturn(run func() dndm.Peer) *MockConn_Local_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -324,18 +324,18 @@ func (_c *MockConn_Read_Call) RunAndReturn(run func(context.Context) (*core.Head
 }
 
 // Remote provides a mock function with given fields:
-func (_m *MockConn) Remote() Peer {
+func (_m *MockConn) Remote() dndm.Peer {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Remote")
 	}
 
-	var r0 Peer
-	if rf, ok := ret.Get(0).(func() Peer); ok {
+	var r0 dndm.Peer
+	if rf, ok := ret.Get(0).(func() dndm.Peer); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(Peer)
+		r0 = ret.Get(0).(dndm.Peer)
 	}
 
 	return r0
@@ -358,18 +358,18 @@ func (_c *MockConn_Remote_Call) Run(run func()) *MockConn_Remote_Call {
 	return _c
 }
 
-func (_c *MockConn_Remote_Call) Return(_a0 Peer) *MockConn_Remote_Call {
+func (_c *MockConn_Remote_Call) Return(_a0 dndm.Peer) *MockConn_Remote_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockConn_Remote_Call) RunAndReturn(run func() Peer) *MockConn_Remote_Call {
+func (_c *MockConn_Remote_Call) RunAndReturn(run func() dndm.Peer) *MockConn_Remote_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateRemotePeer provides a mock function with given fields: _a0
-func (_m *MockConn) UpdateRemotePeer(_a0 Peer) error {
+func (_m *MockConn) UpdateRemotePeer(_a0 dndm.Peer) error {
 	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
@@ -377,7 +377,7 @@ func (_m *MockConn) UpdateRemotePeer(_a0 Peer) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(Peer) error); ok {
+	if rf, ok := ret.Get(0).(func(dndm.Peer) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
@@ -392,14 +392,14 @@ type MockConn_UpdateRemotePeer_Call struct {
 }
 
 // UpdateRemotePeer is a helper method to define mock.On call
-//   - _a0 Peer
+//   - _a0 dndm.Peer
 func (_e *MockConn_Expecter) UpdateRemotePeer(_a0 interface{}) *MockConn_UpdateRemotePeer_Call {
 	return &MockConn_UpdateRemotePeer_Call{Call: _e.mock.On("UpdateRemotePeer", _a0)}
 }
 
-func (_c *MockConn_UpdateRemotePeer_Call) Run(run func(_a0 Peer)) *MockConn_UpdateRemotePeer_Call {
+func (_c *MockConn_UpdateRemotePeer_Call) Run(run func(_a0 dndm.Peer)) *MockConn_UpdateRemotePeer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(Peer))
+		run(args[0].(dndm.Peer))
 	})
 	return _c
 }
@@ -409,7 +409,7 @@ func (_c *MockConn_UpdateRemotePeer_Call) Return(_a0 error) *MockConn_UpdateRemo
 	return _c
 }
 
-func (_c *MockConn_UpdateRemotePeer_Call) RunAndReturn(run func(Peer) error) *MockConn_UpdateRemotePeer_Call {
+func (_c *MockConn_UpdateRemotePeer_Call) RunAndReturn(run func(dndm.Peer) error) *MockConn_UpdateRemotePeer_Call {
 	_c.Call.Return(run)
 	return _c
 }
