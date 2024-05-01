@@ -8,6 +8,7 @@ import (
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/codec"
+	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
 	"github.com/itohio/dndm/testutil"
 	types "github.com/itohio/dndm/types/core"
@@ -48,7 +49,7 @@ func TestNewWithContext(t *testing.T) {
 func TestStreamContext_Close(t *testing.T) {
 	ctx := context.Background()
 	rw := &mockReadWriter{}
-	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 
 	err := streamContext.Close()
 	assert.NoError(t, err)
@@ -59,7 +60,7 @@ func TestStreamContext_Read(t *testing.T) {
 	rw := &mockReadWriter{}
 
 	rw.On("Read", mock.Anything).Return(10, io.EOF)
-	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 
 	route, err := dndm.NewRoute("path", &testtypes.Foo{})
 	assert.NoError(t, err)
@@ -86,7 +87,7 @@ func TestStreamContext_Write(t *testing.T) {
 	codec.Release(b)
 
 	rw.On("Write", mock.Anything).Return(N, nil)
-	streamContext := NewWithContext(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
+	streamContext := NewWithContext(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 
 	err = streamContext.Write(ctx, route, &testtypes.Foo{})
 	assert.NoError(t, err)
@@ -134,7 +135,7 @@ func TestStream_CreateClose(t *testing.T) {
 func TestStream_Read(t *testing.T) {
 	ctx := context.Background()
 	rw := &mockReadWriter{}
-	stream := New(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
+	stream := New(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 
 	rw.On("Read", mock.Anything).Return(0, io.EOF)
 
@@ -149,7 +150,7 @@ func TestStream_Write(t *testing.T) {
 	route, err := dndm.NewRoute("path", &testtypes.Foo{})
 	require.NoError(t, err)
 
-	stream := New(ctx, dndm.Peer{}, dndm.Peer{}, rw, nil)
+	stream := New(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 	b, err := codec.EncodeMessage(&testtypes.Foo{}, route)
 	require.NoError(t, err)
 	N := len(b)

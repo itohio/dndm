@@ -62,7 +62,7 @@ func (t *Endpoint) messageHandler() {
 				result.Error = 1
 				result.Description = err.Error()
 			}
-			err := t.conn.Write(t.Ctx(), dndm.Route{}, result)
+			err := t.conn.Write(t.Ctx(), dndm.EmptyRoute(), result)
 			if err != nil {
 				t.Log.Error("write result", "err", err, "result", result)
 			}
@@ -109,7 +109,7 @@ func (t *Endpoint) messageSender(d time.Duration) {
 			return
 		case <-ticker.C:
 			ping := t.latency.MakePing(1024)
-			err := t.conn.Write(t.Ctx(), dndm.Route{}, ping)
+			err := t.conn.Write(t.Ctx(), dndm.EmptyRoute(), ping)
 			t.Log.Debug("Remote.Ping", "send", err)
 		}
 	}
@@ -139,7 +139,7 @@ func (t *Endpoint) handlePing(hdr *types.Header, m proto.Message) error {
 	}
 	pong := t.latency.MakePong(hdr, msg)
 
-	err := t.conn.Write(t.Ctx(), dndm.Route{}, pong)
+	err := t.conn.Write(t.Ctx(), dndm.EmptyRoute(), pong)
 	t.Log.Debug("Remote.Pong", "send", err)
 
 	return nil

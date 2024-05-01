@@ -117,7 +117,7 @@ func (t *Endpoint) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, e
 		return nil, errors.ErrRemoteIntent
 	}
 
-	t.Log.Info("intent registered", "route", route.Route())
+	t.Log.Info("intent registered", "route", route)
 	return intent, err
 }
 
@@ -127,7 +127,7 @@ func (t *Endpoint) publish(route dndm.Route, m *types.Intent) (dndm.Intent, erro
 		return nil, err
 	}
 
-	t.Log.Info("remote intent registered", "route", route.Route())
+	t.Log.Info("remote intent registered", "route", route)
 	return intent, nil
 }
 
@@ -142,7 +142,7 @@ func (t *Endpoint) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interes
 		return nil, errors.ErrRemoteInterest
 	}
 
-	t.Log.Info("interest registered", "route", route.Route())
+	t.Log.Info("interest registered", "route", route)
 	return interest, err
 }
 
@@ -151,7 +151,7 @@ func (t *Endpoint) subscribe(route dndm.Route, m *types.Interest) (dndm.Interest
 	if err != nil {
 		return nil, err
 	}
-	t.Log.Info("remote interest registered", "route", route.Route())
+	t.Log.Info("remote interest registered", "route", route)
 	return interest, nil
 }
 
