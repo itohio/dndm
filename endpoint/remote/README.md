@@ -1,8 +1,28 @@
-# Pipe based router
+# Remote Endpoint
 
-This router is intended to connect to peers like a pipe. It acts as a regular message queue between processes connected via reader and writer.
+Remote Endpoint connects another Remote Endpoint via a network.Conn interface.
 
-NOTE: Only one intent source is allowed. Meaning that only one peer can have an intent for the same route. Similarly for the interest.
+## Intents
+
+Local Intent is registered only if LocalPeer path matches the prefix of the Route.
+
+Remote Intent is only registered if RemotePeer path matches the prefix of the Route.
+
+## Interests
+
+Local Interest is registered only if RemotePeer path matches the prefix of the Route.
+
+Remote Interest is registered only if LocalPeer path matches the prefix of the Route.
+
+## Messages
+
+TBD
+
+### Ping-Pong
+
+A Ping-Pong is exchanged with a configured period. Each peer is sending Ping and Pong back.
+
+TODO: Perhaps only exchange OWL messages and estimate TTL from that saving some traffic(Might have issues with patents).
 
 ## Basic protocol idea draft
 

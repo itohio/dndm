@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/itohio/dndm/errors"
+	testtypes "github.com/itohio/dndm/types/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -77,4 +78,29 @@ func TestPeer_Equal(t *testing.T) {
 	))
 	assert.True(t, peer1.Equal(peer2))
 	assert.False(t, peer1.Equal(peer3))
+}
+
+func TestPeer_HasPrefix(t *testing.T) {
+	args := url.Values{}
+	args.Add("key", "value")
+	peer1 := errors.Must(NewPeer(
+		"tcp",
+		"example.com",
+		"path",
+		args,
+	))
+	peer2 := errors.Must(NewPeer(
+		"tcp",
+		"example.com",
+		"different",
+		args,
+	))
+	route1 := errors.Must(NewRoute("path", &testtypes.Foo{}))
+
+	assert.True(t, peer1.HasPrefix(route1))
+	assert.False(t, peer2.HasPrefix(route1))
+
+	route2 := errors.Must(RouteFromString("SomeType@path"))
+	assert.True(t, peer1.HasPrefix(route2))
+	assert.False(t, peer2.HasPrefix(route2))
 }

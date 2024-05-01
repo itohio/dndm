@@ -22,6 +22,13 @@ type Endpoint interface {
 	Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error
 }
 
+type RemoteEndpoint interface {
+	// Local returns the name of the local peer
+	Local() Peer
+	// Remote returns the name of the remote peer
+	Remote() Peer
+}
+
 type Base struct {
 	ctx    context.Context
 	cancel context.CancelCauseFunc
