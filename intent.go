@@ -20,10 +20,12 @@ var (
 	_ Intent         = (*intentWrapper)(nil)
 )
 
+// IntentCallback is a function type used for callbacks upon adding an Intent.
 type IntentCallback func(intent Intent, ep Endpoint) error
 
-// Intent is an interface to describe an intent to provide named data.
-// Users can consume Interest channel to determine if it is worthwhile to send any data.
+// Intent is an interface that defines methods to manage data provision requests.
+// It encapsulates behaviors to close the intent, listen for interest on a route,
+// send messages, and execute closure callbacks.
 type Intent interface {
 	io.Closer
 	OnClose(func()) Intent
@@ -35,14 +37,13 @@ type Intent interface {
 	Send(context.Context, proto.Message) error
 }
 
-// RemoteIntent interface represents remote intent.
+// RemoteIntent extends Intent with a method to retrieve associated peer information.
 type RemoteIntent interface {
 	Intent
 	Peer() Peer
 }
 
-// IntentInternal interface extends an intent that can be linked with an interest.
-// This interface is used internally by endpoints.
+// IntentInternal extends Intent with functionalities for linking and notifications.
 type IntentInternal interface {
 	Intent
 	Link(chan<- proto.Message)
@@ -60,6 +61,7 @@ type LocalIntent struct {
 	linkedC chan<- proto.Message
 }
 
+// NewIntent initializes a new LocalIntent with specified context, route, and buffer size for the notifications channel.
 func NewIntent(ctx context.Context, route Route, size int) *LocalIntent {
 	intent := &LocalIntent{
 		Base:    NewBaseWithCtx(ctx),
@@ -137,7 +139,8 @@ func (i *LocalIntent) Notify() {
 	}
 }
 
-// FanOutIntent is a Intent collection that sends out intents and messages to other intents belonging to different endpoints.
+// FanOutIntent represents an Intent that manages multiple underlying intents.
+// It distributes incoming messages across all registered intents and synchronizes their lifecycle.
 type FanOutIntent struct {
 	li       *LocalIntent
 	mu       sync.RWMutex
@@ -147,6 +150,7 @@ type FanOutIntent struct {
 	onNotify func()
 }
 
+// NewFanOutIntent creates a FanOutIntent with given context, route, size, and optional initial intents.
 func NewFanOutIntent(ctx context.Context, route Route, size int, intents ...Intent) (*FanOutIntent, error) {
 	ret := &FanOutIntent{
 		li: NewIntent(ctx, route, size),
@@ -299,7 +303,7 @@ func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
 	return w.router.Send(ctx, msg)
 }
 
-// IntentRouter keeps track of same type intents from different endpoints and multiple publishers.
+// IntentRouter manages a collection of intents, routing messages and notifications among them.
 type IntentRouter struct {
 	*FanOutIntent
 	size     int
@@ -307,6 +311,7 @@ type IntentRouter struct {
 	wrappers []*intentWrapper
 }
 
+// NewIntentRouter creates a new IntentRouter with a given context, route, size, and optionally pre-registered intents.
 func NewIntentRouter(ctx context.Context, route Route, size int, intents ...Intent) (*IntentRouter, error) {
 	foi, err := NewFanOutIntent(ctx, route, size, intents...)
 	if err != nil {

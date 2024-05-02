@@ -18,9 +18,12 @@ var (
 	_ Interest         = (*interestWrapper)(nil)
 )
 
+// InterestCallback is a function type used for callbacks upon adding an Interest.
 type InterestCallback func(interest Interest, ep Endpoint) error
 
-// Interest is an interface to describe an interest in named data.
+// Interest defines the behavior for components interested in receiving named data.
+// It allows closing of the interest, setting closure callbacks, and accessing routes and message channels.
+//
 // User should consume C of the interest until it is closed or no longer needed.
 // Messages will be delivered only when a corresponding Intent is discovered.
 type Interest interface {
@@ -32,26 +35,27 @@ type Interest interface {
 	C() <-chan proto.Message
 }
 
-// RemoteInterest interface represent a remote interest.
+// RemoteInterest extends Interest with the ability to retrieve the peer involved in the interest.
 type RemoteInterest interface {
 	Interest
 	Peer() Peer
 }
 
-// InterestInternal is an interface to describe an internal interest data structure.
-// This interface is used internally by endpoints.
+// InterestInternal extends Interest with additional internal management capabilities.
 type InterestInternal interface {
 	Interest
 	Ctx() context.Context
 	MsgC() chan<- proto.Message
 }
 
+// LocalInterest manages a local interest for receiving data based on a specific route.
 type LocalInterest struct {
 	Base
 	route Route
 	msgC  chan proto.Message
 }
 
+// NewInterest creates a new LocalInterest with a specified context, route, and buffer size.
 func NewInterest(ctx context.Context, route Route, size int) *LocalInterest {
 	ret := &LocalInterest{
 		Base:  NewBase(),
@@ -83,6 +87,7 @@ func (i *LocalInterest) MsgC() chan<- proto.Message {
 	return i.msgC
 }
 
+// FanInInterest aggregates multiple interests, routing incoming messages to a single channel.
 type FanInInterest struct {
 	li        *LocalInterest
 	mu        sync.RWMutex
@@ -92,6 +97,7 @@ type FanInInterest struct {
 	onRecv    func(ctx context.Context, msg proto.Message) error
 }
 
+// NewFanInInterest creates a new FanInInterest with specified context, route, size, and initial interests.
 func NewFanInInterest(ctx context.Context, route Route, size int, interests ...Interest) (*FanInInterest, error) {
 	ret := &FanInInterest{
 		li: NewInterest(ctx, route, size),
@@ -207,7 +213,7 @@ func (w *interestWrapper) C() <-chan proto.Message {
 	return w.c
 }
 
-// InterestRouter keeps track of same type interests and multiple subscribers.
+// InterestRouter manages a collection of interests, directing incoming messages to multiple subscribers.
 type InterestRouter struct {
 	*FanInInterest
 	size     int
@@ -215,6 +221,7 @@ type InterestRouter struct {
 	wrappers []*interestWrapper
 }
 
+// NewInterestRouter initializes a new InterestRouter with a context, route, size, and initial interests.
 func NewInterestRouter(ctx context.Context, route Route, size int, interests ...Interest) (*InterestRouter, error) {
 	fii, err := NewFanInInterest(ctx, route, size, interests...)
 	if err != nil {
