@@ -6,6 +6,7 @@ import (
 
 	testtypes "github.com/itohio/dndm/types/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoute_Equal(t *testing.T) {
@@ -48,6 +49,13 @@ func TestNewRoute(t *testing.T) {
 	assert.Equal(t, "types.Foo@path", route.String())
 	assert.Equal(t, "path", route.Path())
 	assert.Equal(t, reflect.TypeOf(msg), route.Type())
+
+	_, err = NewRoute("", msg)
+	assert.Error(t, err)
+	_, err = NewRoute("a@b", msg)
+	assert.Error(t, err)
+	_, err = NewRoute("a#b", msg)
+	assert.Error(t, err)
 }
 
 func TestNewHashedRoute(t *testing.T) {
@@ -61,6 +69,22 @@ func TestNewHashedRoute(t *testing.T) {
 	assert.Equal(t, "example#m1F+jLCmA+RQL1TkllbKW4cFj8I", route.String())
 	assert.Equal(t, "example", route.Path())
 	assert.Equal(t, reflect.TypeOf(msg), route.Type())
+
+	_, err = NewHashedRoute("", "example.path", msg)
+	assert.Error(t, err)
+	_, err = NewHashedRoute("example", "exampl", msg)
+	assert.Error(t, err)
+	_, err = NewHashedRoute("example", "", msg)
+	assert.Error(t, err)
+	_, err = NewHashedRoute("@", "example.path", msg)
+	assert.Error(t, err)
+	_, err = NewHashedRoute("#", "example.path", msg)
+	assert.Error(t, err)
+
+	_, err = NewHashedRoute("ex", "example@path", msg)
+	assert.NoError(t, err)
+	_, err = NewHashedRoute("ex", "example#path", msg)
+	assert.NoError(t, err)
 }
 
 func TestRouteFromString(t *testing.T) {
@@ -71,14 +95,31 @@ func TestRouteFromString(t *testing.T) {
 	assert.Equal(t, "MessageType@path", route.String())
 	assert.Equal(t, "path", route.Path())
 	assert.Equal(t, nil, route.Type())
+
+	_, err = RouteFromString("@path")
+	assert.Error(t, err)
+	_, err = RouteFromString("foo@")
+	assert.Error(t, err)
+	_, err = RouteFromString("")
+	assert.Error(t, err)
 }
 
 func TestRouteFromStringHashed(t *testing.T) {
 	route, err := RouteFromString("example#m1F+jLCmA+RQL1TkllbKW4cFj8I")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "m1F+jLCmA+RQL1TkllbKW4cFj8I", route.ID())
 	assert.Equal(t, "example#m1F+jLCmA+RQL1TkllbKW4cFj8I", route.String())
 	assert.Equal(t, "example", route.Path())
+	assert.Equal(t, nil, route.Type())
+}
+
+func TestRouteFromStringHashedNoPrefix(t *testing.T) {
+	route, err := RouteFromString("#m1F+jLCmA+RQL1TkllbKW4cFj8I")
+	require.NoError(t, err)
+
+	assert.Equal(t, "m1F+jLCmA+RQL1TkllbKW4cFj8I", route.ID())
+	assert.Equal(t, "#m1F+jLCmA+RQL1TkllbKW4cFj8I", route.String())
+	assert.Equal(t, "", route.Path())
 	assert.Equal(t, nil, route.Type())
 }

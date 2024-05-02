@@ -79,6 +79,9 @@ func routeString(path string, msg proto.Message) string {
 //
 // Path must not contain `@` nor `#` symbols.
 func NewRoute(path string, msg proto.Message) (PlainRoute, error) {
+	if len(path) == 0 {
+		return PlainRoute{}, errors.ErrInvalidRoute
+	}
 	if strings.ContainsAny(path, "@#") {
 		return PlainRoute{}, errors.ErrInvalidRoute
 	}
@@ -95,6 +98,12 @@ func NewRoute(path string, msg proto.Message) (PlainRoute, error) {
 //
 // Route is represented by the hash, while the prefix is used for routing Remote Interests and Intents.
 func NewHashedRoute(prefix, path string, msg proto.Message) (HashedRoute, error) {
+	if len(path) == 0 {
+		return HashedRoute{}, errors.ErrInvalidRoute
+	}
+	if len(prefix) == 0 || len(prefix) > len(path) {
+		return HashedRoute{}, errors.ErrInvalidRoutePrefix
+	}
 	if strings.ContainsAny(prefix, "@#") {
 		return HashedRoute{}, errors.ErrInvalidRoute
 	}
@@ -130,6 +139,9 @@ func plainRouteFromString(route string) (PlainRoute, error) {
 	if len(parts) != 2 {
 		return PlainRoute{}, errors.ErrInvalidRoute
 	}
+	if len(parts[0]) == 0 || len(parts[1]) == 0 {
+		return PlainRoute{}, errors.ErrInvalidRoute
+	}
 	return PlainRoute{
 		route: route,
 		path:  parts[1],
@@ -141,6 +153,10 @@ func hashedRouteFromString(route string) (HashedRoute, error) {
 	if len(parts) != 2 {
 		return HashedRoute{}, errors.ErrInvalidRoute
 	}
+	if len(parts[1]) == 0 {
+		return HashedRoute{}, errors.ErrInvalidRoute
+	}
+	// We do not validate the hashed route thus permitting any encoding.
 	return HashedRoute{
 		route:  parts[1],
 		prefix: parts[0],
