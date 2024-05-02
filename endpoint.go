@@ -8,8 +8,9 @@ import (
 	"github.com/itohio/dndm/errors"
 )
 
-// Endpoint is the interface that describes a End To End route.
-// Endpoint registers Interests and Intents and links them together when they match.
+// Endpoint describes a component that can register, manage, and link intents and interests
+// based on data routes. It provides methods for initialization, publishing intents, subscribing interests,
+// and managing its lifecycle.
 type Endpoint interface {
 	io.Closer
 	OnClose(func()) Endpoint
@@ -22,6 +23,7 @@ type Endpoint interface {
 	Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error
 }
 
+// RemoteEndpoint extends Endpoint with methods to retrieve local and remote peer information.
 type RemoteEndpoint interface {
 	// Local returns the name of the local peer
 	Local() Peer
@@ -29,25 +31,26 @@ type RemoteEndpoint interface {
 	Remote() Peer
 }
 
+// Base provides basic context management functionalities for components that require
+// initialization with a context, cancellation, and cleanup operations.
 type Base struct {
 	ctx    context.Context
 	cancel context.CancelCauseFunc
 }
 
-// NewBase creates Base. This must be used only once when initializing
-// the embedded Base struct.
+// NewBase initializes a new Base instance without a specific context.
 func NewBase() Base {
 	return Base{}
 }
 
-// NewBaseWithCtx creates Base. This must be used only once when initializing
-// the embedded Base struct.
+// NewBaseWithCtx initializes a new Base instance with the provided context.
 func NewBaseWithCtx(ctx context.Context) Base {
 	ret := Base{}
 	ret.Init(ctx)
 	return ret
 }
 
+// Init sets up the Base instance with a cancellation context.
 func (t *Base) Init(ctx context.Context) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	t.ctx = ctx
@@ -55,19 +58,23 @@ func (t *Base) Init(ctx context.Context) error {
 	return nil
 }
 
+// Close cleans up resources and cancels the context without a specific cause.
 func (t *Base) Close() error {
 	return t.CloseCause(nil)
 }
 
+// CloseCause cleans up resources and cancels the context with a specified error cause.
 func (t *Base) CloseCause(err error) error {
 	t.cancel(err)
 	return nil
 }
 
+// Ctx returns the current context associated with the Base instance.
 func (t *Base) Ctx() context.Context {
 	return t.ctx
 }
 
+// AddOnClose registers a function to be called upon the context's cancellation.
 func (t *Base) AddOnClose(f func()) {
 	if f == nil {
 		return
@@ -78,6 +85,8 @@ func (t *Base) AddOnClose(f func()) {
 	}()
 }
 
+// BaseEndpoint is a concrete implementation of the Endpoint interface that provides
+// methods for endpoint initialization, managing lifecycle, and handling intents and interests.
 type BaseEndpoint struct {
 	Base
 	name          string
@@ -87,6 +96,7 @@ type BaseEndpoint struct {
 	Size          int
 }
 
+// NewEndpointBase creates a new BaseEndpoint with a specified name and size.
 func NewEndpointBase(name string, size int) BaseEndpoint {
 	return BaseEndpoint{
 		Base: NewBase(),
@@ -95,6 +105,7 @@ func NewEndpointBase(name string, size int) BaseEndpoint {
 	}
 }
 
+// Init initializes the BaseEndpoint with necessary callbacks and logging capabilities.
 func (t *BaseEndpoint) Init(ctx context.Context, logger *slog.Logger, addIntent IntentCallback, addInterest InterestCallback) error {
 	if logger == nil || addIntent == nil || addInterest == nil {
 		return errors.ErrBadArgument
@@ -107,10 +118,12 @@ func (t *BaseEndpoint) Init(ctx context.Context, logger *slog.Logger, addIntent 
 	return nil
 }
 
+// Name returns the name of the endpoint.
 func (t *BaseEndpoint) Name() string {
 	return t.name
 }
 
+// SetName sets or updates the name of the endpoint.
 func (t *BaseEndpoint) SetName(name string) {
 	t.name = name
 }
