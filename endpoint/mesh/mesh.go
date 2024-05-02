@@ -13,7 +13,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var _ dndm.Endpoint = (*Endpoint)(nil)
+var (
+	_ dndm.RemoteEndpoint = (*Endpoint)(nil)
+)
 
 const NumDialers = 10
 
@@ -38,6 +40,24 @@ func New(localPeer dndm.Peer, size, numDialers int, timeout, pingDuration time.D
 	ret.addrbook = NewAddrbook(localPeer, peers, 3)
 
 	return ret, nil
+}
+
+func (t *Endpoint) Local() dndm.Peer { return t.localPeer }
+
+func (t *Endpoint) Remote() dndm.Peer {
+	return aggregatePeer{
+		ep: t,
+	}
+}
+
+func (t *Endpoint) hasPrefix(r dndm.Route) bool {
+	epList := t.Container.Endpoint(func(e dndm.Endpoint) bool {
+		if rep, ok := e.(dndm.RemoteEndpoint); ok {
+			return rep.Remote().HasPrefix(r)
+		}
+		return false
+	})
+	return len(epList) > 0
 }
 
 func (t *Endpoint) Addrbook() []*p2ptypes.AddrbookEntry {
