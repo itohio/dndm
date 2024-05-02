@@ -47,7 +47,7 @@ func TestFactoryDialNotFound(t *testing.T) {
 func TestFactoryDialSuccess(t *testing.T) {
 	dialer := &MockDialer{}
 	dialer.On("Scheme").Return("tcp")
-	dialer.On("Dial", mock.Anything, mock.AnythingOfType("Peer")).Return(nil, nil)
+	dialer.On("Dial", mock.Anything, mock.AnythingOfType("PeerImpl")).Return(nil, nil)
 
 	factory, _ := New(dialer)
 	_, err := factory.Dial(context.Background(), errors.Must(dndm.NewPeer("tcp", "addr", "path", nil)))
