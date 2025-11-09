@@ -55,38 +55,30 @@ func generateFoo(ctx context.Context, router *dndm.Router) {
 
 	slog.Info("Producer created for Foo", "route", producer.Route())
 
-	// Producer.Send waits for interest and then calls the handler
-	err = producer.Send(ctx, func(ctx context.Context, send func(msg *types.Foo) error) error {
-		for i := 0; i < 20; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			text := "Message from dnbus Producer"
-			if i == 19 {
-				text = "Last message from dnbus Producer"
-			}
-
-			if err := send(&types.Foo{
-				Text: text,
-			}); err != nil {
-				slog.Error("Failed to send message", "err", err)
-				return err
-			}
-
-			slog.Info("Sent message", "index", i)
-			time.Sleep(time.Millisecond * 500)
+	for i := 0; i < 20; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
 		}
 
-		slog.Info("Producer finished")
-		return nil
-	})
+		text := "Message from dnbus Producer"
+		if i == 19 {
+			text = "Last message from dnbus Producer"
+		}
 
-	if err != nil {
-		slog.Error("Producer.Send error", "err", err)
+		if err := producer.Send(ctx, &types.Foo{
+			Text: text,
+		}); err != nil {
+			slog.Error("Failed to send message", "err", err)
+			return
+		}
+
+		slog.Info("Sent message", "index", i)
+		time.Sleep(time.Millisecond * 500)
 	}
+
+	slog.Info("Producer finished")
 }
 
 // generateBar demonstrates using Producer to send different message types
@@ -99,36 +91,29 @@ func generateBar(ctx context.Context, router *dndm.Router) {
 
 	slog.Info("Producer created for Bar", "route", producer.Route())
 
-	// Producer.Send waits for interest and then calls the handler
-	err = producer.Send(ctx, func(ctx context.Context, send func(msg *types.Bar) error) error {
-		i := uint32(0)
-		j := uint32(1)
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			if err := send(&types.Bar{
-				A: i,
-				B: j,
-			}); err != nil {
-				slog.Error("Failed to send message", "err", err)
-				return err
-			}
-
-			i++
-			if j == 0 {
-				j = i
-			}
-			j *= 2
-			time.Sleep(time.Millisecond * 100)
+	i := uint32(0)
+	j := uint32(1)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
 		}
-	})
 
-	if err != nil {
-		slog.Error("Producer.Send error", "err", err)
+		if err := producer.Send(ctx, &types.Bar{
+			A: i,
+			B: j,
+		}); err != nil {
+			slog.Error("Failed to send message", "err", err)
+			return
+		}
+
+		i++
+		if j == 0 {
+			j = i
+		}
+		j *= 2
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
@@ -143,19 +128,19 @@ func consumeFoo(ctx context.Context, router *dndm.Router) {
 
 	slog.Info("Consumer created for Foo", "route", consumer.Route())
 
-	// Consumer.Receive calls handler for each message
-	err = consumer.Receive(ctx, func(ctx context.Context, msg *types.Foo) error {
+	for {
+		msg, err := consumer.Receive(ctx)
+		if err != nil {
+			slog.Info("Consumer finished", "err", err)
+			return
+		}
+
 		buf, err := json.Marshal(msg)
 		if err != nil {
 			slog.Error("Failed to marshal message", "err", err)
-			return nil // Continue receiving
+			continue
 		}
 		slog.Info("Received Foo message", "msg", string(buf))
-		return nil // Continue receiving
-	})
-
-	if err != nil {
-		slog.Info("Consumer finished", "err", err)
 	}
 }
 
@@ -170,18 +155,18 @@ func consumeBar(ctx context.Context, router *dndm.Router) {
 
 	slog.Info("Consumer created for Bar", "route", consumer.Route())
 
-	// Consumer.Receive calls handler for each message
-	err = consumer.Receive(ctx, func(ctx context.Context, msg *types.Bar) error {
+	for {
+		msg, err := consumer.Receive(ctx)
+		if err != nil {
+			slog.Info("Consumer finished", "err", err)
+			return
+		}
+
 		buf, err := json.Marshal(msg)
 		if err != nil {
 			slog.Error("Failed to marshal message", "err", err)
-			return nil // Continue receiving
+			continue
 		}
 		slog.Info("Received Bar message", "msg", string(buf))
-		return nil // Continue receiving
-	})
-
-	if err != nil {
-		slog.Info("Consumer finished", "err", err)
 	}
 }

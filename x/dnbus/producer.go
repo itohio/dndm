@@ -2,7 +2,6 @@ package dnbus
 
 import (
 	"context"
-	"io"
 	"sync"
 	"time"
 
@@ -41,43 +40,19 @@ func NewProducer[T proto.Message](
 	}, nil
 }
 
-// Send waits for interest and then calls the handler callback.
-// The handler can call the provided send function to send messages.
-// When the handler returns, the intent is terminated.
-func (p *Producer[T]) Send(ctx context.Context, handler func(ctx context.Context, send func(msg T) error) error) error {
-	// Wait for interest if not already linked
-	p.mu.Lock()
-	interestReceived := p.interestReceived
-	p.mu.Unlock()
-
-	if !interestReceived {
-		if err := p.WaitForInterest(ctx); err != nil {
-			return err
-		}
-	}
-
-	// Create send function that calls intent.Send
-	sendFunc := func(msg T) error {
-		return p.intent.Send(ctx, msg)
-	}
-
-	// Call handler - when it returns, we're done
-	err := handler(ctx, sendFunc)
-	if err != nil {
-		// Close intent if handler returns error
-		_ = p.intent.Close()
+// Send waits for interest (on the first call) and sends the provided message.
+func (p *Producer[T]) Send(ctx context.Context, msg T) error {
+	if err := p.ensureInterest(ctx); err != nil {
 		return err
 	}
-
-	// Handler returned successfully - close intent
-	return p.intent.Close()
+	return p.intent.Send(ctx, msg)
 }
 
-// SendWithTimeout waits for interest and then calls the handler callback with a timeout.
-func (p *Producer[T]) SendWithTimeout(ctx context.Context, timeout time.Duration, handler func(ctx context.Context, send func(msg T) error) error) error {
+// SendWithTimeout behaves like Send but bounds the send and interest wait time.
+func (p *Producer[T]) SendWithTimeout(ctx context.Context, msg T, timeout time.Duration) error {
 	sendCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	return p.Send(sendCtx, handler)
+	return p.Send(sendCtx, msg)
 }
 
 // WaitForInterest waits for the first consumer to express interest.
@@ -113,15 +88,18 @@ func (p *Producer[T]) Route() dndm.Route {
 // This is useful when you need to send multiple messages and manage the intent lifecycle yourself.
 // You must call WaitForInterest() before calling SendDirect.
 func (p *Producer[T]) SendDirect(ctx context.Context, msg T) error {
-	p.mu.Lock()
-	interestReceived := p.interestReceived
-	p.mu.Unlock()
-
-	if !interestReceived {
-		if err := p.WaitForInterest(ctx); err != nil {
-			return err
-		}
+	if err := p.ensureInterest(ctx); err != nil {
+		return err
 	}
-
 	return p.intent.Send(ctx, msg)
+}
+
+func (p *Producer[T]) ensureInterest(ctx context.Context) error {
+	p.mu.Lock()
+	if p.interestReceived {
+		p.mu.Unlock()
+		return nil
+	}
+	p.mu.Unlock()
+	return p.WaitForInterest(ctx)
 }

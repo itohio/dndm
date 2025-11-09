@@ -53,30 +53,28 @@ func (s *Service[Req, Resp]) Handle(ctx context.Context, handler func(ctx contex
 		return err
 	}
 
-	// Receive requests and handle them
-	return s.requestConsumer.Receive(ctx, func(ctx context.Context, req Req) error {
-		// Each request handled in separate goroutine
+	for {
+		req, err := s.requestConsumer.Receive(ctx)
+		if err != nil {
+			return err
+		}
+
 		go func(request Req) {
-			// Reply function can send multiple times using SendDirect
-			// The intent is kept open for multiple replies
 			replyFunc := func(resp Resp) error {
 				return s.responseProducer.SendDirect(ctx, resp)
 			}
 
 			if err := handler(ctx, request, replyFunc); err != nil {
-				// Handle error (log or callback could be added here)
+				// TODO: optional error reporting hook
 				_ = err
 			}
 		}(req)
-
-		// Continue receiving more requests
-		return nil
-	})
+	}
 }
 
 // Receive receives requests and calls the handler for each request (manual handling).
-func (s *Service[Req, Resp]) Receive(ctx context.Context, handler func(ctx context.Context, req Req) error) error {
-	return s.requestConsumer.Receive(ctx, handler)
+func (s *Service[Req, Resp]) Receive(ctx context.Context) (Req, error) {
+	return s.requestConsumer.Receive(ctx)
 }
 
 // Reply sends a reply for a request (manual handling).

@@ -48,28 +48,21 @@ func feedModule(ctx context.Context, router *dndm.Router) {
 
 	slog.Info("Feeding module with messages")
 
-	err = producer.Send(ctx, func(ctx context.Context, send func(msg *types.Foo) error) error {
-		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			if err := send(&types.Foo{
-				Text: "Input message for processing",
-			}); err != nil {
-				slog.Error("Failed to send message", "err", err)
-				return err
-			}
-
-			time.Sleep(time.Millisecond * 500)
+	for i := 0; i < 10; i++ {
+		select {
+		case <-ctx.Done():
+			return
+		default:
 		}
-		return nil
-	})
 
-	if err != nil {
-		slog.Error("Producer.Send error", "err", err)
+		if err := producer.Send(ctx, &types.Foo{
+			Text: "Input message for processing",
+		}); err != nil {
+			slog.Error("Failed to send message", "err", err)
+			return
+		}
+
+		time.Sleep(time.Millisecond * 500)
 	}
 }
 
@@ -79,14 +72,14 @@ func runProcessingModule(ctx context.Context, router *dndm.Router) {
 	defer module.Close()
 
 	// Define inputs
-	input, err := module.AddInput[*types.Foo]("module.input")
+	input, err := dnbus.AddInput[*types.Foo](module, "module.input")
 	if err != nil {
 		slog.Error("Failed to add input", "err", err)
 		return
 	}
 
 	// Define outputs
-	output, err := module.AddOutput[*types.Bar]("module.output")
+	output, err := dnbus.AddOutput[*types.Bar](module, "module.output")
 	if err != nil {
 		slog.Error("Failed to add output", "err", err)
 		return
@@ -96,8 +89,12 @@ func runProcessingModule(ctx context.Context, router *dndm.Router) {
 
 	// Run processing
 	err = module.Run(ctx, func(ctx context.Context) error {
-		// Receive from input using handler
-		return input.Receive(ctx, func(ctx context.Context, msg *types.Foo) error {
+		for {
+			msg, err := input.Receive(ctx)
+			if err != nil {
+				return err
+			}
+
 			slog.Info("Processing module received message", "text", msg.Text)
 
 			// Process (convert Foo to Bar)
@@ -106,16 +103,12 @@ func runProcessingModule(ctx context.Context, router *dndm.Router) {
 				B: uint32(2),
 			}
 
-			// Send to output using handler
-			return output.Send(ctx, func(ctx context.Context, send func(msg *types.Bar) error) error {
-				if err := send(result); err != nil {
-					slog.Error("Failed to send to output", "err", err)
-					return err
-				}
-				slog.Info("Processing module sent result")
-				return nil
-			})
-		})
+			if err := output.Send(ctx, result); err != nil {
+				slog.Error("Failed to send to output", "err", err)
+				return err
+			}
+			slog.Info("Processing module sent result")
+		}
 	})
 
 	if err != nil {
@@ -129,26 +122,26 @@ func runMultiInputOutputModule(ctx context.Context, router *dndm.Router) {
 	defer module.Close()
 
 	// Define multiple inputs
-	input1, err := module.AddInput[*types.Foo]("module.input1")
+	input1, err := dnbus.AddInput[*types.Foo](module, "module.input1")
 	if err != nil {
 		slog.Error("Failed to add input1", "err", err)
 		return
 	}
 
-	input2, err := module.AddInput[*types.Bar]("module.input2")
+	input2, err := dnbus.AddInput[*types.Bar](module, "module.input2")
 	if err != nil {
 		slog.Error("Failed to add input2", "err", err)
 		return
 	}
 
 	// Define multiple outputs
-	output1, err := module.AddOutput[*types.Bar]("module.output1")
+	output1, err := dnbus.AddOutput[*types.Bar](module, "module.output1")
 	if err != nil {
 		slog.Error("Failed to add output1", "err", err)
 		return
 	}
 
-	output2, err := module.AddOutput[*types.Foo]("module.output2")
+	output2, err := dnbus.AddOutput[*types.Foo](module, "module.output2")
 	if err != nil {
 		slog.Error("Failed to add output2", "err", err)
 		return
@@ -160,23 +153,32 @@ func runMultiInputOutputModule(ctx context.Context, router *dndm.Router) {
 	// For simplicity, we process input1 in a goroutine and input2 in another
 	// In a real scenario, you might want to synchronize inputs or handle them differently
 	go func() {
-		_ = input1.Receive(ctx, func(ctx context.Context, msg1 *types.Foo) error {
+		for {
+			if _, err := input1.Receive(ctx); err != nil {
+				return
+			}
 			// Process and send to output1
-			return output1.Send(ctx, func(ctx context.Context, send func(msg *types.Bar) error) error {
-				return send(&types.Bar{A: 1, B: 2})
-			})
-		})
+			if err := output1.Send(ctx, &types.Bar{A: 1, B: 2}); err != nil {
+				slog.Error("Failed to send output1", "err", err)
+				return
+			}
+		}
 	}()
 
 	go func() {
-		_ = input2.Receive(ctx, func(ctx context.Context, msg2 *types.Bar) error {
+		for {
+			msg2, err := input2.Receive(ctx)
+			if err != nil {
+				return
+			}
 			msg2JSON, _ := json.Marshal(msg2)
 			slog.Info("Received from input2", "input2", string(msg2JSON))
 			// Process and send to output2
-			return output2.Send(ctx, func(ctx context.Context, send func(msg *types.Foo) error) error {
-				return send(&types.Foo{Text: "Result"})
-			})
-		})
+			if err := output2.Send(ctx, &types.Foo{Text: "Result"}); err != nil {
+				slog.Error("Failed to send output2", "err", err)
+				return
+			}
+		}
 	}()
 
 	// Wait for context cancellation

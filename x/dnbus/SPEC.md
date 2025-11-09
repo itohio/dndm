@@ -191,6 +191,15 @@ func NewCaller[Req proto.Message, Resp proto.Message](
     responsePath string,
 ) (*Caller[Req, Resp], error)
 
+// CallerOption allows configuring optional request/response correlation behaviour.
+type CallerOption[Req proto.Message, Resp proto.Message] func(*callerOptions[Req, Resp])
+
+// WithCallerRequestNonce registers a setter that places the generated nonce on outgoing requests.
+func WithCallerRequestNonce[Req proto.Message, Resp proto.Message](fn func(Req, uint64)) CallerOption[Req, Resp]
+
+// WithCallerResponseNonce registers an extractor that reads a nonce from incoming responses.
+func WithCallerResponseNonce[Req proto.Message, Resp proto.Message](fn func(Resp) (uint64, bool)) CallerOption[Req, Resp]
+
 // Call sends a request and waits for a single reply
 func (c *Caller[Req, Resp]) Call(ctx context.Context, req Req) (Resp, error)
 
@@ -212,6 +221,8 @@ func (c *Caller[Req, Resp]) Close() error
 - Single reply via Call() method
 - Multiple replies via HandleReplies() callback
 - Handler callback runs in goroutine
+- Optional nonce setters/extractors for custom correlation. Without custom hooks,
+  replies are dispatched in FIFO order to the oldest pending caller.
 
 **Usage**:
 
@@ -437,11 +448,12 @@ type Output[T proto.Message] struct {
 // NewModule creates a new processing module
 func NewModule(ctx context.Context, router *Router) *Module
 
-// AddInput adds an input consumer
-func (m *Module) AddInput[T proto.Message](path string) (*Input[T], error)
+// AddInput adds an input consumer (package-level helper to avoid method type params
+// which are not supported before Go 1.22)
+func AddInput[T proto.Message](m *Module, path string) (*Input[T], error)
 
 // AddOutput adds an output producer
-func (m *Module) AddOutput[T proto.Message](path string) (*Output[T], error)
+func AddOutput[T proto.Message](m *Module, path string) (*Output[T], error)
 
 // Close closes all inputs and outputs
 func (m *Module) Close() error
@@ -465,12 +477,12 @@ module := dnbus.NewModule(ctx, router)
 defer module.Close()
 
 // Define inputs
-cameraInput, _ := module.AddInput[*CameraImage]("cameras.front")
-sensorInput, _ := module.AddInput[*SensorData]("sensors.imu")
+cameraInput, _ := dnbus.AddInput[*CameraImage](module, "cameras.front")
+sensorInput, _ := dnbus.AddInput[*SensorData](module, "sensors.imu")
 
 // Define outputs
-featuresOutput, _ := module.AddOutput[*ImageFeatures]("image.features")
-depthOutput, _ := module.AddOutput[*DepthMap]("image.depth")
+featuresOutput, _ := dnbus.AddOutput[*ImageFeatures](module, "image.features")
+depthOutput, _ := dnbus.AddOutput[*DepthMap](module, "image.depth")
 
 // Run processing
 module.Run(ctx, func(ctx context.Context) error {
@@ -656,6 +668,8 @@ func (c *Caller[Req, Resp]) HandleReplies(ctx context.Context, req Req, handler 
 - Route-based nonce (creates many routes)
 
 **Recommendation**: Correlation map with nonce (store in message or use header timestamp).
+If messages cannot carry a nonce, fall back to FIFO routing between pending calls.
+Expose optional hooks so callers can set/extract nonces without custom wrappers.
 
 ### 4. Handler Error Handling
 
@@ -960,8 +974,8 @@ import "github.com/itohio/dndm/x/dnbus"
 module := dnbus.NewModule(ctx, router)
 defer module.Close()
 
-input, _ := module.AddInput[*CameraImage]("cameras.front")
-output, _ := module.AddOutput[*ImageFeatures]("image.features")
+input, _ := dnbus.AddInput[*CameraImage](module, "cameras.front")
+output, _ := dnbus.AddOutput[*ImageFeatures](module, "image.features")
 
 module.Run(ctx, func(ctx context.Context) error {
     for {

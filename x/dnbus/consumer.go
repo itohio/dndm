@@ -70,42 +70,29 @@ func NewConsumer[T proto.Message](
 	}, nil
 }
 
-// Receive calls the handler for each received message.
-// If the handler returns an error, the interest is terminated.
-func (c *Consumer[T]) Receive(ctx context.Context, handler func(ctx context.Context, msg T) error) error {
+// Receive returns the next message or an error if the consumer is closed or the context is cancelled.
+func (c *Consumer[T]) Receive(ctx context.Context) (T, error) {
+	var zero T
+
 	c.mu.Lock()
-	closed := c.closed
+	if c.closed {
+		c.mu.Unlock()
+		return zero, ErrClosed
+	}
+	typedC := c.typedC
 	c.mu.Unlock()
 
-	if closed {
-		return ErrClosed
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
+	select {
+	case <-ctx.Done():
+		return zero, ctx.Err()
+	case msg, ok := <-typedC:
+		if !ok {
 			c.mu.Lock()
 			c.closed = true
 			c.mu.Unlock()
-			return ctx.Err()
-		case msg, ok := <-c.typedC:
-			if !ok {
-				c.mu.Lock()
-				c.closed = true
-				c.mu.Unlock()
-				return io.EOF
-			}
-
-			// Call handler - if it returns error, terminate interest
-			if err := handler(ctx, msg); err != nil {
-				c.mu.Lock()
-				c.closed = true
-				c.mu.Unlock()
-				_ = c.interest.Close()
-				return err
-			}
-			// Handler returned nil - continue receiving
+			return zero, io.EOF
 		}
+		return msg, nil
 	}
 }
 

@@ -16,10 +16,9 @@ type Input[T proto.Message] struct {
 	path     string
 }
 
-// Receive calls the handler for each received message.
-// If the handler returns an error, the interest is terminated.
-func (i *Input[T]) Receive(ctx context.Context, handler func(ctx context.Context, msg T) error) error {
-	return i.consumer.Receive(ctx, handler)
+// Receive returns the next message from the underlying consumer.
+func (i *Input[T]) Receive(ctx context.Context) (T, error) {
+	return i.consumer.Receive(ctx)
 }
 
 // C returns the typed message channel for this input.
@@ -33,16 +32,14 @@ type Output[T proto.Message] struct {
 	path     string
 }
 
-// Send waits for interest and then calls the handler callback.
-// The handler can call the provided send function to send messages.
-// When the handler returns, the intent is terminated.
-func (o *Output[T]) Send(ctx context.Context, handler func(ctx context.Context, send func(msg T) error) error) error {
-	return o.producer.Send(ctx, handler)
+// Send waits for interest (on the first call) and delivers the provided message.
+func (o *Output[T]) Send(ctx context.Context, msg T) error {
+	return o.producer.Send(ctx, msg)
 }
 
-// SendWithTimeout waits for interest and then calls the handler callback with a timeout.
-func (o *Output[T]) SendWithTimeout(ctx context.Context, timeout time.Duration, handler func(ctx context.Context, send func(msg T) error) error) error {
-	return o.producer.SendWithTimeout(ctx, timeout, handler)
+// SendWithTimeout behaves like Send but bounds the send and interest wait time.
+func (o *Output[T]) SendWithTimeout(ctx context.Context, msg T, timeout time.Duration) error {
+	return o.producer.SendWithTimeout(ctx, msg, timeout)
 }
 
 // Module represents a processing module with multiple inputs/outputs.
@@ -64,8 +61,9 @@ func NewModule(ctx context.Context, router *dndm.Router) *Module {
 	}
 }
 
-// AddInput adds an input consumer to the module.
-func (m *Module) AddInput[T proto.Message](path string) (*Input[T], error) {
+// AddInput adds an input consumer to the module. This is exposed as a package-level
+// generic helper to remain compatible with Go 1.21 (method type parameters are not supported).
+func AddInput[T proto.Message](m *Module, path string) (*Input[T], error) {
 	consumer, err := NewConsumer[T](m.ctx, m.router, path)
 	if err != nil {
 		return nil, err
@@ -81,8 +79,9 @@ func (m *Module) AddInput[T proto.Message](path string) (*Input[T], error) {
 	}, nil
 }
 
-// AddOutput adds an output producer to the module.
-func (m *Module) AddOutput[T proto.Message](path string) (*Output[T], error) {
+// AddOutput adds an output producer to the module. Exposed as package-level helper
+// for the same reason as AddInput.
+func AddOutput[T proto.Message](m *Module, path string) (*Output[T], error) {
 	producer, err := NewProducer[T](m.ctx, m.router, path)
 	if err != nil {
 		return nil, err
@@ -125,4 +124,3 @@ func (m *Module) Close() error {
 func (m *Module) Run(ctx context.Context, fn func(ctx context.Context) error) error {
 	return fn(ctx)
 }
-

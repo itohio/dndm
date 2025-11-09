@@ -1,12 +1,11 @@
 module github.com/itohio/dndm
 
-go 1.21.5
+go 1.24.1
 
 require (
 	github.com/libp2p/go-buffer-pool v0.1.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07
-	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
 	golang.org/x/sync v0.7.0
 	google.golang.org/protobuf v1.33.0
 )
