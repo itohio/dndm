@@ -30,6 +30,7 @@
 - Makefile must have build, clean, test, cover commands
 - If it is a service, then there has to be docker folder that uses `make build` to build in a build image and then lean final image (Does not apply to cli or libraries)
 - Prefer Mermaid diagrams over just drawings
+- When working on DNDM project, only work on DNDM project. Do not modify other repositories.
 
 # Cross-language principles
 - If it is CRUD - prefer variable arguments for inserts (i.e. no CreateOne, CreateMany - the fewer similar functions the better)
@@ -80,15 +81,14 @@ Prefer:
 - Concrete types in struct fields, interfaces in parameters
 
 # Execution Environment
-For any code execution, testing, or experiments:
+For any code execution or experiments:
 - MUST use Docker containers, never run directly on host
 - Create Dockerfile in project root or test directory
 - Use docker-compose for multi-service scenarios
 - Mount code as volume, don't copy into image during development
-- Examples:
-  * Python tests: docker run --rm -v $(pwd):/app -w /app python:3.11 pytest
-  * Go tests: docker run --rm -v $(pwd):/go/src/app -w /go/src/app golang:1.21 go test ./...
-  * Quick experiments: docker run --rm -it -v $(pwd):/workspace python:3.11 python script.py
+
+Exception:
+- Running tests and benchmarks locally is fine
 
 # Context Management
 When dealing with large files or datasets:
