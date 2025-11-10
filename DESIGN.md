@@ -20,8 +20,9 @@ DNDM (Decentralized Named Data Messaging) is a communication library inspired by
 
 3. **Endpoints**: Abstraction layer for different communication methods
    - **Direct**: Same process, zero-copy via channels
-   - **Remote**: Different processes/systems via network connections
-   - **Mesh**: Full-mesh network with automatic peer discovery
+   - **Remote**: Different processes/systems via network connections (TCP/UDP/Serial)
+   - **Mesh**: Distributed peer-to-peer overlay with automatic discovery
+   - **Extensibility**: Additional endpoints/connectors can be added (e.g., via `x/transport`) without changing the router.
 
 4. **Peer-Based Routing**: Path-based prefix matching for distributed routing
    - Each peer has a unique path prefix

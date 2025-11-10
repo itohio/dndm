@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  embedded:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["./bin/embedded"]
+    environment:
+      - TRANSPORT=tcp
+    ports:
+      - "9001:9001"
+    networks:
+      - dndm-network
+    depends_on:
+      - host
+
+  host:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    command: ["./bin/host"]
+    environment:
+      - TRANSPORT=tcp
+    ports:
+      - "9002:9002"
+    networks:
+      - dndm-network
+    stdin_open: true
+    tty: true
+
+networks:
+  dndm-network:
+    driver: bridge
