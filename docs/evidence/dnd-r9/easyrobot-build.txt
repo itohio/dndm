@@ -1,0 +1,23 @@
+# EasyRobot read-only build, 2026-11-09T09:36:08Z; EasyRobot abb5c9c, replace github.com/itohio/dndm => ../dndm, EasyRobot go.mod has google.golang.org/protobuf v1.36.10
+## A: EasyRobot tree as is, dndm working tree (protobuf v1.36.12); GOFLAGS=-mod=readonly
+./cmd/display/destination exit=1 go: updates to go.mod needed, disabled by -mod=readonly; to update it:
+./cmd/manipulator exit=1 go: updates to go.mod needed, disabled by -mod=readonly; to update it:
+./drivers/lidar exit=1 go: updates to go.mod needed, disabled by -mod=readonly; to update it:
+./drivers/manipulator exit=1 package github.com/itohio/EasyRobot/drivers/manipulator: build constraints exclude all Go files in /Users/andr
+## B: scratch copy of EasyRobot (tmp/dndm/r9/er, x/knowledge excluded) with one change: go get google.golang.org/protobuf@v1.36.12 (offline, module cache)
+./cmd/display/destination exit=1 Package opencv4 was not found in the pkg-config search path.
+./cmd/manipulator exit=0 
+./drivers/lidar exit=1 Package opencv4 was not found in the pkg-config search path.
+./drivers/manipulator exit=1 package github.com/itohio/EasyRobot/drivers/manipulator: build constraints exclude all Go files in /Users/andr
+## B's go.mod/go.sum change vs EasyRobot:
+< 	google.golang.org/protobuf v1.36.10
+> 	google.golang.org/protobuf v1.36.12
+> google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
+> google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+## EasyRobot git status (unchanged by dndm):
+ M .gitignore
+ M Makefile
+ M README.md
+ M go.mod
+?? docs/
+?? x/knowledge/

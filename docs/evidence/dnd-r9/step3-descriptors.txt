@@ -1,0 +1,8 @@
+# DND-R9 step 3: raw file descriptors in generated code, HEAD (protoc-gen-go v1.36.5) vs regenerated (v1.36.12); extracted from the Go literals and compared byte for byte
+examples/embedded/types/embedded.pb.go: old 398 B, new 398 B, identical=True
+types/core/header.pb.go: old 840 B, new 840 B, identical=True
+types/core/intents.pb.go: old 380 B, new 380 B, identical=True
+types/core/interests.pb.go: old 356 B, new 356 B, identical=True
+types/p2p/addrbook.pb.go: old 601 B, new 601 B, identical=True
+types/p2p/peering.pb.go: old 591 B, new 591 B, identical=True
+types/test/message.pb.go: old 217 B, new 217 B, identical=True

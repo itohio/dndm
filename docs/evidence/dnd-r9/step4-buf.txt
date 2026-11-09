@@ -1,0 +1,17 @@
+# DND-R9 step 4 buf checks 2026-11-09T09:38:07Z
+$ buf lint
+exit=0
+$ buf breaking --against <image of the step-3 tree> (tmp/dndm/r9/step3.binpb)
+exit=0
+$ make proto; git status --short -- "*.pb.go"
+ M examples/embedded/types/embedded.pb.go
+ M types/core/header.pb.go
+ M types/core/intents.pb.go
+ M types/core/interests.pb.go
+ M types/p2p/addrbook.pb.go
+ M types/p2p/peering.pb.go
+ M types/test/message.pb.go
+?? types/link/link.pb.go
+$ tool versions
+1.75.0
+protoc-gen-go v1.36.12

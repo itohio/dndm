@@ -121,5 +121,11 @@ These checks establish document consistency only. They do not validate source be
 - 2026-11-09: DND-R6-fix, docs only. ux's UX-3 fixes applied to the diagrams: the legend is now applied everywhere, there is a glossary (link, bridge, gateway, stage, session, match), refusals are drawn at bridges, LF4 is split into 4a/4b, target frames show 4 B, and the set is now 30 blocks. Leader's decisions on the link-context design are recorded in both design docs: protobuf frames and route ids in the CAN identifier yes; tooling download not approved; legacy fallback only via Insecure yes; lower-identity tie-break yes. [Report](evidence/DND-R6-fix.md).
 - 2026-11-09: DND-commit and DND-commit-2. DND-R2…R5, R5-fix, R6 and R7 are committed locally as 14 commits (c7b5b61..684c179), each gated ([report](evidence/DND-commit.md)). Ideation notes held.
 - 2026-11-09: DND-R8, not committed. Filed DND-022 (link-context core) and DND-023 (CAN face). Review F4 fixed (large-frame reads no longer allocate per KiB). DND-008 close/reconnect fixed with connection generations and the lower-address tie-break; 4 tests, 2 v2 tests moved to DND-022. Review nits F6/F8/F11/F13–F15/F17 done. DND-021 flake fixed (19 → 0 failures in 32,000 parallel runs). Earlier over-counted "parallel" stress claims corrected. [Report](evidence/DND-R8.md).
+- 2026-11-09: DND-R8 and its fix round committed as 9 commits (1e38ecc..0062746). DND-R9-tools and its fix round committed: 0bb4604 (tools), e160c3c (protobuf bump), 954bc81 (codec), then the docs commit.
+  - buf v1.75.0 and protoc-gen-go are pinned Go tools in `tools/` (owner-approved download);
+  - buf config moved to v2 at the repo root, with the unused WKT dep dropped;
+  - protobuf bumped to v1.36.12. EasyRobot makes the same one-line bump in parallel, coordinated by Leader; it was not yet committed when dndm's commit landed;
+  - DND-022's `link.proto` (control `oneof`) and DATA codec added, with 4 byte-count tests (they failed first as a build failure: no API yet).
+  ([report](evidence/DND-R9-tools.md))
 
 [Overview](index.md) · [Pinned findings](research/pinned-findings.md) · [Unknown map](research/known-unknowns.md) · [Ticket index](tickets/index.md)

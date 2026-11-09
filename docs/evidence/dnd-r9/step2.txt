@@ -1,0 +1,9 @@
+# DND-R9 step 2 (2026-11-09 ~09:27Z): buf v2 config, WKT dep dropped, regenerate with protoc-gen-go v1.36.5 (= the generator of the committed code)
+$ rm proto/buf.yaml proto/buf.gen.yaml proto/buf.lock examples/embedded/proto/buf.lock; write buf.yaml, buf.gen.yaml (root, v2), examples/embedded/proto/buf.{yaml,gen.yaml} (v2)
+$ find . -name '*.pb.go' -delete; go tool -modfile=tools/buf/go.mod buf generate; (cd examples/embedded/proto && go tool -modfile=../../../tools/buf/go.mod buf generate)
+$ git status --short -- '*.pb.go'      -> (empty)   7 .pb.go files regenerated
+=> generated diff: none (not even version comments: same protoc-gen-go v1.36.5, protoc "(unknown)")
+$ buf lint (after ignore_only for the legacy v1 files)  -> exit 0;  embedded: exit 0
+$ buf build <HEAD proto tree with this buf.yaml> -o head.binpb; buf breaking --against head.binpb -> exit 0
+Before ignore_only, buf lint reported 39 findings on legacy files: COMMENT_ENUM_VALUE 18, ENUM_VALUE_PREFIX 18, ENUM_ZERO_VALUE_SUFFIX 2, PACKAGE_DIRECTORY_MATCH 1 (header.proto, peering.proto, message.proto); embedded: PACKAGE_DIRECTORY_MATCH 1.
+All buf commands ran with HTTPS_PROXY=http://127.0.0.1:9 (no network). `buf breaking --against '.git#ref=HEAD,subdir=proto'` tried the BSR (v1 deps) and failed on that guard, hence the image.

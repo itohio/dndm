@@ -1,0 +1,17 @@
+# DND-R9 step 4 BEFORE: byte-count tests with link.pb.go generated, no encoder yet; 2026-11-09T09:33:26Z
+$ go test -run "TestLinkFrame" ./codec
+# github.com/itohio/dndm/codec [github.com/itohio/dndm/codec.test]
+codec/link_frame_test.go:44:13: undefined: AppendLinkData
+codec/link_frame_test.go:44:33: undefined: LinkData
+codec/link_frame_test.go:47:8: undefined: AppendLinkLength
+codec/link_frame_test.go:73:14: undefined: AppendLinkMessage
+codec/link_frame_test.go:86:13: undefined: AppendLinkData
+codec/link_frame_test.go:86:33: undefined: LinkData
+codec/link_frame_test.go:97:34: undefined: LinkData
+codec/link_frame_test.go:106:14: undefined: AppendLinkData
+codec/link_frame_test.go:109:16: undefined: DecodeLinkData
+codec/link_frame_test.go:189:45: undefined: LinkData
+codec/link_frame_test.go:109:16: too many errors
+FAIL	github.com/itohio/dndm/codec [build failed]
+FAIL
+exit=1

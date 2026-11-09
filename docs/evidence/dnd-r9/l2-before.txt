@@ -1,0 +1,7 @@
+# R-DND-R9 L2 BEFORE the decoder change (oneof schema regenerated, tests on the oneof API), 2026-11-09T09:56:13Z
+$ go test -count=3 -run TestLinkFrame -v ./codec
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/codec	0.387s
+      3 --- FAIL: TestLinkFrameRoundTrip
+      3 --- FAIL: TestLinkFrameRoundTrip/two_control_messages_in_one_frame
+      3 Messages:   	got <nil>

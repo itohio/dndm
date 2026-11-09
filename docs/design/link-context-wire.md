@@ -1,6 +1,6 @@
 # Link-context wire in protobuf (design, DND-R7)
 
-Status: **design draft, no code**. Task: `docs/tasks/DND-R7-design.md`. Owner decisions it follows ([decisions](../../../docs/decisions.md), 2026-11-08):
+Status: **design accepted; the schema and the DATA codec exist** (DND-R9-tools: `proto/types/link/link.proto`, `codec/link_frame.go`); the link state machine is DND-022. Task: `docs/tasks/DND-R7-design.md`. Owner decisions it follows ([decisions](../../../docs/decisions.md), 2026-11-08):
 
 - the link-context model is adopted;
 - protobuf schemas are the language-neutral wire contract (C++/embedded/TS use generated code);
@@ -12,7 +12,7 @@ Status: **design draft, no code**. Task: `docs/tasks/DND-R7-design.md`. Owner de
 **Decisions on this design** (Leader, 2026-11-09, under the owner's autonomy instruction; `docs/tasks/DND-R6-fix.md`):
 
 1. Plain protobuf `LinkFrame` data frames everywhere (4 B + payload), with the route id in the CAN identifier on CAN links: **yes**. The raw mode of §3.1 (b) is not used.
-2. Pinning buf and protoc-gen-go as Go tools: **not approved** (it needs a network download). It stays pending for the owner, so §7's update plan cannot start.
+2. Pinning buf and protoc-gen-go as Go tools: not approved by Leader in DND-R6-fix (network download); **the owner approved it on 2026-11-09** ("download buf and protoc-gen-go"), and §7's plan ran in DND-R9-tools.
 3. Legacy v1 fallback only via `Insecure("legacy v1 peer")` on a link configured as secure: **yes** (§5).
 4. Simultaneous connections keep the one dialled by the lower identity: **yes** ([close-reconnect](close-reconnect.md#31-tie-break-for-simultaneous-connections-decided)).
 
@@ -43,7 +43,7 @@ option go_package = "github.com/itohio/dndm/types/link";
 
 // One frame on a link-context link. Exactly one of the groups below is set:
 //   DATA:    route_id != 0, payload (or ctr + sealed on a secured link), seq when the route buffers.
-//   CONTROL: route_id == 0 and exactly one control field (16+).
+//   CONTROL: route_id == 0 and exactly one control message (oneof control, 16+).
 // Faces delimit frames themselves: UDP datagram, COBS on serial, CAN frame,
 // or a varint length prefix on byte streams (TCP).
 message LinkFrame {
@@ -57,14 +57,16 @@ message LinkFrame {
   // 7..15 reserved for future data-path fields
 
   // ---- control (2-byte tags) ----
-  Hello     hello      = 16;
-  Handshake handshake  = 17;
-  Announce  announce   = 18;
-  Bind      bind       = 19;
-  BindAck   bind_ack   = 20;
-  Unbind    unbind     = 21;
-  UnbindAck unbind_ack = 22;
-  Close     close      = 23;
+  oneof control {          // review R-DND-R9 L2: at most one per frame; same wire bytes as plain fields
+    Hello     hello      = 16;
+    Handshake handshake  = 17;
+    Announce  announce   = 18;
+    Bind      bind       = 19;
+    BindAck   bind_ack   = 20;
+    Unbind    unbind     = 21;
+    UnbindAck unbind_ack = 22;
+    Close     close      = 23;
+  }
   // 24..31 reserved: repair/fetch (DND-006), capability report (DND-013)
 }
 
@@ -139,7 +141,7 @@ message Close { CloseReason reason = 1; string text = 2; uint64 session = 3; }
 
 Design choices:
 
-- **Flat fields, no `oneof`, no proto3 `optional`.** The DATA path is never nested, so it pays no extra tag and length. Presence comes from zero values: `route_id` 0 means control, and `seq` starts at 1. `ctr` needs no presence, because `sealed` already marks a secured frame, so an absent `ctr` simply means low bits 0. Every generator in §6 handles this subset.
+- **Flat DATA fields, no proto3 `optional`; the control messages are a `oneof`.** The DATA path is never nested, so it pays no extra tag and length. Presence comes from zero values: `route_id` 0 means control, and `seq` starts at 1. `ctr` needs no presence, because `sealed` already marks a secured frame, so an absent `ctr` simply means low bits 0. The control messages sit in `oneof control` (decided in DND-R9 after review R-DND-R9 L2): it uses the same field numbers and the same wire bytes as plain fields, and generated code holds at most one control message. A frame that carries two control fields on the wire, or DATA together with a control field, or both `payload` and `sealed`, is rejected by `codec.DecodeLinkData` (`ErrBadFrame`). nanopb exposes the oneof as `which_control`; oneof support in protobuf-go-lite and protobuf-c is `#verify` when those targets arrive (DND-015).
 - **Direction and DND-020.** The sender of DATA allocates the ids, so each side has its own id space. A route used in both directions gets two ids, one per sender. That is the DND-020 fix expressed in the schema.
 - **Announce stays separate from Bind.** Announce mirrors today's Intent/Interest (who has, who wants). Bind is sent only by the data sender, once both sides want the route.
 
@@ -239,7 +241,7 @@ DATA for an id without a `BIND_STATUS_OK` is dropped and counted.
 |---|---|---|---|
 | Go (host) | protoc-gen-go | — | fine; hot path via `protowire` (§3.2) |
 | TinyGo | protobuf-go-lite (aperturerobotics) | proto3 without reflection; avoid `Any`, maps, WKTs | none used `#verify` generator feature list |
-| C on MCUs | nanopb | an `.options` file with `max_size` for every string/bytes (`path` 128, `type` 96, `payload` per face MTU) or callbacks; proto3 subset | flat fields, no oneof/optional; `payload` as a callback field for zero-copy decode `#verify` |
+| C on MCUs | nanopb | an `.options` file with `max_size` for every string/bytes (`path` 128, `type` 96, `payload` per face MTU) or callbacks; proto3 subset | flat DATA fields, one `oneof` for control (`which_control`), no optional; `payload` as a callback field for zero-copy decode `#verify` |
 | C (Linux/SBC) | protobuf-c | proto3 subset | same subset `#verify` with the protobuf-c version chosen |
 | TypeScript | protobuf-es | full proto3 | fine |
 | C++ (nncase etc.) | protoc C++ or EmbeddedProto | — | fine |
@@ -255,30 +257,34 @@ The `.options` file for nanopb lives next to `link.proto` and is part of the con
 
 ## 7. Tooling: current and target
 
-| Item | Current (observed) | Target |
+State after DND-R9-tools (2026-11-09, owner approved the download; [evidence](../evidence/DND-R9-tools.md)):
+
+| Item | Before DND-R9 | Now |
 |---|---|---|
-| Go runtime | `google.golang.org/protobuf v1.36.10` (go.mod) | latest stable at update time; local module cache has up to v1.36.12, v1.37.0-rc.1 not used |
-| Generated code | `protoc-gen-go v1.36.5` (`types/core/header.pb.go` header), protoc "(unknown)" | regenerate with the same protoc-gen-go version as the runtime |
-| buf config | `proto/buf.yaml` v1, `proto/buf.gen.yaml` v1 (plugin `go`, `paths=source_relative`), `buf.lock` pins `buf.build/protocolbuffers/wellknowntypes` | buf v2 config at repo root (`modules: [{path: proto}]`), `buf.gen.yaml` v2 |
-| Well-known types dep | listed but **no `.proto` imports `google/protobuf/*`** | remove the dep and the lock entry |
-| buf CLI | **not installed** on this machine (`buf: command not found`); `make proto` runs `buf generate` | pin it as a Go tool (`tool` directive in go.mod, Go 1.24+) or a pinned binary; needs owner approval (download) |
-| Other generators | none | add when the matching target exists: protobuf-es (TS), nanopb (MCU), protobuf-go-lite (TinyGo); each in its own output dir |
+| Go runtime | `google.golang.org/protobuf v1.36.10` (go.mod) | **v1.36.12**, the latest stable (`@latest` on 2026-11-09). EasyRobot must raise its own requirement to match (one go.mod line) |
+| Generated code | `protoc-gen-go v1.36.5`, protoc "(unknown)" | **protoc-gen-go v1.36.12**, same as the runtime; raw descriptors byte-identical to before |
+| buf config | `proto/buf.yaml` v1, `proto/buf.gen.yaml` v1, `buf.lock` pinning the WKT module | **v2 at the repo root**: `buf.yaml` (`modules: [{path: proto}]`, no deps, no lock), `buf.gen.yaml` (managed `go_package_prefix`, local plugin via `go tool`). The embedded example has its own v2 module |
+| Well-known types dep | listed, never imported | removed |
+| buf CLI | not installed | **buf v1.75.0 as a Go tool** in `tools/buf/go.mod`; protoc-gen-go as a Go tool in `tools/go.mod`. `make proto`, `make proto-lint` |
+| Other generators | none | unchanged: add when the matching target exists (DND-015) |
+
+Why two tool modules: buf v1.75.0 requires an unreleased protobuf (`v1.36.13-0.20261016…`), so protoc-gen-go in the same module would be that pseudo-version instead of the runtime's. Neither module is part of dndm's library graph (nested modules are outside `./...` and the module zip).
 
 **Update plan** (each step its own change, behind the gates):
 
-1. Owner approves fetching buf and protoc-gen-go, a module download (**pending**: Leader did not approve it in DND-R6-fix).
-2. Convert the config to v2 and drop the unused WKT dep. Regenerate with no schema change; the generated diff must be version comments only.
-3. Bump `google.golang.org/protobuf` and regenerate. Gates, wire probe byte-identical.
-4. Add `types/link/link.proto` plus `.options` and generate Go. Lint with `buf lint` and `buf breaking` against the previous tag.
+1. Owner approves fetching buf and protoc-gen-go (**done**, 2026-11-09).
+2. Convert the config to v2 and drop the unused WKT dep. Regenerate with no schema change (**done**: generated diff empty with protoc-gen-go v1.36.5).
+3. Bump `google.golang.org/protobuf` and regenerate (**done**: v1.36.12; gates, wire probe byte-identical).
+4. Add `types/link/link.proto` plus `.options` and generate Go; `buf lint` and `buf breaking` against the previous step (**done**).
 5. Add other generators only when a target needs them (DND-015).
 
-## 8. Byte-count test (to write when code is allowed)
+## 8. Byte-count test
 
-`codec/link_frame_test.go`, failing first (the encoder doesn't exist yet):
+`codec/link_frame_test.go`. The first four tests below exist since DND-R9 (failing first, then passing with `codec/link_frame.go`); the others need the link state machine and stay with DND-022:
 
 - **TestLinkFrameOverhead**: encode DATA for payloads of 26 B and 62 B (the sizes of EasyRobot's ManipulatorTarget and ManipulatorState above) and 127/128/16 383/16 384 B (varint boundaries), and assert:
   - overhead = 4 B below 128 B, 5 B up to 16 383 B, 6 B above (UDP/serial framing);
-  - +1/+2 B with the TCP length prefix;
+  - the TCP length prefix: 1 B for frames below 128 B, 2 B below 16 384 B, 3 B above (so a 127 B payload already needs 2 B: its frame is 131 B);
   - the v1 frame for the same route names is 86/94 B, so the saving is measured in the same test.
 - **TestLinkFrameRouteIdBoundary**: route_id 127 → +4 B, route_id 128 → +5 B (payload 62 B; measured 66 and 67 B with the draft schema).
 - **TestRouteIdsStaySmallAcrossReconnects**: bind 10 routes, then reconnect 50 times (each a new session) and unbind/rebind routes in between. Every id stays ≤ 10, and every DATA frame stays at 4 B + payload. Verify's F1 case (ids passing 127 after about 13 reconnects) must fail under the old rule.
