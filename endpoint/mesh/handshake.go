@@ -54,6 +54,7 @@ type Handshaker struct {
 	addrbook     *Addrbook
 	remotePeer   dndm.Peer
 	isSeed       bool
+	dialer       bool // this node dialled the connection; set in Init before the handler starts
 
 	readyMu sync.Mutex
 	ready   bool
@@ -227,6 +228,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 	if dialing {
 		h.state = HS_WAIT
 	}
+	h.dialer = dialing
 
 	err := tr.Init(h.Ctx(), logger, addIntent, addInterest)
 	if err != nil {
@@ -240,7 +242,10 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 	})
 
 	if dialing {
-		h.addrbook.AddConn(h.remotePeer, true, h.conn)
+		// Record the dial for the address book (IsActive) without deciding anything: the
+		// peer's declared identity is not known yet. Simultaneous connections are settled
+		// when the handshake completes (close-reconnect.md §3.1, review R-DND-R8 N2).
+		h.addrbook.NoteDial(h.remotePeer, h.conn)
 		h.Log.Info("Sending Handshake", "state", HS_WAIT, "local", h.addrbook.Self(), "peer", h.remotePeer)
 		h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
@@ -289,7 +294,15 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		}
 		h.Log.Info("Handshaker.UpdatePeer", "them", hs.Me, "us", hs.You, "prevPeer", h.remotePeer)
 		h.remotePeer = peer
-		h.addrbook.AddConn(h.remotePeer, false, h.conn)
+		// Both roles pass here: the acceptor on INITIAL, the dialer on FINAL. Now both
+		// declared identities are known, so the tie-break gives the same answer on both
+		// sides. A losing connection closes before it becomes ready (or, on the dialer,
+		// before it replies), and the peer's side of it then closes too.
+		if err := h.addrbook.AddConn(h.remotePeer, h.dialer, h.conn); err != nil {
+			h.Log.Info("Handshaker: dropping duplicate connection", "peer", h.remotePeer, "err", err)
+			h.Close()
+			return false, err
+		}
 
 		err = h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),

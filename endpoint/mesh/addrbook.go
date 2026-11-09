@@ -215,7 +215,20 @@ func (b *Addrbook) Entry(p dndm.Peer) (*AddrbookEntry, bool) {
 	return e, ok
 }
 
+// AddConn records c for peer p, whose identity p is as the peer declared it in the
+// handshake. outbound reports that this node dialled c. See AddrbookEntry.SetConn.
 func (b *Addrbook) AddConn(p dndm.Peer, outbound bool, c network.Conn) error {
+	return b.addConn(p, outbound, c, p)
+}
+
+// NoteDial records a connection this node dialled to target before the handshake has
+// told it the peer's declared identity. It never displaces or refuses a live connection;
+// the handshake's AddConn decides.
+func (b *Addrbook) NoteDial(target dndm.Peer, c network.Conn) error {
+	return b.addConn(target, true, c, nil)
+}
+
+func (b *Addrbook) addConn(p dndm.Peer, outbound bool, c network.Conn, remote dndm.Peer) error {
 	if b.self.Equal(p) {
 		return nil
 	}
@@ -238,12 +251,20 @@ func (b *Addrbook) AddConn(p dndm.Peer, outbound bool, c network.Conn) error {
 		return nil
 	}
 
-	return e.SetConn(c)
+	return e.SetConn(c, outbound, b.self, remote)
 }
 
+// DelConn forgets c if it is the entry's current connection.
 func (b *Addrbook) DelConn(p dndm.Peer, c network.Conn) {
-	if e, ok := b.Entry(p); ok {
-		e.SetConn(nil)
+	e, ok := b.Entry(p)
+	if !ok {
+		return
+	}
+	e.Lock()
+	gen, current := e.gen, e.conn
+	e.Unlock()
+	if current == c {
+		e.clearConn(gen)
 	}
 }
 
@@ -264,8 +285,10 @@ type AddrbookEntry struct {
 	LastSuccess time.Time
 	Backoff     time.Duration
 
-	conn    network.Conn
-	dialing bool
+	conn         network.Conn
+	connOutbound bool   // conn was dialled by this node
+	gen          uint64 // increments on every recorded connection
+	dialing      bool
 
 	sharedPeers map[string]struct{}
 
@@ -330,27 +353,95 @@ func (a *AddrbookEntry) IsActive() bool {
 	return a.conn != nil || a.dialing
 }
 
-func (a *AddrbookEntry) SetConn(c network.Conn) error {
-	a.Lock()
-	defer a.Unlock()
-
-	if a.conn != nil && c != nil {
-		a.log.Error("Setting Connection on Active Peer", "peer", a.Peer, "conn.remote", c.Remote(), "conn.local", c.Local())
-		return errors.ErrDuplicate
-	}
-
-	a.sharedPeers = make(map[string]struct{})
-	a.conn = c
+// SetConn records c as the entry's connection; outbound reports that this node dialled
+// it, self is this node's own peer and remote the peer's declared identity. Each recorded
+// connection gets a new generation, and its close callback clears the entry only if that
+// generation is still current, so a late callback of an old connection never wipes a
+// newer one (DND-008, close-reconnect.md).
+//
+// If a live connection is already recorded, both sides must keep the same one: the
+// connection dialled by the peer with the lower declared identity (Peer.String()) wins.
+// If both were dialled by the same side, the newer one wins. A losing c is refused with
+// ErrDuplicate (its owner closes it); a losing current connection is replaced and closed.
+// A current connection that is already closed is always replaced.
+//
+// A nil remote means the peer's identity is not known yet (a dial whose handshake has not
+// finished): c is then recorded only if no live connection is, and never displaces or
+// refuses one. The decision is made when the handshake completes (review R-DND-R8 N2).
+// A nil c is ignored.
+func (a *AddrbookEntry) SetConn(c network.Conn, outbound bool, self, remote dndm.Peer) error {
 	if c == nil {
 		return nil
 	}
+	if connClosed(c) {
+		return errors.ErrClosed // never record a connection that is already gone
+	}
+	a.Lock()
+	old := a.conn
+	if old == c {
+		a.Unlock()
+		return nil
+	}
+	if old != nil && !connClosed(old) {
+		if remote == nil {
+			a.Unlock()
+			return nil // identity unknown: leave the decision to the handshake
+		}
+		if !a.newWinsLocked(outbound, self, remote) {
+			a.Unlock()
+			a.log.Info("Addrbook: refusing duplicate connection", "peer", remote, "outbound", outbound)
+			return errors.ErrDuplicate
+		}
+	}
+	a.gen++
+	gen := a.gen
+	a.conn = c
+	a.connOutbound = outbound
+	a.sharedPeers = make(map[string]struct{})
+	a.Unlock()
 
 	c.OnClose(func() {
-		a.SetConn(nil)
-		a.log.Info("Addrbook Peer closed", "peer", a.Peer)
+		if a.clearConn(gen) {
+			a.log.Info("Addrbook Peer closed", "peer", a.Peer)
+		}
 	})
-
+	if old != nil {
+		a.log.Info("Addrbook: replacing connection", "peer", a.Peer, "outbound", outbound)
+		old.Close() // outside the lock: its close callback takes it
+	}
 	return nil
+}
+
+// newWinsLocked applies the simultaneous-connection rule with declared identities, which
+// both sides know once the handshake has run. The caller holds a's lock.
+func (a *AddrbookEntry) newWinsLocked(newOutbound bool, self, remote dndm.Peer) bool {
+	if newOutbound == a.connOutbound {
+		return true // same dialer: the peer redialled, so the old connection is stale
+	}
+	selfLower := self.String() < remote.String()
+	// The new connection was dialled by us if newOutbound, else by the peer.
+	return newOutbound == selfLower
+}
+
+// clearConn forgets the connection of generation gen, if it is still current.
+func (a *AddrbookEntry) clearConn(gen uint64) bool {
+	a.Lock()
+	defer a.Unlock()
+	if a.gen != gen || a.conn == nil {
+		return false
+	}
+	a.conn = nil
+	a.sharedPeers = make(map[string]struct{})
+	return true
+}
+
+// connClosed reports whether c has already been closed, for connections that expose
+// their context (stream connections do, through dndm.Base).
+func connClosed(c network.Conn) bool {
+	if cc, ok := c.(interface{ Ctx() context.Context }); ok {
+		return cc.Ctx().Err() != nil
+	}
+	return false
 }
 
 func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer network.Dialer, q chan<- *AddrbookEntry) (io.ReadWriter, error) {
