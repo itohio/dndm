@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/itohio/dndm"
+	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
 	types "github.com/itohio/dndm/types/core"
 	testtypes "github.com/itohio/dndm/types/test"
@@ -201,12 +202,17 @@ func simultaneousDial(t *testing.T, addrA, addrB string, alias bool) {
 	assert.Eventually(t, func() bool { return endpoints(a) == 1 && endpoints(b) == 1 }, 3*time.Second, 10*time.Millisecond,
 		"each side must end with one connection (A has %d, B has %d)", endpoints(a), endpoints(b))
 
-	select {
-	case <-intent.Interest():
-	case <-ctx.Done():
-		t.Fatal("A never saw B's interest")
-	}
-	require.NoError(t, intent.Send(ctx, &testtypes.Foo{Text: "once"}))
+	// The interest must reach A over the connection that survives. A notification alone is
+	// not enough: while both connections are briefly ready (close-reconnect.md §3.1
+	// residual), it can come from the one that loses the tie-break and closes, taking its
+	// remote interest with it (DND-008 G1). ErrNoInterest means nothing was sent anywhere,
+	// so retrying cannot duplicate the message.
+	var sendErr error
+	require.Eventually(t, func() bool {
+		sendErr = intent.Send(ctx, &testtypes.Foo{Text: "once"})
+		return !errors.Is(sendErr, errors.ErrNoInterest)
+	}, 5*time.Second, 5*time.Millisecond, "B's interest never reached A over the surviving connection")
+	require.NoError(t, sendErr)
 
 	var got atomic.Int32
 	deadline := time.After(500 * time.Millisecond)
