@@ -227,7 +227,13 @@ func wrapRemoteInterest(log *slog.Logger, remote network.Conn, ri *types.Interes
 				case <-ret.wd.C:
 					log.Info("ttl reached", "ttl", ret.wd.ttl, "interest", li.Route())
 					return
-				case m := <-li.C():
+				case m, ok := <-li.C():
+					if !ok || m == nil {
+						// The interest closed: Close cancels the context, then closes C, and
+						// select may pick the closed channel first. Never forward its zero
+						// value (DND-008 G4).
+						return
+					}
 					if err := remote.Write(li.Ctx(), li.Route(), m); err != nil {
 						log.Error("remote interest write", "err", err, "route", li.Route())
 					}
