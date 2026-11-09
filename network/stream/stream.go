@@ -12,6 +12,7 @@ import (
 	"github.com/itohio/dndm/errors"
 	"github.com/itohio/dndm/network"
 	types "github.com/itohio/dndm/types/core"
+	pool "github.com/libp2p/go-buffer-pool"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -174,14 +175,21 @@ func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 	}
 }
 
-// readScratchSize bounds the read loop's own buffer. Callers such as codec.ReadMessage
-// ask for a whole frame body at once; sizing the buffer to the request would keep the
-// largest frame (up to codec.DefaultMaxFrameSize) per stream for its whole life.
+// readScratchSize is the read loop's own buffer for small requests. Larger requests (a
+// whole frame body from codec.ReadMessage) borrow a buffer from the shared buffer pool
+// for the duration of one request, so a stream neither keeps its largest frame for life
+// (review R-DND-R5 F1) nor splits a large body into many small requests (F4).
 const readScratchSize = 1024
 
 // serve handles one request and reports whether the loop should go on.
 func (c *contextRW) serve(ctx context.Context, r contextRWRequest, f func([]byte) (int, error)) bool {
 	var res contextRWResult
+	var pooled []byte // returned to the pool once the caller has copied or the bytes are kept
+	defer func() {
+		if pooled != nil {
+			pool.Put(pooled)
+		}
+	}()
 	fromPending := false
 	switch {
 	case !c.copyOut:
@@ -193,13 +201,16 @@ func (c *contextRW) serve(ctx context.Context, r contextRWRequest, f func([]byte
 		if res.n == len(c.pending) {
 			res.err = c.pendingErr
 		}
-	default:
+	case len(r.data) <= readScratchSize:
 		if c.scratch == nil {
 			c.scratch = make([]byte, readScratchSize)
 		}
-		// A short read is fine: io.ReadFull and codec.ReadMessage ask again for the rest.
-		res.n, res.err = f(c.scratch[:min(len(r.data), len(c.scratch))])
+		res.n, res.err = f(c.scratch[:len(r.data)])
 		res.src = c.scratch[:res.n]
+	default:
+		pooled = pool.Get(len(r.data))
+		res.n, res.err = f(pooled)
+		res.src = pooled[:res.n]
 	}
 
 	select {
@@ -233,7 +244,10 @@ func (c *contextRW) serve(ctx context.Context, r contextRWRequest, f func([]byte
 // the loop may still be using buf (write side, cancelled after hand-over).
 func (c *contextRW) Request(ctx context.Context, buf []byte) (n int, inUse bool, err error) {
 	ch := make(chan contextRWResult)
-	ack := make(chan struct{})
+	var ack chan struct{}
+	if c.copyOut { // only the read side hands bytes over (review R-DND-R5 F4)
+		ack = make(chan struct{})
+	}
 	select {
 	case <-ctx.Done():
 		return 0, false, ctx.Err()
