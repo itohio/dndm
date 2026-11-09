@@ -1,0 +1,6 @@
+# F4 AFTER the fix; 2026-11-09T00:52:34Z
+      3 alloc_test.go:60: allocations per frame: 64 B 10, 64 KiB 10
+      1 ok  	github.com/itohio/dndm/network/stream	0.318s
+      3 --- PASS: TestStreamContext_ReadAllocsDoNotGrowWithFrameSize
+$ go test -race -count=30 ./network/stream (whole package)
+ok  	github.com/itohio/dndm/network/stream	3.276s

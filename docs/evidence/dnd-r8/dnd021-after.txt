@@ -1,0 +1,6 @@
+# DND-021 AFTER the fix; 2026-11-09T01:05:56Z
+## CORRECTION: this used the same one-process '&' loop: 1 x 2000 runs per test, 0 failures. The real 16-process run (32000 runs per test, 0 failures) is in dnd021-parallel.txt.
+$ go test -race -count=30 -run TestCtxRecvPrefersAReadyChannel ./testutil
+ok  	github.com/itohio/dndm/testutil	1.289s
+## time.Sleep left in TestContainer_Publish/TestContainer_Subscribe:
+(none if empty)

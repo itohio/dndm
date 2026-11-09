@@ -1,0 +1,21 @@
+# go doc -all, HEAD 684c179 (committed DND-R2..R5) vs working tree; exported declarations only ('<' HEAD, '>' tree); 2026-11-09T01:10:05Z
+== .
+== ./codec
+< func ReadMessageLimit(r io.Reader, max int) ([]byte, uint64, error)
+> func ReadMessageLimit(r io.Reader, maxBody int) ([]byte, uint64, error)
+== ./endpoint/direct
+== ./endpoint/mesh
+< func (a *AddrbookEntry) SetConn(c network.Conn) error
+> func (a *AddrbookEntry) SetConn(c network.Conn, outbound bool, self dndm.Peer) error
+== ./endpoint/remote
+== ./errors
+== ./network
+== ./network/net
+== ./network/serial
+== ./network/stream
+== ./testutil
+== ./x/bus
+< type CryptoNonce struct {
+> type CryptoNonce struct{}
+< func (c *CryptoNonce) Next() uint64
+> func (CryptoNonce) Next() uint64

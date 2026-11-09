@@ -1,0 +1,20 @@
+# DND-008 close/reconnect tests BEFORE the fix (HEAD 684c179 + endpoint/mesh/reconnect_test.go); 2026-11-09T00:55:15Z
+$ go test -race -count=3 -run "TestAddrbookEntry_LiveConnNotLostBehindDeadOne|TestMesh_" -v ./endpoint/mesh
+      3 actual  : int32(2)
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/endpoint/mesh	10.788s
+      3 --- FAIL: TestAddrbookEntry_LiveConnNotLostBehindDeadOne
+      3 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection
+      3 Messages:   	a dead connection must not block a live one
+      3 Messages:   	each side must end with one connection (A has 2, B has 2)
+      3 Messages:   	the late callback of a dead connection wiped the live one
+      3 Messages:   	the message arrived 2 times
+      3 --- PASS: TestMesh_CloseDuringHandshakeReturns
+      3 --- PASS: TestMesh_ReconnectQueuesRedial
+
+## Added later: both address orders (subtests), HEAD 684c179; 2026-11-09T00:58:11Z
+      2 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection
+      2 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/publisher_higher
+      2 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/publisher_lower
+      4 Messages:   	each side must end with one connection (A has 2, B has 2)
+      4 Messages:   	the message arrived 2 times

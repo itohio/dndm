@@ -1,0 +1,15 @@
+# DND-R8-fix: N1 and N2 tests BEFORE the fixes (DND-R8 working tree + the new tests); 2026-11-09T01:23:35Z
+$ go test -count=5 -run TestLinker_OldMatchCloseKeepsNewMatch -v .   (and with -race)
+      5 --- FAIL: TestLinker_OldMatchCloseKeepsNewMatch
+      5 Messages:   	send raced the interest close: panic: send on closed channel
+      5 Messages:   	the old match's close forgot the new match
+      5 --- FAIL: TestLinker_OldMatchCloseKeepsNewMatch
+      5 Messages:   	send raced the interest close: panic: send on closed channel
+      5 Messages:   	the old match's close forgot the new match
+      1 WARNING: DATA RACE
+$ go test -race -count=3 -run TestMesh_SimultaneousDialKeepsOneConnection -v ./endpoint/mesh
+      3 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection
+      3 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+      3 Messages:   	each side must end with one connection (A has 2, B has 2)
+      3 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_higher
+      3 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_lower
