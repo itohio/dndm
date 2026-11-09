@@ -17,6 +17,7 @@ import (
 	"encoding/binary"
 	stderrors "errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -38,7 +39,9 @@ var (
 )
 
 // Face sends one delimited frame (UDP datagram, COBS on serial, length prefix on TCP).
-// Send must not keep frame after it returns and must not call back into the Link.
+// Send must not keep frame after it returns, must not call back into the Link, and must
+// not block: the link calls it with its lock held, so a blocking Send stalls Receive. A
+// face with back-pressure (TCP) queues or drops instead (review R-DND-022 L5).
 type Face interface {
 	Send(frame []byte) error
 }
@@ -64,6 +67,7 @@ type Stats struct {
 	DroppedBeforeOpen uint64 // DATA or control (other than Hello/Handshake/Close) before the handshake (A1)
 	DroppedUnbound    uint64 // DATA for an id that is not bound (late, unbound or never bound)
 	BindsRefused      uint64 // Binds answered with a status other than OK
+	DroppedStale      uint64 // Hello or Close naming a session that is not current (retired, spoofed or unknown)
 }
 
 type state int
@@ -88,10 +92,12 @@ type Link struct {
 	deliver DeliverFunc
 
 	state       state
-	session     uint64 // ours; 0 until Start
+	session     uint64 // ours; 0 until Start, then kept until Restart (also across a peer's reconnect)
 	helloSent   bool
-	peerSession uint64 // 0 until the peer's Hello
-	peerRoutes  int    // the peer's max_routes
+	sentHello   bool     // we sent a Hello since the last one we received: do not answer the next
+	peerSession uint64   // 0 until the peer's Hello
+	peerRoutes  int      // the peer's max_routes
+	retired     []uint64 // the peer's previous sessions (last retiredKeep); their Hellos are dropped
 
 	ids       idTable
 	tx        map[routeKey]*txRoute
@@ -103,10 +109,19 @@ type Link struct {
 	stats Stats
 }
 
+// DefaultMaxRoutes is the route table cap when none is configured, and what a peer's Hello
+// without max_routes (proto3 zero: an older or minimal peer) is taken to mean.
+const DefaultMaxRoutes = 64
+
+// retiredKeep is how many of the peer's previous sessions are remembered, so a late
+// duplicate Hello from one of them (a reordering face) is dropped instead of resetting
+// the link.
+const retiredKeep = 4
+
 // New returns an idle link. Call Start to send the Hello.
 func New(face Face, cfg Config, deliver DeliverFunc) *Link {
 	if cfg.MaxRoutes <= 0 {
-		cfg.MaxRoutes = 64
+		cfg.MaxRoutes = DefaultMaxRoutes
 	}
 	if cfg.MaxFrame <= 0 {
 		cfg.MaxFrame = 1500
@@ -119,9 +134,16 @@ func New(face Face, cfg Config, deliver DeliverFunc) *Link {
 	return l
 }
 
+// resetLocked forgets the session on both sides: our session, the peer's, and every id
+// table. The retired peer sessions are kept.
 func (l *Link) resetLocked() {
 	l.state = stateIdle
-	l.session, l.helloSent, l.peerSession, l.peerRoutes = 0, false, 0, 0
+	l.session, l.helloSent, l.sentHello, l.peerSession, l.peerRoutes = 0, false, false, 0, 0
+	l.resetTablesLocked()
+}
+
+// resetTablesLocked drops every route id, binding and route of the current session pair.
+func (l *Link) resetTablesLocked() {
 	l.ids = newIDTable()
 	l.tx = make(map[routeKey]*txRoute)
 	l.unbinding = make(map[uint32]struct{})
@@ -129,8 +151,9 @@ func (l *Link) resetLocked() {
 	l.rx = make(map[uint32]routeKey)
 }
 
-// Start begins a session: a fresh random session id and a Hello. The link opens once the
-// peer's Hello has arrived as well.
+// Start begins a session with a fresh random session id and sends a Hello. On a link that
+// has already started, it resends the same Hello (a retry on a lossy face): the session
+// changes only after Restart. The link opens once the peer's Hello has arrived as well.
 func (l *Link) Start() error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -140,12 +163,15 @@ func (l *Link) Start() error {
 	if l.state == stateClosed {
 		return ErrClosed
 	}
+	if l.session == 0 {
+		l.session = newSession()
+	}
 	return l.sendHelloLocked()
 }
 
+// sendHelloLocked sends the Hello of the current session.
 func (l *Link) sendHelloLocked() error {
-	l.session = newSession()
-	l.helloSent = true
+	l.helloSent, l.sentHello = true, true
 	err := l.sendControlLocked(&linktypes.LinkFrame{Control: &linktypes.LinkFrame_Hello{Hello: &linktypes.Hello{
 		Version:   LinkVersion,
 		Profile:   l.cfg.Profile,
@@ -163,12 +189,34 @@ func (l *Link) maybeOpenLocked() {
 	}
 }
 
-// Restart forgets the session (a reconnect): every id, binding and route is dropped. Call
-// Start to begin the next session.
+// Restart forgets the session (our reconnect): every id, binding and route is dropped, and
+// Start then begins a new session. The peer's session is not retired: a peer that sees our
+// new session keeps its own (helloLocked), so its next Hello still carries it.
 func (l *Link) Restart() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.resetLocked()
+}
+
+// Close sends a Close naming our session (or, before we have one, the peer's) and closes
+// the link. Start returns ErrClosed until Restart.
+func (l *Link) Close(reason linktypes.CloseReason, text string) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.state == stateClosed {
+		return nil
+	}
+	session := l.session
+	if session == 0 {
+		session = l.peerSession
+	}
+	err := l.sendControlLocked(&linktypes.LinkFrame{Control: &linktypes.LinkFrame_Close{Close: &linktypes.Close{
+		Reason: reason, Text: text, Session: session,
+	}}})
+	l.retireLocked(l.peerSession)
+	l.resetLocked()
+	l.state = stateClosed
+	return err
 }
 
 // Open reports whether the handshake has completed.
@@ -281,8 +329,16 @@ func (l *Link) Receive(frame []byte) error {
 	case *linktypes.LinkFrame_Handshake:
 		return nil // ONBOARD has no handshake steps beyond Hello
 	case *linktypes.LinkFrame_Close:
-		// Accepted in any state: ONBOARD has no authentication to check. Secured profiles
-		// must drop an unauthenticated Close before the handshake (DND-009 acceptance).
+		// A Close names a current session: the sender's own, or the receiver's when the
+		// sender has none yet. Any other is stale (an old session's late Close on a
+		// reordering face) or forged, and is dropped. On ONBOARD nothing is authenticated;
+		// secured profiles must also drop an unauthenticated Close before the handshake
+		// (DND-009 acceptance).
+		if s := c.Close.GetSession(); s == 0 || (s != l.session && s != l.peerSession) {
+			l.stats.DroppedStale++
+			return nil
+		}
+		l.retireLocked(l.peerSession)
 		l.resetLocked()
 		l.state = stateClosed
 		return nil
@@ -324,6 +380,15 @@ func (l *Link) dataLocked(d codec.LinkData) {
 	}
 }
 
+// helloLocked applies the session rules (design link-context-wire §4, review R-DND-022 L1):
+//   - another version or profile closes the link with PROFILE_MISMATCH;
+//   - a Hello from one of the peer's retired sessions (a late duplicate on a reordering
+//     face) is dropped and counted, so it cannot reset the link;
+//   - a new peer session while one is known means the peer reconnected: the id tables
+//     are reset, and our own session is kept, so the peer sees nothing new to react to;
+//   - a Hello is answered with ours only if we have not sent one since the last Hello we
+//     received. A retry or a reconnecting peer gets one answer, and two sides can never
+//     keep answering each other.
 func (l *Link) helloLocked(h *linktypes.Hello) error {
 	if h.GetVersion() != LinkVersion || h.GetProfile() != l.cfg.Profile {
 		reason := linktypes.CloseReason_CLOSE_REASON_PROFILE_MISMATCH
@@ -334,18 +399,48 @@ func (l *Link) helloLocked(h *linktypes.Hello) error {
 		l.state = stateClosed
 		return err
 	}
-	if h.GetSession() == 0 || h.GetSession() == l.peerSession {
-		return nil // a repeated Hello of the current session
+	s := h.GetSession()
+	if s == 0 || slices.Contains(l.retired, s) {
+		l.stats.DroppedStale++
+		return nil
 	}
-	if l.peerSession != 0 {
-		// The peer started a new session (it reconnected): its ids and ours are gone.
-		l.resetLocked()
-		l.peerSession, l.peerRoutes = h.GetSession(), int(h.GetMaxRoutes())
+	answer := l.session != 0 && !l.sentHello
+	l.sentHello = false
+	switch {
+	case s == l.peerSession:
+		// a repeat of the current session: a retry, or an answer to ours
+	case l.peerSession != 0:
+		// the peer reconnected: its ids and ours are gone
+		l.retireLocked(l.peerSession)
+		l.resetTablesLocked()
+		l.peerSession, l.peerRoutes = s, helloRoutes(h)
+	default:
+		l.peerSession, l.peerRoutes = s, helloRoutes(h)
+	}
+	l.maybeOpenLocked()
+	if answer {
 		return l.sendHelloLocked()
 	}
-	l.peerSession, l.peerRoutes = h.GetSession(), int(h.GetMaxRoutes())
-	l.maybeOpenLocked()
 	return nil
+}
+
+// retireLocked remembers one of the peer's sessions as finished.
+func (l *Link) retireLocked(s uint64) {
+	if s == 0 || slices.Contains(l.retired, s) {
+		return
+	}
+	if len(l.retired) == retiredKeep {
+		l.retired = l.retired[1:]
+	}
+	l.retired = append(l.retired, s)
+}
+
+// helloRoutes is the peer's route table cap; 0 (not set) means DefaultMaxRoutes.
+func helloRoutes(h *linktypes.Hello) int {
+	if r := int(h.GetMaxRoutes()); r > 0 {
+		return r
+	}
+	return DefaultMaxRoutes
 }
 
 func (l *Link) bindLocked(b *linktypes.Bind) error {

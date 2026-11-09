@@ -18,10 +18,11 @@ import (
 // fakeFace delivers frames to a peer queue. hold, when set, keeps DATA frames back so a
 // test can deliver them late (a reordering face such as UDP).
 type fakeFace struct {
-	queue *[][]byte
-	sizes []int // sizes of DATA frames sent through this face
-	hold  bool
-	held  [][]byte
+	queue  *[][]byte
+	sizes  []int    // sizes of DATA frames sent through this face
+	hellos [][]byte // Hello frames sent through this face
+	hold   bool
+	held   [][]byte
 }
 
 func (f *fakeFace) Send(frame []byte) error {
@@ -31,6 +32,11 @@ func (f *fakeFace) Send(frame []byte) error {
 		if f.hold {
 			f.held = append(f.held, b)
 			return nil
+		}
+	} else if err == nil {
+		var lf linktypes.LinkFrame
+		if proto.Unmarshal(b, &lf) == nil && lf.GetHello() != nil {
+			f.hellos = append(f.hellos, b)
 		}
 	}
 	*f.queue = append(*f.queue, b)
@@ -204,6 +210,8 @@ func TestCounterLowBits(t *testing.T) {
 	assert.Equal(t, uint64(194), RebuildCounter(130, LowBits(194, bits), bits), "a tie resolves ahead (same window)")
 	assert.NotEqual(t, uint64(265), RebuildCounter(200, LowBits(265, bits), bits), "65 frames lost: ambiguous")
 	assert.NotEqual(t, uint64(135), RebuildCounter(200, LowBits(135, bits), bits), "65 frames late: ambiguous")
+	// Review R-DND-022 L4: bits above the window in low are ignored (328 = 72 + 256).
+	assert.Equal(t, uint64(72), RebuildCounter(10, 328, bits), "low is masked to the window")
 	// 14 bits: unambiguous up to 8191 either way.
 	assert.Equal(t, uint64(10_000+8191), RebuildCounter(10_000, LowBits(10_000+8191, 14), 14))
 	assert.Equal(t, uint64(10_000-8191), RebuildCounter(10_000, LowBits(10_000-8191, 14), 14))

@@ -88,7 +88,7 @@ message Hello {
   bytes nonce = 3;
   // Largest frame this side accepts.
   uint32 max_frame = 4;
-  // Route table cap per direction (A8).
+  // Route table cap per direction (A8). 0 = not specified: the receiver assumes 64.
   uint32 max_routes = 5;
   // Random per session; echoed in Close and used by the address book (close-reconnect.md).
   uint64 session = 6;
@@ -196,6 +196,7 @@ message Close {
   CloseReason reason = 1;
   // Human-readable detail.
   string text = 2;
-  // The session being closed (Hello.session).
+  // The session being closed: the sender's own Hello.session, or the receiver's when the
+  // sender has none yet. A Close naming neither side's current session is dropped.
   uint64 session = 3;
 }

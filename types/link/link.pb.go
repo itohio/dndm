@@ -532,7 +532,7 @@ type Hello struct {
 	Nonce []byte `protobuf:"bytes,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// Largest frame this side accepts.
 	MaxFrame uint32 `protobuf:"varint,4,opt,name=max_frame,json=maxFrame,proto3" json:"max_frame,omitempty"`
-	// Route table cap per direction (A8).
+	// Route table cap per direction (A8). 0 = not specified: the receiver assumes 64.
 	MaxRoutes uint32 `protobuf:"varint,5,opt,name=max_routes,json=maxRoutes,proto3" json:"max_routes,omitempty"`
 	// Random per session; echoed in Close and used by the address book (close-reconnect.md).
 	Session       uint64 `protobuf:"varint,6,opt,name=session,proto3" json:"session,omitempty"`
@@ -976,7 +976,8 @@ type Close struct {
 	Reason CloseReason `protobuf:"varint,1,opt,name=reason,proto3,enum=types.link.CloseReason" json:"reason,omitempty"`
 	// Human-readable detail.
 	Text string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	// The session being closed (Hello.session).
+	// The session being closed: the sender's own Hello.session, or the receiver's when the
+	// sender has none yet. A Close naming neither side's current session is dropped.
 	Session       uint64 `protobuf:"varint,3,opt,name=session,proto3" json:"session,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

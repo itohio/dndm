@@ -23,11 +23,11 @@ func LowBits(ctr uint64, bits uint) uint32 {
 }
 
 // RebuildCounter returns the full counter with low bits low that is closest to highest,
-// the highest counter accepted so far.
+// the highest counter accepted so far. Bits of low above the window are ignored.
 func RebuildCounter(highest uint64, low uint32, bits uint) uint64 {
 	window := uint64(1) << bits
 	half := window / 2
-	c := highest&^(window-1) | uint64(low)
+	c := highest&^(window-1) | uint64(low)&(window-1)
 	switch {
 	case c > highest && c-highest > half:
 		if c >= window { // near zero there is nothing behind
