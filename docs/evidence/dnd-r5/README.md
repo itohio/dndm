@@ -59,9 +59,11 @@ Both files were restored byte-for-byte from `HEAD`; each was clean before (DND-R
 | `TestContainer_Publish` alone, `-race -count=20` | ×10 | 0 |
 | Full suite, `-race -count=3` | ×8 | 0 |
 | Full suite, `-race -count=10` | ×6 | 0 |
-| `TestContainer_Publish`, 8 parallel processes × 300 runs, working tree | 2,400 | 0 |
-| Same, at the pin | 2,400 | 0 |
-| Root package, 3 processes × 80 | 240 | 0 |
+| `TestContainer_Publish`, 300 runs, working tree (stated at the time as 8 parallel processes × 300; see the correction below) | 300 | 0 |
+| Same, at the pin (stated as 8 × 300) | 300 | 0 |
+| Root package, 80 runs (stated as 3 processes × 80) | 80 | 0 |
+
+**Correction (DND-R8, 2026-11-09).** The "parallel processes" rows used a shell `&` loop that, in the agent's tool shell, starts only the last process. The run counts were therefore 8× and 3× lower than stated. Verify's own 4-way runs (9,000 per tree) found the flake at both pin and tree. With real parallelism (`xargs -P 16`), DND-R8 measured 19 failures in 32,000 runs before the DND-021 fix and 0 after ([dnd021-parallel.txt](../dnd-r8/dnd021-parallel.txt)). The cause was the mock waits in `container_test.go` and a random pick in `testutil.CtxRecv`, both now fixed (DND-021).
 
 [INFERENCE, static] The test asserts a mock expectation, `MockIntent.Interest`, that only the fan-out's notify goroutine satisfies, and it waits for that goroutine with two 1 ms sleeps. That code is unchanged since the pin. Not fixed: there is no repro and no assertion text. Next time, rerun with `-v` output kept.
 
