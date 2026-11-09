@@ -16,17 +16,18 @@ import (
 )
 
 // An attacker on the response path sees one reply, predicts the Caller's next nonce and
-// injects a forged reply while that call is pending. With the counter source the forgery
-// is accepted (residual risk, DND-005); with per-call random sources it is dropped.
+// injects a forged reply while that call is pending. Per-call random sources must drop
+// it. The counter source is predictable by design (residual risk, DND-005); its outcome is
+// only logged, so hardening the counter later does not fail this test (review F13).
 func TestCallerPredictedNonceForgery(t *testing.T) {
 	cases := []struct {
-		name   string
-		source func() NonceSource
-		forged bool
+		name       string
+		source     func() NonceSource
+		mustResist bool
 	}{
-		{"counter", func() NonceSource { return NewCounterNonce() }, true},
-		{"random", func() NonceSource { return RandomNonce{} }, false},
-		{"crypto", func() NonceSource { return &CryptoNonce{} }, false},
+		{"counter", func() NonceSource { return NewCounterNonce() }, false},
+		{"random", func() NonceSource { return RandomNonce{} }, true},
+		{"crypto", func() NonceSource { return CryptoNonce{} }, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -93,11 +94,11 @@ func TestCallerPredictedNonceForgery(t *testing.T) {
 			got := <-second
 			require.NoError(t, got.err)
 			_, payload := splitMsg(got.resp)
-			if tc.forged {
-				assert.Equal(t, "forged", payload, "counter nonces are predictable; the forgery should land")
-			} else {
+			if tc.mustResist {
 				assert.Equal(t, "two", payload, "a predicted-nonce forgery was accepted")
 				assert.GreaterOrEqual(t, caller.Dropped(), uint64(1))
+			} else {
+				t.Logf("%s source: the call received %q (the forgery lands while nonces are predictable)", tc.name, payload)
 			}
 		})
 	}
@@ -194,7 +195,7 @@ func BenchmarkNonceSource(b *testing.B) {
 	}{
 		{"counter", NewCounterNonce()},
 		{"random", RandomNonce{}},
-		{"crypto", &CryptoNonce{}},
+		{"crypto", CryptoNonce{}},
 	}
 	for _, s := range sources {
 		b.Run(s.name, func(b *testing.B) {

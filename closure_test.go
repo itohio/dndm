@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -41,6 +42,13 @@ func sendRecover(ctx context.Context, intent Intent, msg proto.Message) (err err
 		}
 	}()
 	return intent.Send(ctx, msg)
+}
+
+// waitTraffic waits until the reader has received a few messages, so the race it sets up
+// really runs (review R-DND-R5 F17: a too-short sleep silently stopped testing the race).
+func waitTraffic(t *testing.T, received *atomic.Int32) {
+	t.Helper()
+	require.Eventually(t, func() bool { return received.Load() >= 8 }, time.Second, 100*time.Microsecond)
 }
 
 // A Send blocked on a full interest channel must return, not panic, when the interest closes.
@@ -88,11 +96,13 @@ func TestLinker_InterestCloseDuringSends(t *testing.T) {
 				}
 			}()
 		}
+		var received atomic.Int32
 		go func() { // a slow reader keeps senders moving
 			for range interest.C() {
+				received.Add(1)
 			}
 		}()
-		time.Sleep(time.Millisecond)
+		waitTraffic(t, &received) // senders and reader are running when the interest closes
 		require.NoError(t, interest.Close())
 		wg.Wait()
 		close(panics)
@@ -126,7 +136,8 @@ func TestFanInInterest_CloseWhileForwarding(t *testing.T) {
 				}
 			}
 		}()
-		time.Sleep(time.Millisecond)
+		// The runner has forwarded and is blocked sending into the full fan-in channel.
+		require.Eventually(t, func() bool { return len(fanIn.C()) == cap(fanIn.C()) }, time.Second, 100*time.Microsecond)
 		require.NoError(t, fanIn.Close()) // a runner panic here crashes the test binary
 		close(stop)
 		<-fed
@@ -159,11 +170,13 @@ func TestLinker_ContextCancelDuringSends(t *testing.T) {
 				}
 			}()
 		}
+		var received atomic.Int32
 		go func() {
 			for range interest.C() {
+				received.Add(1)
 			}
 		}()
-		time.Sleep(time.Millisecond)
+		waitTraffic(t, &received) // senders and reader are running when the context is cancelled
 		lcancel()
 		wg.Wait()
 		close(panics)

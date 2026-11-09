@@ -224,3 +224,17 @@ func FuzzReadDecode(f *testing.F) {
 		}
 	})
 }
+
+// Review R-DND-R5 F14: a cap below the smallest valid body (including a negative one,
+// which used to wrap to a huge uint64 bound) is a caller error, not a frame error.
+func TestReadMessageLimitRejectsBadCap(t *testing.T) {
+	route, err := dndm.NewRoute("cap", &testtypes.Foo{})
+	require.NoError(t, err)
+	frame, err := EncodeMessage(&testtypes.Foo{Text: "x"}, route)
+	require.NoError(t, err)
+	for _, max := range []int{-1, 0, minFrameBody - 1} {
+		buf, _, err := ReadMessageLimit(bytes.NewReader(frame), max)
+		assert.ErrorIs(t, err, errors.ErrBadArgument, "cap %d", max)
+		assert.Nil(t, buf, "cap %d", max)
+	}
+}

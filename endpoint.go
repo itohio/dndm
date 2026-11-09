@@ -70,16 +70,25 @@ type lifecycle struct {
 	mu        sync.Mutex
 	state     int
 	callbacks []func()
+	stop      func() bool // stops the context's AfterFunc; set by Init
 }
 
 // claim moves the lifecycle from open to closing. Only the claimer runs the callbacks.
+// An explicit claim also stops the context's AfterFunc, so cancelling the context does
+// not start a goroutine just to lose the claim (review R-DND-R5 F6).
 func (l *lifecycle) claim() bool {
 	l.mu.Lock()
-	defer l.mu.Unlock()
 	if l.state != lifecycleOpen {
+		l.mu.Unlock()
 		return false
 	}
 	l.state = lifecycleClosing
+	stop := l.stop
+	l.stop = nil
+	l.mu.Unlock()
+	if stop != nil {
+		stop()
+	}
 	return true
 }
 
@@ -133,11 +142,14 @@ func (t *Base) Init(ctx context.Context) error {
 		t.lc = &lifecycle{}
 	}
 	lc := t.lc
-	context.AfterFunc(ctx, func() {
+	stop := context.AfterFunc(ctx, func() {
 		if lc.claim() {
 			lc.drain()
 		}
 	})
+	lc.mu.Lock()
+	lc.stop = stop
+	lc.mu.Unlock()
 	return nil
 }
 

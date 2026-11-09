@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	mrand "math/rand/v2"
-	"sync"
 	"sync/atomic"
 
 	"google.golang.org/protobuf/proto"
@@ -58,20 +57,13 @@ func (RandomNonce) Next() uint64 {
 	return mrand.Uint64()
 }
 
-// CryptoNonce draws every nonce from crypto/rand.
-type CryptoNonce struct {
-	mu  sync.Mutex
-	buf [8]byte // reused under mu so Next does not allocate
-}
+// CryptoNonce draws every nonce from crypto/rand. It is a zero-size value with no lock,
+// like RandomNonce (review R-DND-R5 F11): the read buffer lives on the stack.
+type CryptoNonce struct{}
 
 // Next returns a fresh cryptographically random nonce.
-func (c *CryptoNonce) Next() uint64 {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if _, err := crand.Read(c.buf[:]); err != nil {
-		panic(fmt.Errorf("bus: crypto nonce: %w", err)) // crypto/rand does not fail on supported platforms
-	}
-	return binary.LittleEndian.Uint64(c.buf[:])
+func (CryptoNonce) Next() uint64 {
+	return cryptoUint64()
 }
 
 func cryptoUint64() uint64 {

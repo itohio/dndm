@@ -156,12 +156,16 @@ func (t *Linker) addIntentLocked(route Route, wrapper IntentWrapperFunc) (Intent
 	return intent, nil
 }
 
-// RemoveIntent removes an intent by its route and cleans up any associated links.
+// RemoveIntent removes an intent by its route and closes its match (Link), if any, outside
+// the lock, as RemoveInterest does (review R-DND-R5 F15).
 func (t *Linker) RemoveIntent(route Route) error {
 	t.mu.Lock()
-	t.unlink(route)
+	link := t.unlink(route)
 	delete(t.intents, route.ID())
 	t.mu.Unlock()
+	if link != nil {
+		link.Close()
+	}
 	return nil
 }
 
@@ -254,8 +258,12 @@ func (t *Linker) link(route Route, intent IntentInternal, interest InterestInter
 
 	link := NewLink(t.ctx, intent, interest)
 	link.AddOnClose(func() {
+		// Forget only this match: a newer one may already be stored for the route
+		// (compare-and-clear, review R-DND-R8 N1).
 		t.mu.Lock()
-		_ = t.unlink(route)
+		if cur, ok := t.links[route.ID()]; ok && cur == link {
+			_ = t.unlink(route)
+		}
 		t.mu.Unlock()
 	})
 	t.links[route.ID()] = link

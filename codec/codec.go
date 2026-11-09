@@ -54,17 +54,21 @@ func ReadMessage(r io.Reader) ([]byte, uint64, error) {
 	return ReadMessageLimit(r, DefaultMaxFrameSize)
 }
 
-// ReadMessageLimit reads one frame whose body may not exceed max bytes and returns the
-// body (header length, header, message length, message) in a pooled buffer that the
+// ReadMessageLimit reads one frame whose body may not exceed maxBody bytes and returns
+// the body (header length, header, message length, message) in a pooled buffer that the
 // caller must Release, plus the local receive time in Unix nanoseconds.
 //
 // It reads until the frame is complete, so readers may return any split of the bytes.
 // A clean end of input before a frame starts returns io.EOF. Every other failure (bad
-// magic, a body length outside [8, max], input ending inside a frame) returns an error
+// magic, a body length outside [8, maxBody], input ending inside a frame) returns an error
 // wrapping errors.ErrBadFrame. The format has no delimiter to resynchronise on, so after
 // such an error the caller must close the stream. No buffer is allocated before the
-// length is validated, and none is retained on error.
-func ReadMessageLimit(r io.Reader, max int) ([]byte, uint64, error) {
+// length is validated, and none is retained on error. A maxBody below the smallest valid
+// body (8) is a caller error and returns errors.ErrBadArgument without reading.
+func ReadMessageLimit(r io.Reader, maxBody int) ([]byte, uint64, error) {
+	if maxBody < minFrameBody {
+		return nil, 0, fmt.Errorf("%w: frame body cap %d below %d", errors.ErrBadArgument, maxBody, minFrameBody)
+	}
 	var preamble [8]byte
 	if _, err := io.ReadFull(r, preamble[:]); err != nil {
 		if err == io.EOF {
@@ -77,8 +81,8 @@ func ReadMessageLimit(r io.Reader, max int) ([]byte, uint64, error) {
 		return nil, 0, fmt.Errorf("%w: magic %#08x", errors.ErrBadFrame, magic)
 	}
 	size := uint64(binary.BigEndian.Uint32(preamble[4:]))
-	if size < minFrameBody || size > uint64(max) {
-		return nil, 0, fmt.Errorf("%w: body length %d outside [%d, %d]", errors.ErrBadFrame, size, minFrameBody, max)
+	if size < minFrameBody || size > uint64(maxBody) {
+		return nil, 0, fmt.Errorf("%w: body length %d outside [%d, %d]", errors.ErrBadFrame, size, minFrameBody, maxBody)
 	}
 	buf := buffers.Get(int(size))
 	if _, err := io.ReadFull(r, buf); err != nil {

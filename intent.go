@@ -156,6 +156,15 @@ func (i *LocalIntent) Link(c chan<- proto.Message) {
 		i.unlink()
 		return
 	}
+	// Re-linking the current channel is a no-op. Check it under the read lock: Sends
+	// blocked on a full channel hold that lock, and the write lock would wait for them
+	// (review R-DND-R5 F8).
+	i.mu.RLock()
+	same := i.link != nil && i.link.c == c
+	i.mu.RUnlock()
+	if same {
+		return
+	}
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if i.closed {
