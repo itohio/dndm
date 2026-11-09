@@ -11,6 +11,7 @@ var (
 
 	ErrClosed             = errors.New("closed")
 	ErrNotEnoughBytes     = errors.New("not enough bytes")
+	ErrBadFrame           = errors.New("bad frame")
 	ErrNotFound           = errors.New("not found")
 	ErrRetry              = errors.New("will retry")
 	ErrNoInterest         = errors.New("no interest")

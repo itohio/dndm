@@ -59,7 +59,8 @@ func TestStreamContext_Read(t *testing.T) {
 	ctx := context.Background()
 	rw := &mockReadWriter{}
 
-	rw.On("Read", mock.Anything).Return(10, io.EOF)
+	// A reader at end of input: io.Reader requires n <= len(p), so EOF comes with 0 bytes.
+	rw.On("Read", mock.Anything).Return(0, io.EOF)
 	streamContext := NewWithContext(ctx, errors.Must(dndm.NewPeer("", "", "", nil)), errors.Must(dndm.NewPeer("", "", "", nil)), rw, nil)
 
 	route, err := dndm.NewRoute("path", &testtypes.Foo{})
