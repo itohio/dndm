@@ -220,12 +220,17 @@ func (b *Addrbook) AddConn(p dndm.Peer, outbound bool, c network.Conn) error {
 		return nil
 	}
 
-	e, ok := b.Entry(p)
+	// Look up and insert under b.mu: monitor and ActivePeers iterate b.peers concurrently.
+	b.mu.Lock()
+	e, ok := b.peers[p.Address()]
 	if !ok {
 		abe := p2ptypes.AddrbookEntryFromPeer(p.String())
 		e = NewAddrbookEntry(b.log, abe)
 		e.outbound = outbound
 		b.peers[p.Address()] = e
+	}
+	b.mu.Unlock()
+	if !ok {
 		b.log.Info("Addrbook.AddConn", "peer", p)
 	}
 
@@ -321,9 +326,8 @@ func (a *AddrbookEntry) SharedPeers() map[string]struct{} {
 
 func (a *AddrbookEntry) IsActive() bool {
 	a.Lock()
-	b := a.conn != nil
-	a.Unlock()
-	return b || a.dialing
+	defer a.Unlock()
+	return a.conn != nil || a.dialing
 }
 
 func (a *AddrbookEntry) SetConn(c network.Conn) error {
@@ -351,18 +355,18 @@ func (a *AddrbookEntry) SetConn(c network.Conn) error {
 
 func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer network.Dialer, q chan<- *AddrbookEntry) (io.ReadWriter, error) {
 	a.Lock()
-	a.dialing = true
-	defer func() { a.dialing = false }()
 	if a.conn != nil {
 		a.Unlock()
 		log.Error("AddrbookEntry.Dial", "err", "connection already set")
 		return nil, errors.ErrDuplicate
 	}
+	a.dialing = true
 	a.Unlock()
 
 	rw, err := dialer.Dial(ctx, a.Peer)
 	a.Lock()
 	defer a.Unlock()
+	a.dialing = false
 	if err == nil {
 		a.Attempts++
 		a.Failed = 0
@@ -386,11 +390,12 @@ func (a *AddrbookEntry) Dial(ctx context.Context, log *slog.Logger, dialer netwo
 	}
 
 	t := time.NewTimer(a.Backoff)
+	failed, backoff := a.Failed, a.Backoff // read under the lock; the goroutine runs without it
 	go func() {
 		select {
 		case <-ctx.Done():
 		case <-t.C:
-			log.Info("Retry", "num", a.Failed, "peer", a.Peer, "backoff", a.Backoff)
+			log.Info("Retry", "num", failed, "peer", a.Peer, "backoff", backoff)
 		}
 
 		select {
