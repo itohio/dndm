@@ -71,6 +71,7 @@ func NewConsumer[T proto.Message](
 }
 
 // Receive returns the next message or an error if the consumer is closed or the context is cancelled.
+// The message is read-only and may be shared with other local subscribers (see dndm.Interest.C).
 func (c *Consumer[T]) Receive(ctx context.Context) (T, error) {
 	var zero T
 

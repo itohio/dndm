@@ -41,6 +41,7 @@ func NewProducer[T proto.Message](
 }
 
 // Send waits for interest (on the first call) and sends the provided message.
+// The message must not be modified after Send is called (see dndm.Intent.Send).
 func (p *Producer[T]) Send(ctx context.Context, msg T) error {
 	if err := p.ensureInterest(ctx); err != nil {
 		return err
@@ -85,6 +86,7 @@ func (p *Producer[T]) Route() dndm.Route {
 }
 
 // SendDirect sends a message directly without closing the intent.
+// The message must not be modified after SendDirect is called (see dndm.Intent.Send).
 // This is useful when you need to send multiple messages and manage the intent lifecycle yourself.
 // You must call WaitForInterest() before calling SendDirect.
 func (p *Producer[T]) SendDirect(ctx context.Context, msg T) error {

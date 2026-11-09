@@ -34,6 +34,12 @@ type Intent interface {
 	// Users should start sending the data once an event is received on this channel.
 	Interest() <-chan Route
 	// Send will send a message to any recepient that indicated an interest.
+	//
+	// Ownership (DND-002): the message is immutable once Send is called. Neither the
+	// sender nor anyone else may modify it, or anything it points to, after that point,
+	// even after Send returns: local subscribers receive this same pointer and keep it as
+	// long as they like, and remote endpoints may marshal it concurrently. To change a
+	// message, send a new one (or proto.Clone and modify the clone).
 	Send(context.Context, proto.Message) error
 }
 

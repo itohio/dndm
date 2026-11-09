@@ -32,6 +32,10 @@ type Interest interface {
 	Route() Route
 	// C returns a channel that contains messages. Users should typecast to specific message type that
 	// was registered with the interest.
+	//
+	// Ownership (DND-002): received messages are read-only. A local message is the
+	// sender's own object, shared with every other local subscriber; receivers may keep
+	// it but must proto.Clone it before modifying it.
 	C() <-chan proto.Message
 }
 

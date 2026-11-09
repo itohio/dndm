@@ -78,7 +78,8 @@ func (s *Service[Req, Resp]) Receive(ctx context.Context) (Req, error) {
 }
 
 // Reply sends a reply for a request (manual handling).
-// Can be called multiple times to send multiple replies.
+// Can be called multiple times to send multiple replies. The reply must not be modified
+// after Reply is called (see dndm.Intent.Send).
 func (s *Service[Req, Resp]) Reply(ctx context.Context, resp Resp) error {
 	// SendDirect waits for interest if needed and sends without closing intent
 	return s.responseProducer.SendDirect(ctx, resp)
