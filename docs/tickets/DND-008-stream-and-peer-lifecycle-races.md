@@ -132,9 +132,14 @@ Behaviour changes:
   - **G2 fixed.** `Handshaker.remotePeer` is guarded by `peerMu`, and every read goes through `h.peer()`.
     - `TestHandshaker_NameDuringHandshake` reads `Name()` on both handshakers during the handshake. Before: a race was detected in 8 of 10 fresh processes. After: 0 of 100 runs.
   - **G1 fixed in the test.** The alias subtest now retries `Send` while it returns `ErrNoInterest` (nothing was sent, so no duplicate), then checks the message arrives once.
-    - Before: 16/120 (and 11/120 in a second sample). After: 0/120.
+    - Before: 16/120 (and 11/120 in a second sample). After: 0/120, at host load ≈ 45–55. Verify's recheck saw the convergence check fail at load ≈ 65; see the follow-ups entry below.
     - A mutant whose container never registers routes still fails it, with "B's interest never reached A over the surviving connection".
     - The product behaviour behind it is the documented residual: during the simultaneous-dial window, `Send` can briefly see no interest. DND-022's session ids remove that window.
   - The whole `endpoint/mesh` package, 12 processes × 10 runs: 0 failures, 0 races.
+- 2026-11-10: follow-ups from verify's DND-008 recheck (task DND-022-followups).
+  - **Remote Init/shutdown race fixed** (74a8d15). `remote.Endpoint.Init` registered the conn's close callback before assigning `t.linker`, so a conn closed during `Init` raced `shutdown`, or panicked on a nil linker.
+  - **G4 fixed** (1b426c1), found under stress. The remote-interest forwarder could take a closed channel's zero value on close and write a nil message, a panic in `codec.resolveType` (3 of 48 processes). `FanInInterest.recvRunner` has the same receive pattern but only forwards nil locally, where consumers skip it; it is not changed yet.
+  - **Alias convergence:** under load 50–81, convergence took at most 0.59 s in 3,960 runs and never failed to converge. The old failure message ("A has 2, B has 2") showed the starting state, because `assert.Eventually` formats its arguments before waiting. The bound is now 10 s, with the final counts and time logged.
+  - **Open, G3:** once, under the heaviest stress (1 of 1,167 runs at load ≈ 78), the alias subtest's message arrived 0 times. `Send` had succeeded after convergence. [INFERENCE] A saw B's interest and sent before B had registered A's intent, so B dropped the DATA. That is loss after a successful `Send`, in the v1 announce window. It did not recur in 3,600 later runs. v2's Bind/BindAck gates DATA until the receiver has bound the route (DND-022).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

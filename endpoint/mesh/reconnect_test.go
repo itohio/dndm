@@ -176,7 +176,7 @@ func TestMesh_SimultaneousDialKeepsOneConnection(t *testing.T) {
 }
 
 func simultaneousDial(t *testing.T, addrA, addrB string, alias bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	a := newNode(t, ctx, addrA, "a")
 	b := newNode(t, ctx, addrB, "b")
@@ -199,8 +199,18 @@ func simultaneousDial(t *testing.T, addrA, addrB string, alias bool) {
 	dialPairAs(t, b, a, targetA, open) // B dials A
 	close(open)
 
-	assert.Eventually(t, func() bool { return endpoints(a) == 1 && endpoints(b) == 1 }, 3*time.Second, 10*time.Millisecond,
-		"each side must end with one connection (A has %d, B has %d)", endpoints(a), endpoints(b))
+	// Convergence needs one handshake round trip on each connection. Measured under a
+	// stress of 12-48 race processes (host load 50-78): at most 0.43 s in 2,067 runs, never
+	// non-convergent. The 10 s bound leaves room for heavier load; the time is logged so a
+	// failure shows slowness vs. non-convergence (DND-022 follow-up 3). The counts are
+	// read after the wait: assert.Eventually formats its message arguments before waiting,
+	// so the old message always showed the starting state ("A has 2, B has 2").
+	convStart := time.Now()
+	converged := assert.Eventually(t, func() bool { return endpoints(a) == 1 && endpoints(b) == 1 }, 10*time.Second, 10*time.Millisecond)
+	t.Logf("convergence: %v after %s (A has %d, B has %d)", converged, time.Since(convStart), endpoints(a), endpoints(b))
+	if !converged {
+		t.Fatalf("each side must end with one connection (A has %d, B has %d after %s)", endpoints(a), endpoints(b), time.Since(convStart))
+	}
 
 	// The interest must reach A over the connection that survives. A notification alone is
 	// not enough: while both connections are briefly ready (close-reconnect.md §3.1
