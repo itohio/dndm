@@ -61,7 +61,9 @@ func TestLinker_AddRemoveIntent(t *testing.T) {
 }
 
 func TestLinker_AddRemoveInterest(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*10)
+	// The deadline only bounds the test; it was 10 ms, which cancelled the linker (and
+	// closed the interest early) on a loaded machine.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -221,6 +223,9 @@ func TestLinker_AddInterestIntentSend(t *testing.T) {
 	linker.Close()
 
 	<-linker.ctx.Done()
+	// The removed interest is no longer owned by the linker; the linker's cancellation
+	// closes it through its parent context, so its callback runs asynchronously.
+	removeInterest.WaitCalled()
 
 	assert.Equal(t, context.Canceled, linker.ctx.Err())
 }

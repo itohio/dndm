@@ -63,14 +63,15 @@ func (d *Router) addInterest(interest Interest, t Endpoint) error {
 			d.size,
 			interest,
 		)
+		if err != nil {
+			// The router or the interest is already closing (ErrClosed); nothing to route.
+			return
+		}
 		ir.OnClose(func() {
 			d.mu.Lock()
 			defer d.mu.Unlock()
 			delete(d.interestRouters, route.ID())
 		})
-		if err != nil {
-			panic(err)
-		}
 		d.interestRouters[route.ID()] = ir
 	}()
 
@@ -120,14 +121,14 @@ func (d *Router) Publish(path string, msg proto.Message, opt ...PubOpt) (Intent,
 		d.size,
 		intents...,
 	)
+	if err != nil {
+		return nil, err
+	}
 	ir.OnClose(func() {
 		d.mu.Lock()
 		defer d.mu.Unlock()
 		delete(d.intentRouters, route.ID())
 	})
-	if err != nil {
-		return nil, err
-	}
 	d.intentRouters[route.ID()] = ir
 	return ir.Wrap(), nil
 }
@@ -161,14 +162,14 @@ func (d *Router) Subscribe(path string, msg proto.Message, opt ...SubOpt) (Inter
 		d.size,
 		interests...,
 	)
+	if err != nil {
+		return nil, err
+	}
 	ir.OnClose(func() {
 		d.mu.Lock()
 		defer d.mu.Unlock()
 		delete(d.interestRouters, route.ID())
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	d.interestRouters[route.ID()] = ir
 	return ir.Wrap(), nil

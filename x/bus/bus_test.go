@@ -71,7 +71,8 @@ func startForwarder[T proto.Message](t *testing.T, ctx context.Context, consumer
 		for {
 			msg, err := consumer.Receive(ctx)
 			if err != nil {
-				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
+				// Cleanup closes the consumer first; ErrClosed is the normal way out.
+				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) || errors.Is(err, ErrClosed) {
 					return
 				}
 				select {
@@ -85,7 +86,7 @@ func startForwarder[T proto.Message](t *testing.T, ctx context.Context, consumer
 			err = producer.Send(sendCtx, msg)
 			cancel()
 			if err != nil {
-				if errors.Is(err, context.Canceled) {
+				if errors.Is(err, context.Canceled) || errors.Is(err, ErrClosed) {
 					return
 				}
 				select {

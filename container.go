@@ -41,14 +41,16 @@ func NewContainer(name string, size int) *Container {
 }
 
 func (t *Container) Close() error {
-	errarr := make([]error, 0, len(t.endpoints))
-	for _, tr := range t.endpoints {
-		err := tr.Close()
-		if err != nil {
-			errarr = append(errarr, err)
-		}
-	}
+	t.mu.Lock()
+	endpoints := t.endpoints
 	t.endpoints = nil
+	t.mu.Unlock()
+
+	// Close outside t.mu: endpoint close callbacks call Remove, which takes t.mu.
+	errarr := make([]error, 0, len(endpoints)+1)
+	for _, tr := range endpoints {
+		errarr = append(errarr, tr.Close())
+	}
 	errarr = append(errarr, t.BaseEndpoint.Close())
 	return errors.Join(errarr...)
 }

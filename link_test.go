@@ -37,10 +37,8 @@ func TestLink_Link(t *testing.T) {
 	ch := make(chan proto.Message)
 	intent.On("Link", (chan<- proto.Message)(ch))
 	intent.On("Link", (chan<- proto.Message)(nil))
-	intent.On("Ctx").Return(ctx)
 	intent.On("Notify").Twice()
 	interest.On("MsgC").Return((chan<- proto.Message)(ch))
-	interest.On("Ctx").Return(ctx)
 
 	link := NewLink(ctx, intent, interest)
 	link.Link()

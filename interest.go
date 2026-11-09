@@ -65,7 +65,9 @@ func NewInterest(ctx context.Context, route Route, size int) *LocalInterest {
 	ret.Init(ctx)
 	ret.OnClose(func() {
 		ret.cancel(nil)
-		close(ret.msgC)
+		// Close msgC after every later close callback, in particular the linker's
+		// RemoveInterest, which returns once the linked intent can no longer send on it.
+		ret.AddOnClose(func() { close(ret.msgC) })
 	})
 	return ret
 }
@@ -99,22 +101,47 @@ type FanInInterest struct {
 
 // NewFanInInterest creates a new FanInInterest with specified context, route, size, and initial interests.
 func NewFanInInterest(ctx context.Context, route Route, size int, interests ...Interest) (*FanInInterest, error) {
+	ret := newFanInInterest(ctx, route, size)
+	if err := ret.addInterests(interests); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+// newFanInInterest builds the fan-in without interests, so callers can set onRecv
+// before AddInterest starts the receive runners that read it.
+func newFanInInterest(ctx context.Context, route Route, size int) *FanInInterest {
 	ret := &FanInInterest{
 		li: NewInterest(ctx, route, size),
 	}
-	for _, i := range interests {
-		if err := ret.AddInterest(i); err != nil {
-			return nil, err
+	// Runners send on li's channel; it closes only after they have stopped.
+	ret.li.AddOnClose(ret.waitRunners)
+	return ret
+}
+
+func (i *FanInInterest) addInterests(interests []Interest) error {
+	for _, interest := range interests {
+		if err := i.AddInterest(interest); err != nil {
+			i.Close()
+			return err
 		}
 	}
-
-	return ret, nil
+	return nil
 }
 
 func (i *FanInInterest) Close() error {
 	err := i.li.Close()
-	i.wg.Wait()
+	i.waitRunners() // also when another goroutine is running li's close callbacks
 	return err
+}
+
+// waitRunners waits for the receive runners. The context is cancelled, so AddInterest
+// refuses new runners; taking i.mu orders any AddInterest that passed its check before
+// Wait (WaitGroup.Add must not race Wait).
+func (i *FanInInterest) waitRunners() {
+	i.mu.Lock()
+	i.mu.Unlock() //nolint:staticcheck // empty critical section is the ordering point
+	i.wg.Wait()
 }
 
 func (i *FanInInterest) OnClose(f func()) Interest {
@@ -141,6 +168,9 @@ func (i *FanInInterest) AddInterest(interest Interest) error {
 	}
 	i.mu.Lock()
 	defer i.mu.Unlock()
+	if i.Ctx().Err() != nil {
+		return errors.ErrClosed
+	}
 	if idx := slices.Index(i.interests, interest); idx >= 0 {
 		return nil
 	}
@@ -223,16 +253,14 @@ type InterestRouter struct {
 
 // NewInterestRouter initializes a new InterestRouter with a context, route, size, and initial interests.
 func NewInterestRouter(ctx context.Context, route Route, size int, interests ...Interest) (*InterestRouter, error) {
-	fii, err := NewFanInInterest(ctx, route, size, interests...)
-	if err != nil {
-		return nil, err
-	}
 	ret := &InterestRouter{
-		FanInInterest: fii,
+		FanInInterest: newFanInInterest(ctx, route, size),
 		size:          size,
 	}
-	fii.onRecv = ret.routeMsg
-
+	ret.onRecv = ret.routeMsg
+	if err := ret.addInterests(interests); err != nil {
+		return nil, err
+	}
 	return ret, nil
 }
 
@@ -261,18 +289,16 @@ func (i *InterestRouter) addWrapper(w *interestWrapper) {
 
 func (i *InterestRouter) removeWrapper(w *interestWrapper) error {
 	i.mu.Lock()
-	defer i.mu.Unlock()
-
 	idx := slices.Index(i.wrappers, w)
-	w.router = nil
 	if idx >= 0 {
 		i.wrappers = slices.Delete(i.wrappers, idx, idx+1)
 	}
-
-	if len(i.wrappers) > 0 {
+	last := len(i.wrappers) == 0
+	i.mu.Unlock()
+	if !last {
 		return nil
 	}
-
+	// Close outside i.mu: closing waits for receive runners, which take i.mu in routeMsg.
 	return i.Close()
 }
 

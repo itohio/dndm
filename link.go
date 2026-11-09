@@ -14,6 +14,7 @@ type Link struct {
 	intent   IntentInternal
 	interest InterestInternal
 	once     sync.Once
+	unlinked chan struct{}
 }
 
 // NewLink creates a new Link instance initialized with the provided context,
@@ -24,31 +25,34 @@ func NewLink(ctx context.Context, intent IntentInternal, interest InterestIntern
 		Base:     NewBaseWithCtx(ctx),
 		intent:   intent,
 		interest: interest,
+		unlinked: make(chan struct{}),
 	}
-	ret.AddOnClose(func() { intent.Link(nil) })
+	ret.AddOnClose(func() {
+		intent.Link(nil)
+		close(ret.unlinked)
+	})
 	return ret
 }
 
-// Link starts the process of linking the intent with the interest.
-// It configures the intent to send messages to the channel of the interest
-// and ensures that notifications are sent to the intent to signal the establishment
-// of the link. This method ensures that the link operation is performed only once.
-// The operation runs concurrently and listens for context cancellation signals
-// from the Link itself or either the intent or interest to properly manage resource cleanup.
+// Close closes the link and returns once the intent is unlinked, also when another
+// goroutine is already closing it. After that the intent no longer sends on the
+// interest's channel, so the interest may close it.
+func (l *Link) Close() error {
+	err := l.Base.Close()
+	<-l.unlinked
+	return err
+}
+
+// Link links the intent to the interest's channel and notifies the intent, once.
+// It runs in the caller's goroutine: an asynchronous link could run after Close and
+// re-link a closed link's intent. A link that is already closed does nothing.
 func (l *Link) Link() {
 	l.once.Do(func() {
-		go func() {
-			l.intent.Link(l.interest.MsgC())
-			l.intent.Notify()
-			select {
-			case <-l.ctx.Done():
-				return
-			case <-l.intent.Ctx().Done():
-				return
-			case <-l.interest.Ctx().Done():
-				return
-			}
-		}()
+		if l.ctx.Err() != nil {
+			return
+		}
+		l.intent.Link(l.interest.MsgC())
+		l.intent.Notify()
 	})
 }
 

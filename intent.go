@@ -58,8 +58,19 @@ type LocalIntent struct {
 	route   Route
 	notifyC chan Route
 	mu      sync.RWMutex
-	linkedC chan<- proto.Message
+	closed  bool
+	link    *linkState
 }
+
+// linkState is the current link of a LocalIntent: the channel Send delivers to, and a
+// signal that the link is being removed, which releases a Send blocked on a full channel.
+type linkState struct {
+	c    chan<- proto.Message
+	done chan struct{}
+	once sync.Once
+}
+
+func (l *linkState) stop() { l.once.Do(func() { close(l.done) }) }
 
 // NewIntent initializes a new LocalIntent with specified context, route, and buffer size for the notifications channel.
 func NewIntent(ctx context.Context, route Route, size int) *LocalIntent {
@@ -69,8 +80,12 @@ func NewIntent(ctx context.Context, route Route, size int) *LocalIntent {
 		notifyC: make(chan Route, size),
 	}
 	intent.AddOnClose(func() {
+		// The context is already cancelled, so a blocked Send returns and releases mu.
+		intent.mu.Lock()
+		intent.closed = true
+		intent.link = nil
 		close(intent.notifyC)
-		intent.linkedC = nil
+		intent.mu.Unlock()
 	})
 	return intent
 }
@@ -91,16 +106,22 @@ func (i *LocalIntent) Interest() <-chan Route {
 // LinkedC is used for internal debugging and race condition hunting
 func (i *LocalIntent) LinkedC() chan<- proto.Message {
 	i.mu.RLock()
-	linkedC := i.linkedC
-	i.mu.RUnlock()
-	return linkedC
+	defer i.mu.RUnlock()
+	if i.link == nil {
+		return nil
+	}
+	return i.link.c
 }
 
+// Send delivers msg to the linked interest's channel, waiting while it is full.
+// It holds a read lock for the whole delivery, so once Link(nil) returns no Send is
+// still using the old channel and its owner may close it. A Send that is waiting when
+// the link is removed returns ErrNoInterest.
 func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 	i.mu.RLock()
-	linkedC := i.linkedC
-	i.mu.RUnlock()
-	if linkedC == nil {
+	defer i.mu.RUnlock()
+	l := i.link
+	if l == nil {
 		return errors.ErrNoInterest
 	}
 	if i.route.Type() != nil {
@@ -114,26 +135,58 @@ func (i *LocalIntent) Send(ctx context.Context, msg proto.Message) error {
 		return ctx.Err()
 	case <-i.Ctx().Done():
 		return i.Ctx().Err()
-	case linkedC <- msg:
+	case <-l.done:
+		return errors.ErrNoInterest
+	case l.c <- msg:
 	}
 
 	return nil
 }
 
+// Link sets the channel Send delivers to; nil unlinks. A closed intent stays unlinked.
+// Link(nil) returns after every Send on the old channel has returned.
 func (i *LocalIntent) Link(c chan<- proto.Message) {
-	i.mu.Lock()
-	if i.linkedC != nil && c != nil && i.linkedC != c {
-		i.mu.Unlock()
-		panic("Link called multiple times illegally")
+	if c == nil {
+		i.unlink()
+		return
 	}
-	i.linkedC = c
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	if i.closed {
+		return
+	}
+	if i.link != nil {
+		if i.link.c != c {
+			panic("Link called multiple times illegally")
+		}
+		return
+	}
+	i.link = &linkState{c: c, done: make(chan struct{})}
+}
+
+func (i *LocalIntent) unlink() {
+	i.mu.RLock()
+	l := i.link
+	i.mu.RUnlock()
+	if l == nil {
+		return
+	}
+	l.stop() // release Sends waiting on a full channel; they hold the read lock
+	i.mu.Lock()
+	if i.link == l {
+		i.link = nil
+	}
 	i.mu.Unlock()
 }
 
+// Notify queues an interest notification without blocking; it is a no-op once the intent is closed.
 func (i *LocalIntent) Notify() {
-	select {
-	case <-i.Ctx().Done():
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	if i.closed {
 		return
+	}
+	select {
 	case i.notifyC <- i.route:
 	default:
 	}
@@ -152,18 +205,31 @@ type FanOutIntent struct {
 
 // NewFanOutIntent creates a FanOutIntent with given context, route, size, and optional initial intents.
 func NewFanOutIntent(ctx context.Context, route Route, size int, intents ...Intent) (*FanOutIntent, error) {
+	ret := newFanOutIntent(ctx, route, size)
+	if err := ret.addIntents(intents); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+// newFanOutIntent builds the fan-out without intents, so callers can set onNotify
+// before AddIntent starts the notify runners that read it.
+func newFanOutIntent(ctx context.Context, route Route, size int) *FanOutIntent {
 	ret := &FanOutIntent{
 		li: NewIntent(ctx, route, size),
 	}
-	for _, i := range intents {
-		if err := ret.AddIntent(i); err != nil {
-			return nil, err
+	ret.li.AddOnClose(ret.waitRunners)
+	return ret
+}
+
+func (i *FanOutIntent) addIntents(intents []Intent) error {
+	for _, intent := range intents {
+		if err := i.AddIntent(intent); err != nil {
+			i.Close()
+			return err
 		}
 	}
-	ret.li.AddOnClose(func() {
-		ret.wg.Wait()
-	})
-	return ret, nil
+	return nil
 }
 
 func (i *FanOutIntent) OnClose(f func()) Intent {
@@ -181,8 +247,17 @@ func (i *FanOutIntent) Interest() <-chan Route {
 
 func (i *FanOutIntent) Close() error {
 	err := i.li.Close()
-	i.wg.Wait()
+	i.waitRunners()
 	return err
+}
+
+// waitRunners waits for the notify runners. The context is already cancelled, so
+// AddIntent refuses new runners; taking i.mu orders any AddIntent that passed its
+// check before Wait (WaitGroup.Add must not race Wait).
+func (i *FanOutIntent) waitRunners() {
+	i.mu.Lock()
+	i.mu.Unlock() //nolint:staticcheck // empty critical section is the ordering point
+	i.wg.Wait()
 }
 
 func (i *FanOutIntent) Ctx() context.Context {
@@ -224,11 +299,18 @@ func (i *FanOutIntent) Send(ctx context.Context, msg proto.Message) error {
 }
 
 // AddIntent adds a new intent of the same type, creates a notify runner and links wrappers to it.
+// Adding an intent that is already present is a no-op; adding to a closed fan-out returns ErrClosed.
 func (i *FanOutIntent) AddIntent(intent Intent) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	if !i.Route().Equal(intent.Route()) {
 		return errors.ErrInvalidRoute
+	}
+	if i.li.Ctx().Err() != nil {
+		return errors.ErrClosed
+	}
+	if slices.Contains(i.intents, intent) {
+		return nil
 	}
 	ctx, cancel := context.WithCancel(i.li.Ctx())
 	i.intents = append(i.intents, intent)
@@ -241,20 +323,20 @@ func (i *FanOutIntent) AddIntent(intent Intent) error {
 
 func (i *FanOutIntent) RemoveIntent(intent Intent) {
 	i.mu.Lock()
-	defer i.mu.Unlock()
 	idx := slices.Index(i.intents, intent)
 	if idx < 0 {
+		i.mu.Unlock()
 		return
 	}
 	i.cancels[idx]()
 	i.intents = slices.Delete(i.intents, idx, idx+1)
 	i.cancels = slices.Delete(i.cancels, idx, idx+1)
+	last := len(i.intents) == 0
+	i.mu.Unlock()
 
-	if len(i.intents) > 0 {
-		return
+	if last {
+		i.Close()
 	}
-
-	i.Close()
 }
 
 func (i *FanOutIntent) notifyRunner(ctx context.Context, intent Intent) {
@@ -299,7 +381,11 @@ func (w *intentWrapper) Interest() <-chan Route {
 	return w.notifyC
 }
 
+// Send forwards to the router. A closed wrapper returns ErrClosed.
 func (w *intentWrapper) Send(ctx context.Context, msg proto.Message) error {
+	if w.Ctx().Err() != nil {
+		return errors.ErrClosed
+	}
 	return w.router.Send(ctx, msg)
 }
 
@@ -309,19 +395,19 @@ type IntentRouter struct {
 	size     int
 	mu       sync.RWMutex
 	wrappers []*intentWrapper
+	notified bool // an interest notification arrived; later wrappers start with one
 }
 
 // NewIntentRouter creates a new IntentRouter with a given context, route, size, and optionally pre-registered intents.
 func NewIntentRouter(ctx context.Context, route Route, size int, intents ...Intent) (*IntentRouter, error) {
-	foi, err := NewFanOutIntent(ctx, route, size, intents...)
-	if err != nil {
-		return nil, err
-	}
 	ret := &IntentRouter{
-		FanOutIntent: foi,
+		FanOutIntent: newFanOutIntent(ctx, route, size),
 		size:         size,
 	}
-	foi.onNotify = ret.Notify
+	ret.onNotify = ret.Notify
+	if err := ret.addIntents(intents); err != nil {
+		return nil, err
+	}
 	return ret, nil
 }
 
@@ -346,27 +432,35 @@ func (i *IntentRouter) addWrapper(w *intentWrapper) {
 		close(w.notifyC)
 	})
 	i.wrappers = append(i.wrappers, w)
+	if i.notified {
+		// The router already saw interest before this wrapper existed; without this the
+		// wrapper would wait for a notification that was delivered to nobody.
+		select {
+		case w.notifyC <- i.Route():
+		default:
+		}
+	}
 }
 
 func (i *IntentRouter) removeWrapper(w *intentWrapper) error {
 	i.mu.Lock()
-	defer i.mu.Unlock()
-
 	idx := slices.Index(i.wrappers, w)
-	w.router = nil
 	if idx >= 0 {
 		i.wrappers = slices.Delete(i.wrappers, idx, idx+1)
 	}
-	if len(i.wrappers) > 0 {
+	last := len(i.wrappers) == 0
+	i.mu.Unlock()
+	if !last {
 		return nil
 	}
-
+	// Close outside i.mu: closing waits for notify runners, which take i.mu in Notify.
 	return i.Close()
 }
 
 func (i *IntentRouter) Notify() {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.notified = true
 	route := i.Route()
 	slog.Info("Notify wrappers", "route", route)
 	for _, w := range i.wrappers {

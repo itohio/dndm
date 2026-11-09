@@ -79,29 +79,28 @@ func NewLinker(ctx context.Context, log *slog.Logger, size int, addIntent func(i
 	}
 }
 
-// Close shuts down the Linker and cleans up all resources associated with it.
-// It iterates through all intents and interests, closes them, and finally clears the collections.
+// Close shuts down the Linker: it closes every intent, interest and link it owns, clears
+// its collections and closes its context. It returns after all of them are closed.
 func (t *Linker) Close() error {
-	errarr := make([]error, 0, len(t.links))
+	t.mu.Lock()
+	intents, interests, links := t.intents, t.interests, t.links
+	t.intents = make(map[string]IntentInternal)
+	t.interests = make(map[string]InterestInternal)
+	t.links = make(map[string]*Link)
+	t.mu.Unlock()
 
-	t.AddOnClose(func() {
-		for _, i := range t.intents {
-			err := i.Close()
-			if err != nil {
-				errarr = append(errarr, err)
-			}
-		}
-		for _, i := range t.interests {
-			err := i.Close()
-			if err != nil {
-				errarr = append(errarr, err)
-			}
-		}
-		t.intents = nil
-		t.interests = nil
-	})
-	t.Base.Close()
-
+	// Close outside t.mu: intent/interest close callbacks call RemoveIntent/RemoveInterest.
+	errarr := make([]error, 0, len(intents)+len(interests)+len(links)+1)
+	for _, l := range links {
+		errarr = append(errarr, l.Close())
+	}
+	for _, i := range intents {
+		errarr = append(errarr, i.Close())
+	}
+	for _, i := range interests {
+		errarr = append(errarr, i.Close())
+	}
+	errarr = append(errarr, t.Base.Close())
 	return errors.Join(errarr...)
 }
 

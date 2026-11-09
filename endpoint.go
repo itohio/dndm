@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"sync"
 
 	"github.com/itohio/dndm/errors"
 )
@@ -33,9 +34,71 @@ type RemoteEndpoint interface {
 
 // Base provides basic context management functionalities for components that require
 // initialization with a context, cancellation, and cleanup operations.
+//
+// Close callbacks registered with AddOnClose are owned by the Base: they run once,
+// in registration order, when the Base closes. Close runs them in the calling
+// goroutine and returns after they finish. Cancellation of the parent context runs
+// them in one goroutine started by the context (context.AfterFunc). A Close that
+// finds the Base already closing (another Close, a parent cancellation, or a call
+// from inside a callback) cancels and returns without waiting, so callbacks may
+// close their own Base without deadlocking.
 type Base struct {
 	ctx    context.Context
 	cancel context.CancelCauseFunc
+	lc     *lifecycle
+}
+
+const (
+	lifecycleOpen = iota
+	lifecycleClosing
+	lifecycleClosed
+)
+
+// lifecycle holds the close callbacks of a Base. It is shared by copies of the Base value.
+type lifecycle struct {
+	mu        sync.Mutex
+	state     int
+	callbacks []func()
+}
+
+// claim moves the lifecycle from open to closing. Only the claimer runs the callbacks.
+func (l *lifecycle) claim() bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.state != lifecycleOpen {
+		return false
+	}
+	l.state = lifecycleClosing
+	return true
+}
+
+// drain runs callbacks in order, including ones added while draining, then marks the lifecycle closed.
+func (l *lifecycle) drain() {
+	l.mu.Lock()
+	for len(l.callbacks) > 0 {
+		f := l.callbacks[0]
+		l.callbacks[0] = nil
+		l.callbacks = l.callbacks[1:]
+		l.mu.Unlock()
+		f()
+		l.mu.Lock()
+	}
+	l.callbacks = nil
+	l.state = lifecycleClosed
+	l.mu.Unlock()
+}
+
+// add registers f. After the lifecycle has fully closed, f runs at once in its own
+// goroutine: running it inline could deadlock a caller that holds a lock f needs.
+func (l *lifecycle) add(f func()) {
+	l.mu.Lock()
+	if l.state != lifecycleClosed {
+		l.callbacks = append(l.callbacks, f)
+		l.mu.Unlock()
+		return
+	}
+	l.mu.Unlock()
+	go f()
 }
 
 // NewBase initializes a new Base instance without a specific context.
@@ -55,6 +118,15 @@ func (t *Base) Init(ctx context.Context) error {
 	ctx, cancel := context.WithCancelCause(ctx)
 	t.ctx = ctx
 	t.cancel = cancel
+	if t.lc == nil {
+		t.lc = &lifecycle{}
+	}
+	lc := t.lc
+	context.AfterFunc(ctx, func() {
+		if lc.claim() {
+			lc.drain()
+		}
+	})
 	return nil
 }
 
@@ -63,9 +135,13 @@ func (t *Base) Close() error {
 	return t.CloseCause(nil)
 }
 
-// CloseCause cleans up resources and cancels the context with a specified error cause.
+// CloseCause cancels the context with a specified error cause and runs the close callbacks.
 func (t *Base) CloseCause(err error) error {
+	claimed := t.lc.claim()
 	t.cancel(err)
+	if claimed {
+		t.lc.drain()
+	}
 	return nil
 }
 
@@ -74,15 +150,15 @@ func (t *Base) Ctx() context.Context {
 	return t.ctx
 }
 
-// AddOnClose registers a function to be called upon the context's cancellation.
+// AddOnClose registers a function to be called once when the Base closes.
 func (t *Base) AddOnClose(f func()) {
 	if f == nil {
 		return
 	}
-	go func() {
-		<-t.ctx.Done()
-		f()
-	}()
+	if t.lc == nil {
+		t.lc = &lifecycle{}
+	}
+	t.lc.add(f)
 }
 
 // BaseEndpoint is a concrete implementation of the Endpoint interface that provides

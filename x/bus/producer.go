@@ -45,7 +45,7 @@ func (p *Producer[T]) Send(ctx context.Context, msg T) error {
 	if err := p.ensureInterest(ctx); err != nil {
 		return err
 	}
-	return p.intent.Send(ctx, msg)
+	return busErr(p.intent.Send(ctx, msg))
 }
 
 // SendWithTimeout behaves like Send but bounds the send and interest wait time.
@@ -91,7 +91,7 @@ func (p *Producer[T]) SendDirect(ctx context.Context, msg T) error {
 	if err := p.ensureInterest(ctx); err != nil {
 		return err
 	}
-	return p.intent.Send(ctx, msg)
+	return busErr(p.intent.Send(ctx, msg))
 }
 
 func (p *Producer[T]) ensureInterest(ctx context.Context) error {
