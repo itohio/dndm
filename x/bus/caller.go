@@ -3,6 +3,7 @@ package bus
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/itohio/dndm"
@@ -24,12 +25,15 @@ func (w *waiter[Resp]) close() {
 type callerOptions[Req proto.Message, Resp proto.Message] struct {
 	setRequestNonce  func(Req, uint64)
 	getResponseNonce func(Resp) (uint64, bool)
+	nonceSource      NonceSource
 }
 
 // CallerOption configures optional behaviour of Caller.
 type CallerOption[Req proto.Message, Resp proto.Message] func(*callerOptions[Req, Resp])
 
 // WithCallerRequestNonce registers a hook that injects the generated nonce into outgoing requests.
+// Nonces come from the Caller's NonceSource (WithCallerNonceSource or the build default);
+// the message field must carry all 64 bits.
 func WithCallerRequestNonce[Req proto.Message, Resp proto.Message](fn func(Req, uint64)) CallerOption[Req, Resp] {
 	return func(opts *callerOptions[Req, Resp]) {
 		opts.setRequestNonce = fn
@@ -37,6 +41,9 @@ func WithCallerRequestNonce[Req proto.Message, Resp proto.Message](fn func(Req, 
 }
 
 // WithCallerResponseNonce registers a hook that extracts a nonce from incoming responses.
+// With this hook a reply is delivered only to the call whose nonce it carries; replies with
+// a foreign nonce or none (ok == false) are dropped and counted in Dropped. Without it,
+// replies are matched to calls in FIFO order, which is only correct for one Caller per path.
 func WithCallerResponseNonce[Req proto.Message, Resp proto.Message](fn func(Resp) (uint64, bool)) CallerOption[Req, Resp] {
 	return func(opts *callerOptions[Req, Resp]) {
 		opts.getResponseNonce = fn
@@ -55,8 +62,14 @@ type Caller[Req proto.Message, Resp proto.Message] struct {
 	mu      sync.Mutex
 	waiters map[uint64]*waiter[Resp]
 	order   []uint64
-	nonce   uint64
+	nonces  NonceSource
 	opts    callerOptions[Req, Resp]
+	dropped atomic.Uint64
+}
+
+// Dropped returns how many replies this Caller received but delivered to no call.
+func (c *Caller[Req, Resp]) Dropped() uint64 {
+	return c.dropped.Load()
 }
 
 // NewCaller creates a request/reply caller that sends requests on requestPath
@@ -83,6 +96,10 @@ func NewCaller[Req proto.Message, Resp proto.Message](
 	for _, optFn := range options {
 		optFn(&callOpts)
 	}
+	nonces := callOpts.nonceSource
+	if nonces == nil {
+		nonces = defaultNonceSource()
+	}
 
 	caller := &Caller[Req, Resp]{
 		requestProducer:  requestProducer,
@@ -92,7 +109,7 @@ func NewCaller[Req proto.Message, Resp proto.Message](
 		responsePath:     responsePath,
 		waiters:          make(map[uint64]*waiter[Resp]),
 		order:            make([]uint64, 0),
-		nonce:            1, // Start at 1 to avoid zero value issues
+		nonces:           nonces,
 		opts:             callOpts,
 	}
 
@@ -111,26 +128,32 @@ func (c *Caller[Req, Resp]) handleResponses(ctx context.Context) {
 			c.failAll()
 			return
 		}
-
-		delivered := false
-		if c.opts.getResponseNonce != nil {
-			if nonce, ok := c.opts.getResponseNonce(resp); ok {
-				if w := c.takeWaiterForNonce(nonce); w != nil {
-					delivered = true
-					c.deliver(resp, w)
-				}
-			}
+		if w := c.waiterFor(resp); w != nil {
+			c.deliver(resp, w)
+			continue
 		}
-		if !delivered {
-			if w := c.takeNextWaiter(); w != nil {
-				delivered = true
-				c.deliver(resp, w)
-			}
-		}
+		c.dropped.Add(1)
 	}
 }
 
+// waiterFor picks the call a reply belongs to. With a response-nonce hook the reply's
+// nonce must name one of this Caller's live calls; replies with a foreign or missing
+// nonce belong to no call (other Callers on the same path see them too). Without a hook,
+// replies go to the oldest waiting call (FIFO), which is only correct for one Caller per path.
+func (c *Caller[Req, Resp]) waiterFor(resp Resp) *waiter[Resp] {
+	if c.opts.getResponseNonce == nil {
+		return c.takeNextWaiter()
+	}
+	nonce, ok := c.opts.getResponseNonce(resp)
+	if !ok {
+		return nil
+	}
+	return c.takeWaiterForNonce(nonce)
+}
+
 // Call sends a request and waits for a single reply.
+// Pass a fresh request per call: the request-nonce hook writes into it before it is sent,
+// and it must not be modified after that (see dndm.Intent.Send). The reply is read-only.
 func (c *Caller[Req, Resp]) Call(ctx context.Context, req Req) (Resp, error) {
 	return c.CallWithTimeout(ctx, req, 0)
 }
@@ -146,7 +169,11 @@ func (c *Caller[Req, Resp]) CallWithTimeout(ctx context.Context, req Req, timeou
 		defer cancel()
 	}
 
-	w, nonce := c.registerWaiter(false)
+	w, nonce, err := c.registerWaiter(false)
+	if err != nil {
+		var zero Resp
+		return zero, err
+	}
 	respC := w.ch
 
 	if setter := c.opts.setRequestNonce; setter != nil {
@@ -154,7 +181,7 @@ func (c *Caller[Req, Resp]) CallWithTimeout(ctx context.Context, req Req, timeou
 	}
 
 	// Send request
-	err := c.requestProducer.Send(callCtx, req)
+	err = c.requestProducer.Send(callCtx, req)
 	if err != nil {
 		if removed := c.unregisterWaiter(nonce); removed != nil {
 			removed.close()
@@ -187,7 +214,10 @@ func (c *Caller[Req, Resp]) CallWithTimeout(ctx context.Context, req Req, timeou
 // HandleReplies handles multiple replies via callback (goroutine-based).
 // The callback is called in a goroutine and can receive one or multiple replies.
 func (c *Caller[Req, Resp]) HandleReplies(ctx context.Context, req Req, handler func(ctx context.Context, req Req, resp Resp) error) error {
-	w, nonce := c.registerWaiter(true)
+	w, nonce, err := c.registerWaiter(true)
+	if err != nil {
+		return err
+	}
 	ch := w.ch
 
 	if setter := c.opts.setRequestNonce; setter != nil {
@@ -266,23 +296,32 @@ func (c *Caller[Req, Resp]) deliver(resp Resp, w *waiter[Resp]) {
 	w.close()
 }
 
-func (c *Caller[Req, Resp]) registerWaiter(stream bool) (*waiter[Resp], uint64) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+// nonceTries bounds how often registerWaiter asks the NonceSource for a usable nonce.
+// The shipped sources need one try in practice; a broken source fails the call instead
+// of spinning forever.
+const nonceTries = 8
 
-	if c.waiters == nil {
-		c.waiters = make(map[uint64]*waiter[Resp])
+func (c *Caller[Req, Resp]) registerWaiter(stream bool) (*waiter[Resp], uint64, error) {
+	for range nonceTries {
+		nonce := c.nonces.Next() // outside c.mu: a slow source must not block other calls
+		if nonce == 0 {
+			continue
+		}
+		c.mu.Lock()
+		if c.waiters == nil {
+			c.waiters = make(map[uint64]*waiter[Resp])
+		}
+		if _, used := c.waiters[nonce]; used {
+			c.mu.Unlock()
+			continue
+		}
+		w := &waiter[Resp]{ch: make(chan Resp, 1), stream: stream}
+		c.waiters[nonce] = w
+		c.order = append(c.order, nonce)
+		c.mu.Unlock()
+		return w, nonce, nil
 	}
-	if c.order == nil {
-		c.order = make([]uint64, 0)
-	}
-
-	nonce := c.nonce
-	c.nonce++
-	w := &waiter[Resp]{ch: make(chan Resp, 1), stream: stream}
-	c.waiters[nonce] = w
-	c.order = append(c.order, nonce)
-	return w, nonce
+	return nil, 0, ErrNonceSource
 }
 
 func (c *Caller[Req, Resp]) unregisterWaiter(nonce uint64) *waiter[Resp] {
