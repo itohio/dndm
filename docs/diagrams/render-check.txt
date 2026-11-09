@@ -1,0 +1,10 @@
+# Mermaid render check, 2026-11-08T23:26:06Z (after UX-3 fixes, DND-R6-fix)
+# tool: @mermaid-js/mermaid-cli 12.2.0 (mmdc), mermaid 12.3.0, local npx cache, local headless Chrome; no network
+# negative control: a deliberately broken block makes mmdc exit 1 (checked in _scratch)
+# not tested: Obsidian's bundled Mermaid 11.x, GitHub
+README.md: 1 mermaid blocks, mmdc exit=0, rendered=1
+core.md: 8 mermaid blocks, mmdc exit=0, rendered=8
+link-flows.md: 7 mermaid blocks, mmdc exit=0, rendered=7
+message-paths.md: 6 mermaid blocks, mmdc exit=0, rendered=6
+robotics.md: 8 mermaid blocks, mmdc exit=0, rendered=8
+total blocks: 30
