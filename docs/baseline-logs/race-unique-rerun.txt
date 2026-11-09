@@ -1,0 +1,19 @@
+51 reports, 18 unique access pairs
+github.com/itohio/dndm.(*IntentRouter).removeWrapper() intent.go:358 <-> github.com/itohio/dndm.TestIntentRouter_NotifyWrappers() intent_test.go:261 | TestIntentRouter_NotifyWrappers
+github.com/itohio/dndm.(*IntentRouter).removeWrapper() intent.go:358 <-> github.com/itohio/dndm.TestIntentRouter_NotifyWrappers() intent_test.go:265 | TestIntentRouter_NotifyWrappers
+github.com/itohio/dndm.(*LocalIntent).Link() intent.go:125 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:73 | TestLinker_AddIntentInterestSend,TestProducerConsumer,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 <-> github.com/itohio/dndm.(*Linker).RemoveIntent() linker.go:164 | TestLinker_AddIntentInterestSend,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:227 | TestLinker_AddIntentInterestSend,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*LocalIntent).Link() intent.go:129 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:73 | TestCallerServiceRoundTrip,TestLinker_AddInterestIntentSend,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:88 <-> github.com/itohio/dndm.(*Linker).RemoveIntent() linker.go:164 | TestPeer_String,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*FanOutIntent).notifyRunner() intent.go:269 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:324 | TestCallerHandleReplies,TestCallerServiceRoundTrip,TestModuleRun,TestProducerConsumer,TestStreamSensorHostWorkflow,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*FanOutIntent).notifyRunner() intent.go:270 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:320 | TestCallerHandleReplies,TestCallerServiceRoundTrip,TestModuleRun,TestProducerConsumer,TestStreamSensorHostWorkflow,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm/network/stream.(*contextRW).Close() network/stream/stream.go:145 <-> github.com/itohio/dndm/network/stream.(*contextRW).Request() network/stream/stream.go:198 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*LocalIntent).Notify() intent.go:137 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:72 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close() linker.go:85 <-> github.com/itohio/dndm.(*Linker).unlink() linker.go:274 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:94 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:231 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:88 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:94 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close() linker.go:105 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:91 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:231 | TestStreamStarTopologyBidirectional

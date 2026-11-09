@@ -1,0 +1,3227 @@
+=== RUN   Test_NewContainer
+    testutil.go:27: on close
+--- PASS: Test_NewContainer (0.10s)
+=== RUN   TestContainer_AddEndpoint
+--- PASS: TestContainer_AddEndpoint (0.00s)
+=== RUN   TestContainer_RemoveEndpoint
+--- PASS: TestContainer_RemoveEndpoint (0.00s)
+=== RUN   TestContainer_Publish
+    testutil.go:27: add intent
+--- PASS: TestContainer_Publish (0.00s)
+=== RUN   TestContainer_Subscribe
+    testutil.go:27: add interest
+--- PASS: TestContainer_Subscribe (0.00s)
+=== RUN   TestContainer_SubscribePublish
+    testutil.go:27: add interest
+    testutil.go:27: add intent
+--- PASS: TestContainer_SubscribePublish (0.01s)
+=== RUN   TestNewIntent
+    testutil.go:27: close intent
+--- PASS: TestNewIntent (0.00s)
+=== RUN   TestLocalIntent_Send
+--- PASS: TestLocalIntent_Send (0.00s)
+=== RUN   TestLocalIntent_Link
+--- PASS: TestLocalIntent_Link (0.00s)
+=== RUN   TestIntentRouter_Creation
+    testutil.go:27: close router
+--- PASS: TestIntentRouter_Creation (0.01s)
+=== RUN   TestIntentRouter_WrapAndSend
+--- PASS: TestIntentRouter_WrapAndSend (0.00s)
+=== RUN   TestIntentRouter_Close
+    testutil.go:27: close router
+--- PASS: TestIntentRouter_Close (0.00s)
+=== RUN   TestIntentRouter_NotifyWrappers
+    intent_test.go:209: Register 1st wrapper
+    intent_test.go:223: register intent
+    intent_test.go:226: register 2nd wrapper
+    intent_test.go:238: Simulate interest notification
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@path
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@path
+    testutil.go:27: close wrapper 2
+==================
+WARNING: DATA RACE
+Read at 0x00c0001ea0a8 by goroutine 66:
+  github.com/itohio/dndm.TestIntentRouter_NotifyWrappers()
+      intent_test.go:261 +0x10b0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Previous write at 0x00c0001ea0a8 by goroutine 76:
+  github.com/itohio/dndm.(*IntentRouter).removeWrapper()
+      intent.go:358 +0x25c
+  github.com/itohio/dndm.(*IntentRouter).addWrapper.func1()
+      intent.go:345 +0x34
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 66 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:120 +0x100
+
+Goroutine 76 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*IntentRouter).addWrapper()
+      intent.go:344 +0x110
+  github.com/itohio/dndm.(*IntentRouter).Wrap()
+      intent.go:336 +0x168
+  github.com/itohio/dndm.TestIntentRouter_NotifyWrappers()
+      intent_test.go:227 +0xa74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+    intent_test.go:213: w1 OnClose
+    testutil.go:27: close wrapper 1
+    testutil.go:27: close router
+    intent_test.go:249: router ctx done
+==================
+WARNING: DATA RACE
+Read at 0x00c0001ea0a8 by goroutine 66:
+  github.com/itohio/dndm.TestIntentRouter_NotifyWrappers()
+      intent_test.go:265 +0x113c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Previous write at 0x00c0001ea0a8 by goroutine 71:
+  github.com/itohio/dndm.(*IntentRouter).removeWrapper()
+      intent.go:358 +0x25c
+  github.com/itohio/dndm.(*IntentRouter).addWrapper.func1()
+      intent.go:345 +0x34
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 66 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:120 +0x100
+
+Goroutine 71 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*IntentRouter).addWrapper()
+      intent.go:344 +0x110
+  github.com/itohio/dndm.(*IntentRouter).Wrap()
+      intent.go:336 +0x168
+  github.com/itohio/dndm.TestIntentRouter_NotifyWrappers()
+      intent_test.go:210 +0x758
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+    intent_test.go:266: Before WaitCalled
+    intent_test.go:268: After WaitCalled
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestIntentRouter_NotifyWrappers (0.00s)
+=== RUN   TestNewInterest
+    testutil.go:27: close interest
+--- PASS: TestNewInterest (0.00s)
+=== RUN   TestLocalInterest_ConcurrentAccess
+--- PASS: TestLocalInterest_ConcurrentAccess (0.00s)
+=== RUN   TestInterestRouter_CreationAndOperation
+    testutil.go:27: close router
+--- PASS: TestInterestRouter_CreationAndOperation (0.00s)
+=== RUN   TestInterestWrapperOperations
+--- PASS: TestInterestWrapperOperations (0.00s)
+=== RUN   TestInterestRouter_Close
+    testutil.go:27: close router
+--- PASS: TestInterestRouter_Close (0.00s)
+=== RUN   TestInterestRouter_MessageRouting
+    interest_test.go:204: Register 1st wrapper
+    interest_test.go:214: register interest
+    interest_test.go:218: register second wrapper
+    interest_test.go:228: Simulate message reception and routing
+--- PASS: TestInterestRouter_MessageRouting (0.00s)
+=== RUN   Test_NewLink
+--- PASS: Test_NewLink (0.00s)
+=== RUN   TestLink_Link
+    testutil.go:27: close link
+--- PASS: TestLink_Link (0.00s)
+=== RUN   Test_NewLinker
+--- PASS: Test_NewLinker (0.00s)
+=== RUN   TestLinker_AddRemoveIntent
+    testutil.go:27: add intent
+--- PASS: TestLinker_AddRemoveIntent (0.00s)
+=== RUN   TestLinker_AddRemoveInterest
+    testutil.go:27: add interest
+    testutil.go:27: close interest
+--- PASS: TestLinker_AddRemoveInterest (0.00s)
+=== RUN   TestLinker_AddIntentInterestSend
+    testutil.go:27: addInterest
+    testutil.go:27: addIntent
+    testutil.go:27: before Link
+2026/11/08 20:11:01 INFO linked route=types.Foo@path intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc00048a9a0
+2026/11/08 20:11:01 INFO unlinked route=types.Foo@path
+==================
+WARNING: DATA RACE
+Read at 0x00c0001545e8 by goroutine 134:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:125 +0x48
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0001545e8 by goroutine 132:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 134 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:138 +0x5b0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 132 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:138 +0x5b0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+    testutil.go:27: close interest
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestLinker_AddIntentInterestSend (0.00s)
+==================
+WARNING: DATA RACE
+Read at 0x00c0004b0990 by goroutine 133:
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:164 +0x74
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0004b0990 by goroutine 137:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:100 +0x33c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 133 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:138 +0x5b0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 137 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:159 +0x908
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0004b0998 by goroutine 130:
+  github.com/itohio/dndm.(*Linker).RemoveInterest()
+      linker.go:227 +0x68
+  github.com/itohio/dndm.(*Linker).addInterestLocked.func1()
+      linker.go:205 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0004b0998 by goroutine 137:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:101 +0x36c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 130 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalInterest).OnClose()
+      interest.go:74 +0x34
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:204 +0x214
+  github.com/itohio/dndm.(*Linker).AddInterest()
+      linker.go:182 +0x98
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:127 +0x3e4
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 137 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm.TestLinker_AddIntentInterestSend()
+      linker_test.go:159 +0x908
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+=== RUN   TestLinker_AddInterestIntentSend
+    testutil.go:27: addIntent
+    testutil.go:27: addInterest
+    testutil.go:27: before Link
+2026/11/08 20:11:01 INFO linked route=types.Foo@path intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000137030
+2026/11/08 20:11:01 INFO unlinked route=types.Foo@path
+--- PASS: TestLinker_AddInterestIntentSend (0.00s)
+==================
+WARNING: DATA RACE
+Write at 0x00c0001547c8 by goroutine 139:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0001547c8 by goroutine 143:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:129 +0x88
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 139 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm.TestLinker_AddInterestIntentSend()
+      linker_test.go:186 +0x3b8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 143 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:218 +0x370
+  github.com/itohio/dndm.(*Linker).AddInterest()
+      linker.go:182 +0x98
+  github.com/itohio/dndm.TestLinker_AddInterestIntentSend()
+      linker_test.go:193 +0x4a0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+=== RUN   TestPeer_String
+==================
+WARNING: DATA RACE
+Read at 0x00c000156960 by goroutine 147:
+  runtime.deductAssistCredit()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/malloc_stubs.go:169 +0x6c
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:88 +0x74
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c000156960 by goroutine 140:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:164 +0x90
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 147 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm.TestLinker_AddInterestIntentSend()
+      linker_test.go:221 +0x8f8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 140 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm.TestLinker_AddInterestIntentSend()
+      linker_test.go:186 +0x3b8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+--- PASS: TestPeer_String (0.00s)
+=== RUN   TestNewPeer
+--- PASS: TestNewPeer (0.00s)
+=== RUN   TestPeerFromString
+--- PASS: TestPeerFromString (0.00s)
+=== RUN   TestPeer_Methods
+--- PASS: TestPeer_Methods (0.00s)
+=== RUN   TestPeer_Equal
+--- PASS: TestPeer_Equal (0.00s)
+=== RUN   TestPeer_HasPrefix
+--- PASS: TestPeer_HasPrefix (0.00s)
+=== RUN   TestRoute_Equal
+=== RUN   TestRoute_Equal/Equal_routes
+=== RUN   TestRoute_Equal/Different_routes
+--- PASS: TestRoute_Equal (0.00s)
+    --- PASS: TestRoute_Equal/Equal_routes (0.00s)
+    --- PASS: TestRoute_Equal/Different_routes (0.00s)
+=== RUN   TestNewRoute
+--- PASS: TestNewRoute (0.00s)
+=== RUN   TestNewHashedRoute
+--- PASS: TestNewHashedRoute (0.00s)
+=== RUN   TestRouteFromString
+--- PASS: TestRouteFromString (0.00s)
+=== RUN   TestRouteFromStringHashed
+--- PASS: TestRouteFromStringHashed (0.00s)
+=== RUN   TestRouteFromStringHashedNoPrefix
+--- PASS: TestRouteFromStringHashedNoPrefix (0.00s)
+FAIL
+FAIL	github.com/itohio/dndm	0.835s
+=== RUN   TestDecodeMessage
+=== RUN   TestDecodeMessage/intent
+=== RUN   TestDecodeMessage/interest
+=== RUN   TestDecodeMessage/ping
+--- PASS: TestDecodeMessage (0.00s)
+    --- PASS: TestDecodeMessage/intent (0.00s)
+    --- PASS: TestDecodeMessage/interest (0.00s)
+    --- PASS: TestDecodeMessage/ping (0.00s)
+PASS
+ok  	github.com/itohio/dndm/codec	1.374s
+?   	github.com/itohio/dndm/endpoint/direct	[no test files]
+?   	github.com/itohio/dndm/endpoint/mesh	[no test files]
+?   	github.com/itohio/dndm/endpoint/remote	[no test files]
+?   	github.com/itohio/dndm/errors	[no test files]
+?   	github.com/itohio/dndm/examples	[no test files]
+?   	github.com/itohio/dndm/examples/bench	[no test files]
+?   	github.com/itohio/dndm/examples/bus_direct	[no test files]
+?   	github.com/itohio/dndm/examples/bus_module	[no test files]
+?   	github.com/itohio/dndm/examples/bus_request	[no test files]
+?   	github.com/itohio/dndm/examples/direct	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/embedded	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/host	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/types	[no test files]
+?   	github.com/itohio/dndm/examples/node	[no test files]
+=== RUN   TestNewFactorySuccess
+--- PASS: TestNewFactorySuccess (0.00s)
+=== RUN   TestNewFactoryDuplicateError
+--- PASS: TestNewFactoryDuplicateError (0.00s)
+=== RUN   TestFactoryDialNotFound
+--- PASS: TestFactoryDialNotFound (0.00s)
+=== RUN   TestFactoryDialSuccess
+--- PASS: TestFactoryDialSuccess (0.00s)
+=== RUN   TestFactoryServe
+--- PASS: TestFactoryServe (0.00s)
+PASS
+ok  	github.com/itohio/dndm/network	2.747s
+?   	github.com/itohio/dndm/network/net	[no test files]
+?   	github.com/itohio/dndm/network/serial	[no test files]
+=== RUN   TestNewWithContext
+--- PASS: TestNewWithContext (0.00s)
+=== RUN   TestStreamContext_Close
+2026/11/08 20:11:01 INFO Stream.Close
+--- PASS: TestStreamContext_Close (0.00s)
+2026/11/08 20:11:01 INFO Stream.Close
+=== RUN   TestStreamContext_Read
+--- PASS: TestStreamContext_Read (0.00s)
+=== RUN   TestStreamContext_Write
+--- PASS: TestStreamContext_Write (0.00s)
+=== RUN   TestStream_CreateClose
+2026/11/08 20:11:01 INFO Stream.Close
+    testutil.go:27: close stream
+--- PASS: TestStream_CreateClose (0.00s)
+=== RUN   TestStream_Read
+--- PASS: TestStream_Read (0.00s)
+=== RUN   TestStream_Write
+--- PASS: TestStream_Write (0.00s)
+PASS
+ok  	github.com/itohio/dndm/network/stream	2.300s
+?   	github.com/itohio/dndm/testutil	[no test files]
+?   	github.com/itohio/dndm/types/core	[no test files]
+?   	github.com/itohio/dndm/types/p2p	[no test files]
+?   	github.com/itohio/dndm/types/test	[no test files]
+=== RUN   TestProducerConsumer
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000220e00
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+==================
+WARNING: DATA RACE
+Read at 0x00c0002211e0 by goroutine 24:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0002211e0 by goroutine 7:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 24 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 7 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0001ab2d0 by goroutine 24:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0001ab2d0 by goroutine 7:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 24 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 7 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@test.producer
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestProducerConsumer (0.00s)
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@test.producer
+==================
+WARNING: DATA RACE
+Read at 0x00c0001bc7c8 by goroutine 19:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:125 +0x48
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0001bc7c8 by goroutine 17:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 19 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm/endpoint/direct.(*Endpoint).Publish()
+      endpoint/direct/direct.go:70 +0x50
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 17 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm/endpoint/direct.(*Endpoint).Publish()
+      endpoint/direct/direct.go:70 +0x50
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestProducerConsumer()
+      x/bus/bus_test.go:140 +0x12c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+=== RUN   TestCallerServiceRoundTrip
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000221730
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000221ce0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@call.resp
+==================
+WARNING: DATA RACE
+Read at 0x00c000221c60 by goroutine 56:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000221c60 by goroutine 30:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 56 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 30 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0001ab890 by goroutine 56:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0001ab890 by goroutine 30:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 56 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 30 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@call.req
+==================
+WARNING: DATA RACE
+Write at 0x00c0001bcf98 by goroutine 49:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0001bcf98 by goroutine 51:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:129 +0x88
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 49 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm/endpoint/direct.(*Endpoint).Publish()
+      endpoint/direct/direct.go:70 +0x50
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 51 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntent()
+      linker.go:121 +0x98
+  github.com/itohio/dndm/endpoint/direct.(*Endpoint).Publish()
+      endpoint/direct/direct.go:70 +0x50
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerServiceRoundTrip()
+      x/bus/bus_test.go:178 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestCallerServiceRoundTrip (0.00s)
+=== RUN   TestCallerHandleReplies
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000116a10
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000116fc0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@stream.resp
+==================
+WARNING: DATA RACE
+Read at 0x00c000116f40 by goroutine 102:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000116f40 by goroutine 76:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerHandleReplies()
+      x/bus/bus_test.go:209 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 102 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerHandleReplies()
+      x/bus/bus_test.go:209 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 76 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@stream.resp
+==================
+WARNING: DATA RACE
+Read at 0x00c000148410 by goroutine 102:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000148410 by goroutine 76:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerHandleReplies()
+      x/bus/bus_test.go:209 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 102 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.NewCaller[go.shape.*uint8,go.shape.*uint8]()
+      x/bus/caller.go:71 +0x70
+  github.com/itohio/dndm/x/bus.TestCallerHandleReplies()
+      x/bus/bus_test.go:209 +0x1ec
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 76 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestCallerHandleReplies (0.00s)
+=== RUN   TestModuleRun
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc0002893b0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000288fc0
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@module.out
+==================
+WARNING: DATA RACE
+Read at 0x00c000289790 by goroutine 163:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000289790 by goroutine 125:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestModuleRun()
+      x/bus/bus_test.go:265 +0x488
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 163 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestModuleRun()
+      x/bus/bus_test.go:265 +0x488
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 125 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0002c4590 by goroutine 163:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0002c4590 by goroutine 125:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestModuleRun()
+      x/bus/bus_test.go:265 +0x488
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 163 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestModuleRun()
+      x/bus/bus_test.go:265 +0x488
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 125 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@module.in
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestModuleRun (0.00s)
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@module.in
+=== RUN   TestStreamProducerConsumer
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xc0002ee7e0
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xc0002ee4d0
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+--- PASS: TestStreamProducerConsumer (0.00s)
+=== RUN   TestStreamStarTopologyBidirectional
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Write at 0x00c00028b120 by goroutine 170:
+  runtime.recvDirect()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:405 +0x7c
+  github.com/itohio/dndm/network/stream.(*contextRW).Close()
+      network/stream/stream.go:145 +0x90
+  github.com/itohio/dndm/network/stream.NewWithContext.func1()
+      network/stream/stream.go:48 +0x34
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c00028b120 by goroutine 179:
+  runtime.chansend1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:162 +0x2c
+  github.com/itohio/dndm/network/stream.(*contextRW).Request()
+      network/stream/stream.go:198 +0x148
+  github.com/itohio/dndm/network/stream.reader.Read()
+      network/stream/stream.go:219 +0x70
+  github.com/itohio/dndm/network/stream.(*reader).Read()
+      <autogenerated>:1 +0x1c
+  github.com/itohio/dndm/codec.ReadMessage()
+      codec/codec.go:87 +0x64
+  github.com/itohio/dndm/network/stream.(*StreamContext).Read()
+      network/stream/stream.go:77 +0x118
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:37 +0x224
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 170 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm/network/stream.NewWithContext()
+      network/stream/stream.go:47 +0x430
+  github.com/itohio/dndm/x/bus.newStreamPair()
+      x/bus/bus_test.go:46 +0x39c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:291 +0x88
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 179 (running) created at:
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:93 +0x2e0
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:293 +0x1f8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://router-b err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Write at 0x00c0000a2a90 by goroutine 217:
+  runtime.recvDirect()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:405 +0x7c
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:72 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c0000a2a90 by goroutine 227:
+  runtime.chansend1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:162 +0x2c
+  github.com/itohio/dndm.(*LocalIntent).Notify()
+      intent.go:137 +0xac
+  github.com/itohio/dndm.(*Link).Link.func1.1()
+      link.go:42 +0x90
+
+Goroutine 217 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 227 (finished) created at:
+  github.com/itohio/dndm.(*Link).Link.func1()
+      link.go:40 +0x84
+  sync.(*Once).doSlow()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/sync/once.go:78 +0x94
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+2026/11/08 20:11:01 INFO Stream.Close
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+==================
+WARNING: DATA RACE
+Write at 0x00c0002aaea0 by goroutine 205:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).unlink()
+      linker.go:274 +0xd0
+  github.com/itohio/dndm.(*Linker).link.func1()
+      linker.go:259 +0x54
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c0002aaea0 by goroutine 178:
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:85 +0x54
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 205 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:257 +0x2b4
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:218 +0x370
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).subscribe()
+      endpoint/remote/remote.go:158 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteInterest()
+      endpoint/remote/messages.go:287 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleInterest()
+      endpoint/remote/messages.go:258 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:90 +0xe4
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 178 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm/network/stream.(*Stream).OnClose()
+      network/stream/stream.go:294 +0x48
+  github.com/itohio/dndm/network/stream.(*StreamContext).OnClose()
+      <autogenerated>:1 +0x18
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:59 +0xd8
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:293 +0x1f8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c000022188 by goroutine 223:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:125 +0x48
+  github.com/itohio/dndm/endpoint/remote.(*RemoteIntent).Link()
+      endpoint/remote/wrappers.go:143 +0x8c
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c000022188 by goroutine 217:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 223 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 217 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+==================
+WARNING: DATA RACE
+Write at 0x00c0002aae40 by goroutine 185:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:164 +0x90
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c0002aae40 by goroutine 253:
+  runtime.deductAssistCredit()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/malloc_stubs.go:169 +0x6c
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:88 +0x74
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 185 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:296 +0x38c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 253 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+==================
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Read at 0x00c0002ab0b0 by goroutine 261:
+  runtime.deductAssistCredit()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/malloc_stubs.go:169 +0x6c
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:94 +0x1f4
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0002ab0b0 by goroutine 198:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).RemoveInterest()
+      linker.go:231 +0xec
+  github.com/itohio/dndm.(*Linker).addInterestLocked.func1()
+      linker.go:205 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 261 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 198 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalInterest).OnClose()
+      interest.go:74 +0x34
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:204 +0x214
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Subscribe()
+      endpoint/remote/remote.go:144 +0xd0
+  github.com/itohio/dndm.(*Router).Subscribe()
+      dndm.go:147 +0x260
+  github.com/itohio/dndm/x/bus.NewConsumer[go.shape.*uint8]()
+      x/bus/consumer.go:30 +0x6c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:300 +0x428
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0002c8450 by goroutine 257:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:88 +0x44
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0002c8450 by goroutine 261:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:100 +0x33c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 257 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 261 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0002c8458 by goroutine 257:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:94 +0x1c4
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0002c8458 by goroutine 261:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:101 +0x36c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 257 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 261 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+==================
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://router-a err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+==================
+WARNING: DATA RACE
+Write at 0x00c0002b13a8 by goroutine 184:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0002b13a8 by goroutine 204:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:129 +0x88
+  github.com/itohio/dndm/endpoint/remote.(*LocalIntent).Link()
+      endpoint/remote/wrappers.go:92 +0x40
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 184 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:296 +0x38c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 204 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:218 +0x370
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).subscribe()
+      endpoint/remote/remote.go:158 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteInterest()
+      endpoint/remote/messages.go:287 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleInterest()
+      endpoint/remote/messages.go:258 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:90 +0xe4
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO messageHandler endpoint=stream://star-b loop=START
+==================
+WARNING: DATA RACE
+Read at 0x00c00028b190 by goroutine 253:
+  runtime.chansend1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:162 +0x2c
+  github.com/itohio/dndm/network/stream.(*contextRW).Request()
+      network/stream/stream.go:198 +0x148
+  github.com/itohio/dndm/network/stream.(*StreamContext).Write()
+      network/stream/stream.go:115 +0x84
+  github.com/itohio/dndm/endpoint/remote.(*LocalIntent).Close()
+      endpoint/remote/wrappers.go:78 +0x1a0
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:89 +0xd8
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c00028b190 by goroutine 170:
+  runtime.recvDirect()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/chan.go:405 +0x7c
+  github.com/itohio/dndm/network/stream.(*contextRW).Close()
+      network/stream/stream.go:145 +0x90
+  github.com/itohio/dndm/network/stream.NewWithContext.func1()
+      network/stream/stream.go:49 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 253 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 170 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm/network/stream.NewWithContext()
+      network/stream/stream.go:47 +0x430
+  github.com/itohio/dndm/x/bus.newStreamPair()
+      x/bus/bus_test.go:46 +0x39c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:291 +0x88
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+==================
+WARNING: DATA RACE
+Write at 0x00c0004120c0 by goroutine 253:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:91 +0x178
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c0004120c0 by goroutine 178:
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:105 +0x188
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 253 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 178 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm/network/stream.(*Stream).OnClose()
+      network/stream/stream.go:294 +0x48
+  github.com/itohio/dndm/network/stream.(*StreamContext).OnClose()
+      <autogenerated>:1 +0x18
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:59 +0xd8
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+  github.com/itohio/dndm/x/bus.TestStreamProducerConsumer()
+      x/bus/bus_test.go:293 +0x1f8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+==================
+WARNING: DATA RACE
+Write at 0x00c0002c8330 by goroutine 253:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:100 +0x33c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0002c8330 by goroutine 263:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:100 +0x33c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 253 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 263 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xc000583650
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xc0005831f0
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xc000117d50
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xc000582310
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+==================
+WARNING: DATA RACE
+Read at 0x00c0002ef640 by goroutine 380:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0002ef640 by goroutine 231:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:342 +0x700
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 380 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:342 +0x700
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 231 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0002c5110 by goroutine 380:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0002c5110 by goroutine 231:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:342 +0x700
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 380 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:342 +0x700
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 231 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xc0005c5260
+2026/11/08 20:11:01 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xc000338ee0
+2026/11/08 20:11:01 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 20:11:01 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xc000338380
+2026/11/08 20:11:01 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xc0003d1730
+2026/11/08 20:11:01 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+==================
+WARNING: DATA RACE
+Read at 0x00c0005c5d40 by goroutine 503:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0005c5d40 by goroutine 231:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:370 +0xab8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 503 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:370 +0xab8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 231 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c000594410 by goroutine 503:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000594410 by goroutine 231:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:370 +0xab8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 503 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:370 +0xab8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 231 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://router-a err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Read at 0x00c0001357a0 by goroutine 264:
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:85 +0x54
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0001357a0 by goroutine 425:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).unlink()
+      linker.go:274 +0xd0
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:163 +0x54
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 264 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm/network/stream.(*Stream).OnClose()
+      network/stream/stream.go:294 +0x48
+  github.com/itohio/dndm/network/stream.(*StreamContext).OnClose()
+      <autogenerated>:1 +0x18
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:59 +0xd8
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://star-b err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://star-b
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:325 +0x54c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 425 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:361 +0x9a0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://star-a err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Read at 0x00c000135860 by goroutine 267:
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:85 +0x54
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Previous write at 0x00c000135860 by goroutine 494:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).unlink()
+      linker.go:274 +0xd0
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:163 +0x54
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 267 (running) created at:
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:93 +0x2e0
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:325 +0x54c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 494 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO Stream.Close
+==================
+WARNING: DATA RACE
+Read at 0x00c0003a5038 by goroutine 465:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:125 +0x48
+  github.com/itohio/dndm/endpoint/remote.(*LocalIntent).Link()
+      endpoint/remote/wrappers.go:92 +0x40
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c0003a5038 by goroutine 424:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 465 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:218 +0x370
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).subscribe()
+      endpoint/remote/remote.go:158 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteInterest()
+      endpoint/remote/messages.go:287 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleInterest()
+      endpoint/remote/messages.go:258 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:90 +0xe4
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 424 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:361 +0x9a0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 ERROR remote.Read endpoint=stream://router-b err="context canceled"
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-b send=Intent.Close err="not enough bytes"
+2026/11/08 20:11:01 INFO RemoteInterest close endpoint=stream://router-b
+==================
+WARNING: DATA RACE
+Write at 0x00c00030c9f8 by goroutine 367:
+  github.com/itohio/dndm.NewIntent.func1()
+      intent.go:73 +0x4c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c00030c9f8 by goroutine 370:
+  github.com/itohio/dndm.(*LocalIntent).Link()
+      intent.go:129 +0x88
+  github.com/itohio/dndm/endpoint/remote.(*RemoteIntent).Link()
+      endpoint/remote/wrappers.go:143 +0x8c
+  github.com/itohio/dndm.NewLink.func1()
+      link.go:28 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 367 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewIntent()
+      intent.go:71 +0x1c4
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:139 +0xf4
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 370 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.NewLink()
+      link.go:28 +0x1c4
+  github.com/itohio/dndm.(*Linker).link()
+      linker.go:256 +0x208
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:154 +0x2f8
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).publish()
+      endpoint/remote/remote.go:133 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteIntent()
+      endpoint/remote/messages.go:222 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleIntent()
+      endpoint/remote/messages.go:193 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:86 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+==================
+WARNING: DATA RACE
+Write at 0x00c0001354d0 by goroutine 336:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).RemoveInterest()
+      linker.go:231 +0xec
+  github.com/itohio/dndm.(*Linker).addInterestLocked.func1()
+      linker.go:205 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c0001354d0 by goroutine 525:
+  runtime.mapIterStart()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/map.go:156 +0x9c
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:94 +0x200
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 336 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalInterest).OnClose()
+      interest.go:74 +0x34
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:204 +0x214
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Subscribe()
+      endpoint/remote/remote.go:144 +0xd0
+  github.com/itohio/dndm.(*Router).Subscribe()
+      dndm.go:147 +0x260
+2026/11/08 20:11:01 INFO Remote.Close endpoint=stream://router-a
+  github.com/itohio/dndm/x/bus.NewConsumer[go.shape.*uint8]()
+      x/bus/consumer.go:30 +0x6c
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:338 +0x660
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 525 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+==================
+2026/11/08 20:11:01 INFO Stream.Close
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 20:11:01 INFO RemoteInterest close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+==================
+WARNING: DATA RACE
+Write at 0x00c000135740 by goroutine 425:
+  runtime.mapassign_faststr()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/internal/runtime/maps/runtime_faststr.go:261 +0x4dc
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:164 +0x90
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c000135740 by goroutine 531:
+  runtime.mapIterStart()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/map.go:156 +0x9c
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:88 +0x80
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 425 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:361 +0x9a0
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 531 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+==================
+WARNING: DATA RACE
+Write at 0x00c000120638 by goroutine 525:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:101 +0x36c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c000120638 by goroutine 336:
+  github.com/itohio/dndm.(*Linker).RemoveInterest()
+      linker.go:231 +0xd0
+  github.com/itohio/dndm.(*Linker).addInterestLocked.func1()
+      linker.go:205 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 525 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 336 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalInterest).OnClose()
+      interest.go:74 +0x34
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:204 +0x214
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Subscribe()
+      endpoint/remote/remote.go:144 +0xd0
+  github.com/itohio/dndm.(*Router).Subscribe()
+      dndm.go:147 +0x260
+  github.com/itohio/dndm/x/bus.NewConsumer[go.shape.*uint8]()
+      x/bus/consumer.go:30 +0x6c
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:338 +0x660
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+==================
+WARNING: DATA RACE
+Read at 0x00c000120630 by goroutine 489:
+  github.com/itohio/dndm.(*Linker).RemoveIntent()
+      linker.go:164 +0x74
+  github.com/itohio/dndm.(*Linker).addIntentLocked.func1()
+      linker.go:141 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous write at 0x00c000120630 by goroutine 525:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:100 +0x33c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 489 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalIntent).OnClose()
+      intent.go:79 +0x34
+  github.com/itohio/dndm.(*Linker).addIntentLocked()
+      linker.go:140 +0x19c
+  github.com/itohio/dndm.(*Linker).AddIntentWithWrapper()
+      linker.go:129 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Publish()
+      endpoint/remote/remote.go:119 +0xd0
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:106 +0x260
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:370 +0xab8
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 525 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.func1()
+      endpoint/remote/remote.go:59 +0x2c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+==================
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+==================
+WARNING: DATA RACE
+Write at 0x00c000140c18 by goroutine 519:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:91 +0x178
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c000140c18 by goroutine 267:
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:105 +0x188
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 519 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 267 (running) created at:
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init()
+      endpoint/remote/remote.go:93 +0x2e0
+  github.com/itohio/dndm.New()
+      dndm.go:42 +0x568
+  github.com/itohio/dndm/x/bus.newRouterWithEndpoints()
+      x/bus/bus_test.go:22 +0x12c
+  github.com/itohio/dndm/x/bus.TestStreamStarTopologyBidirectional()
+      x/bus/bus_test.go:325 +0x54c
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+==================
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://router-b send=Intent.Close err="not enough bytes"
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+==================
+WARNING: DATA RACE
+Write at 0x00c000120638 by goroutine 528:
+  github.com/itohio/dndm.(*Linker).Close.func1()
+      linker.go:101 +0x36c
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Previous read at 0x00c000120638 by goroutine 432:
+  github.com/itohio/dndm.(*Linker).RemoveInterest()
+      linker.go:227 +0x68
+  github.com/itohio/dndm.(*Linker).addInterestLocked.func1()
+      linker.go:205 +0x40
+  github.com/itohio/dndm.(*Base).AddOnClose.func1()
+      endpoint.go:84 +0x58
+
+Goroutine 528 (running) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*Linker).Close()
+      linker.go:87 +0x154
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Close()
+      endpoint/remote/remote.go:112 +0x16c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:40 +0x7d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+
+Goroutine 432 (finished) created at:
+  github.com/itohio/dndm.(*Base).AddOnClose()
+      endpoint.go:82 +0xc4
+  github.com/itohio/dndm.(*LocalInterest).OnClose()
+      interest.go:74 +0x34
+  github.com/itohio/dndm.(*Linker).addInterestLocked()
+      linker.go:204 +0x214
+  github.com/itohio/dndm.(*Linker).AddInterestWithWrapper()
+      linker.go:190 +0x98
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).subscribe()
+      endpoint/remote/remote.go:158 +0xec
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleRemoteInterest()
+      endpoint/remote/messages.go:287 +0x74
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleInterest()
+      endpoint/remote/messages.go:258 +0x4c
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).handleMessage()
+      endpoint/remote/messages.go:90 +0xe4
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:52 +0x3d8
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:93 +0x2c
+==================
+2026/11/08 20:11:01 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 20:11:01 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 20:11:01 INFO RemoteInterest close endpoint=stream://router-a
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestStreamStarTopologyBidirectional (0.02s)
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+=== RUN   TestStreamSensorHostWorkflow
+2026/11/08 20:11:01 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 20:11:01 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000339810
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+==================
+WARNING: DATA RACE
+Read at 0x00c000370f40 by goroutine 631:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000370f40 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:440 +0x890
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 631 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:440 +0x890
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c000374890 by goroutine 631:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000374890 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:440 +0x890
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 631 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:440 +0x890
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000339c70
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+==================
+WARNING: DATA RACE
+Read at 0x00c000371100 by goroutine 642:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000371100 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:444 +0x940
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 642 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:444 +0x940
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c000374a10 by goroutine 642:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000374a10 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:444 +0x940
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 642 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:444 +0x940
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000371180
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc0005105b0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc0005107e0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000370540
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+==================
+WARNING: DATA RACE
+Read at 0x00c000510b50 by goroutine 689:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000510b50 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:461 +0xc00
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 689 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:461 +0xc00
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c0005204d0 by goroutine 689:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c0005204d0 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:461 +0xc00
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 689 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:461 +0xc00
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000510bd0
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc000510e00
+2026/11/08 20:11:01 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xc0003709a0
+2026/11/08 20:11:01 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+==================
+WARNING: DATA RACE
+Read at 0x00c000511170 by goroutine 724:
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:269 +0x15c
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000511170 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:324 +0x164
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:474 +0xe10
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 724 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:474 +0xe10
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+==================
+WARNING: DATA RACE
+Read at 0x00c000520950 by goroutine 724:
+  runtime.raceread()
+      <autogenerated>:1 +0x10
+  github.com/itohio/dndm.(*IntentRouter).Notify-fm()
+      <autogenerated>:1 +0x2c
+  github.com/itohio/dndm.(*FanOutIntent).notifyRunner()
+      intent.go:270 +0x180
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent.gowrap2()
+      intent.go:238 +0x54
+
+Previous write at 0x00c000520950 by goroutine 539:
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:320 +0x80
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:474 +0xe10
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 724 (running) created at:
+  github.com/itohio/dndm.(*FanOutIntent).AddIntent()
+      intent.go:238 +0x3b8
+  github.com/itohio/dndm.NewFanOutIntent()
+      intent.go:159 +0x134
+  github.com/itohio/dndm.NewIntentRouter()
+      intent.go:316 +0x60
+  github.com/itohio/dndm.(*Router).Publish()
+      dndm.go:119 +0x40c
+  github.com/itohio/dndm/x/bus.NewProducer[go.shape.*uint8]()
+      x/bus/producer.go:30 +0x60
+  github.com/itohio/dndm/x/bus.TestStreamSensorHostWorkflow()
+      x/bus/bus_test.go:474 +0xe10
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.(*T).Run.gowrap1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x34
+
+Goroutine 539 (running) created at:
+  testing.(*T).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2260 +0x7bc
+  testing.runTests.func1()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2744 +0x74
+  testing.tRunner()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2195 +0x164
+  testing.runTests()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2742 +0x7a0
+  testing.(*M).Run()
+      /opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:2602 +0xb38
+  main.main()
+      _testmain.go:58 +0x100
+==================
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 20:11:01 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 20:11:01 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+    testing.go:1867: race detected during execution of test
+--- FAIL: TestStreamSensorHostWorkflow (0.00s)
+FAIL
+FAIL	github.com/itohio/dndm/x/bus	0.954s
+FAIL
+test_exit=1

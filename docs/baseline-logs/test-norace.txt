@@ -1,0 +1,413 @@
+=== RUN   Test_NewContainer
+    testutil.go:27: on close
+--- PASS: Test_NewContainer (0.11s)
+=== RUN   TestContainer_AddEndpoint
+--- PASS: TestContainer_AddEndpoint (0.01s)
+=== RUN   TestContainer_RemoveEndpoint
+--- PASS: TestContainer_RemoveEndpoint (0.00s)
+=== RUN   TestContainer_Publish
+    testutil.go:27: add intent
+--- PASS: TestContainer_Publish (0.00s)
+=== RUN   TestContainer_Subscribe
+    testutil.go:27: add interest
+--- PASS: TestContainer_Subscribe (0.00s)
+=== RUN   TestContainer_SubscribePublish
+    testutil.go:27: add interest
+    testutil.go:27: add intent
+--- PASS: TestContainer_SubscribePublish (0.00s)
+=== RUN   TestNewIntent
+    testutil.go:27: close intent
+--- PASS: TestNewIntent (0.00s)
+=== RUN   TestLocalIntent_Send
+--- PASS: TestLocalIntent_Send (0.00s)
+=== RUN   TestLocalIntent_Link
+--- PASS: TestLocalIntent_Link (0.00s)
+=== RUN   TestIntentRouter_Creation
+    testutil.go:27: close router
+--- PASS: TestIntentRouter_Creation (0.01s)
+=== RUN   TestIntentRouter_WrapAndSend
+--- PASS: TestIntentRouter_WrapAndSend (0.00s)
+=== RUN   TestIntentRouter_Close
+    testutil.go:27: close router
+--- PASS: TestIntentRouter_Close (0.00s)
+=== RUN   TestIntentRouter_NotifyWrappers
+    intent_test.go:209: Register 1st wrapper
+    intent_test.go:223: register intent
+    intent_test.go:226: register 2nd wrapper
+    intent_test.go:238: Simulate interest notification
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@path
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@path
+    testutil.go:27: close wrapper 2
+    intent_test.go:249: router ctx done
+    intent_test.go:213: w1 OnClose
+    testutil.go:27: close wrapper 1
+    testutil.go:27: close router
+    intent_test.go:266: Before WaitCalled
+    intent_test.go:268: After WaitCalled
+--- PASS: TestIntentRouter_NotifyWrappers (0.00s)
+=== RUN   TestNewInterest
+    testutil.go:27: close interest
+--- PASS: TestNewInterest (0.00s)
+=== RUN   TestLocalInterest_ConcurrentAccess
+--- PASS: TestLocalInterest_ConcurrentAccess (0.00s)
+=== RUN   TestInterestRouter_CreationAndOperation
+    testutil.go:27: close router
+--- PASS: TestInterestRouter_CreationAndOperation (0.00s)
+=== RUN   TestInterestWrapperOperations
+--- PASS: TestInterestWrapperOperations (0.00s)
+=== RUN   TestInterestRouter_Close
+    testutil.go:27: close router
+--- PASS: TestInterestRouter_Close (0.00s)
+=== RUN   TestInterestRouter_MessageRouting
+    interest_test.go:204: Register 1st wrapper
+    interest_test.go:214: register interest
+    interest_test.go:218: register second wrapper
+    interest_test.go:228: Simulate message reception and routing
+--- PASS: TestInterestRouter_MessageRouting (0.00s)
+=== RUN   Test_NewLink
+--- PASS: Test_NewLink (0.00s)
+=== RUN   TestLink_Link
+    testutil.go:27: close link
+--- PASS: TestLink_Link (0.00s)
+=== RUN   Test_NewLinker
+--- PASS: Test_NewLinker (0.00s)
+=== RUN   TestLinker_AddRemoveIntent
+    testutil.go:27: add intent
+--- PASS: TestLinker_AddRemoveIntent (0.00s)
+=== RUN   TestLinker_AddRemoveInterest
+    testutil.go:27: add interest
+    testutil.go:27: close interest
+--- PASS: TestLinker_AddRemoveInterest (0.00s)
+=== RUN   TestLinker_AddIntentInterestSend
+    testutil.go:27: addInterest
+    testutil.go:27: addIntent
+    testutil.go:27: before Link
+2026/11/08 19:42:31 INFO linked route=types.Foo@path intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x49a699e40bd0
+2026/11/08 19:42:31 INFO unlinked route=types.Foo@path
+    testutil.go:27: close interest
+--- PASS: TestLinker_AddIntentInterestSend (0.01s)
+=== RUN   TestLinker_AddInterestIntentSend
+    testutil.go:27: addIntent
+    testutil.go:27: addInterest
+    testutil.go:27: before Link
+2026/11/08 19:42:31 INFO linked route=types.Foo@path intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x49a699e40ee0
+2026/11/08 19:42:31 INFO unlinked route=types.Foo@path
+    testutil.go:27: remove Interest
+--- PASS: TestLinker_AddInterestIntentSend (0.00s)
+=== RUN   TestPeer_String
+--- PASS: TestPeer_String (0.00s)
+=== RUN   TestNewPeer
+--- PASS: TestNewPeer (0.00s)
+=== RUN   TestPeerFromString
+--- PASS: TestPeerFromString (0.00s)
+=== RUN   TestPeer_Methods
+--- PASS: TestPeer_Methods (0.00s)
+=== RUN   TestPeer_Equal
+--- PASS: TestPeer_Equal (0.00s)
+=== RUN   TestPeer_HasPrefix
+--- PASS: TestPeer_HasPrefix (0.00s)
+=== RUN   TestRoute_Equal
+=== RUN   TestRoute_Equal/Equal_routes
+=== RUN   TestRoute_Equal/Different_routes
+--- PASS: TestRoute_Equal (0.00s)
+    --- PASS: TestRoute_Equal/Equal_routes (0.00s)
+    --- PASS: TestRoute_Equal/Different_routes (0.00s)
+=== RUN   TestNewRoute
+--- PASS: TestNewRoute (0.00s)
+=== RUN   TestNewHashedRoute
+--- PASS: TestNewHashedRoute (0.00s)
+=== RUN   TestRouteFromString
+--- PASS: TestRouteFromString (0.00s)
+=== RUN   TestRouteFromStringHashed
+--- PASS: TestRouteFromStringHashed (0.00s)
+=== RUN   TestRouteFromStringHashedNoPrefix
+--- PASS: TestRouteFromStringHashedNoPrefix (0.00s)
+PASS
+ok  	github.com/itohio/dndm	1.610s
+=== RUN   TestDecodeMessage
+=== RUN   TestDecodeMessage/intent
+=== RUN   TestDecodeMessage/interest
+=== RUN   TestDecodeMessage/ping
+--- PASS: TestDecodeMessage (0.00s)
+    --- PASS: TestDecodeMessage/intent (0.00s)
+    --- PASS: TestDecodeMessage/interest (0.00s)
+    --- PASS: TestDecodeMessage/ping (0.00s)
+PASS
+ok  	github.com/itohio/dndm/codec	0.373s
+?   	github.com/itohio/dndm/endpoint/direct	[no test files]
+?   	github.com/itohio/dndm/endpoint/mesh	[no test files]
+?   	github.com/itohio/dndm/endpoint/remote	[no test files]
+?   	github.com/itohio/dndm/errors	[no test files]
+?   	github.com/itohio/dndm/examples	[no test files]
+?   	github.com/itohio/dndm/examples/bench	[no test files]
+?   	github.com/itohio/dndm/examples/bus_direct	[no test files]
+?   	github.com/itohio/dndm/examples/bus_module	[no test files]
+?   	github.com/itohio/dndm/examples/bus_request	[no test files]
+?   	github.com/itohio/dndm/examples/direct	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/embedded	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/host	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/types	[no test files]
+?   	github.com/itohio/dndm/examples/node	[no test files]
+=== RUN   TestNewFactorySuccess
+--- PASS: TestNewFactorySuccess (0.00s)
+=== RUN   TestNewFactoryDuplicateError
+--- PASS: TestNewFactoryDuplicateError (0.00s)
+=== RUN   TestFactoryDialNotFound
+--- PASS: TestFactoryDialNotFound (0.00s)
+=== RUN   TestFactoryDialSuccess
+--- PASS: TestFactoryDialSuccess (0.00s)
+=== RUN   TestFactoryServe
+--- PASS: TestFactoryServe (0.00s)
+PASS
+ok  	github.com/itohio/dndm/network	0.638s
+?   	github.com/itohio/dndm/network/net	[no test files]
+?   	github.com/itohio/dndm/network/serial	[no test files]
+=== RUN   TestNewWithContext
+--- PASS: TestNewWithContext (0.00s)
+=== RUN   TestStreamContext_Close
+2026/11/08 19:42:30 INFO Stream.Close
+--- PASS: TestStreamContext_Close (0.00s)
+=== RUN   TestStreamContext_Read
+2026/11/08 19:42:30 INFO Stream.Close
+--- PASS: TestStreamContext_Read (0.00s)
+=== RUN   TestStreamContext_Write
+--- PASS: TestStreamContext_Write (0.00s)
+=== RUN   TestStream_CreateClose
+2026/11/08 19:42:30 INFO Stream.Close
+    testutil.go:27: close stream
+--- PASS: TestStream_CreateClose (0.00s)
+=== RUN   TestStream_Read
+--- PASS: TestStream_Read (0.00s)
+=== RUN   TestStream_Write
+--- PASS: TestStream_Write (0.00s)
+PASS
+ok  	github.com/itohio/dndm/network/stream	0.908s
+?   	github.com/itohio/dndm/testutil	[no test files]
+?   	github.com/itohio/dndm/types/core	[no test files]
+?   	github.com/itohio/dndm/types/p2p	[no test files]
+?   	github.com/itohio/dndm/types/test	[no test files]
+=== RUN   TestProducerConsumer
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c82ce00
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@test.producer
+--- PASS: TestProducerConsumer (0.00s)
+=== RUN   TestCallerServiceRoundTrip
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c8904d0
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c890a80
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@call.resp
+--- PASS: TestCallerServiceRoundTrip (0.00s)
+=== RUN   TestCallerHandleReplies
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c8f4700
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c8f4cb0
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@stream.resp
+--- PASS: TestCallerHandleReplies (0.00s)
+=== RUN   TestModuleRun
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c8f5570
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c8f5180
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@module.in
+--- PASS: TestModuleRun (0.00s)
+=== RUN   TestStreamProducerConsumer
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 19:42:31 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xa306c9aa3f0
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xa306c9aa0e0
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+--- PASS: TestStreamProducerConsumer (0.00s)
+=== RUN   TestStreamStarTopologyBidirectional
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://router-b err="context canceled"
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://router-a err="context canceled"
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xa306c85a4d0
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xa306c79e690
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xa306c82d8f0
+2026/11/08 19:42:31 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xa306c9aae00
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xa306ca00770
+2026/11/08 19:42:31 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xa306ca00540
+2026/11/08 19:42:31 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 19:42:31 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0xa306c9d3490
+2026/11/08 19:42:31 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0xa306c9d36c0
+2026/11/08 19:42:31 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://star-a err="context canceled"
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://star-b err="context canceled"
+--- PASS: TestStreamStarTopologyBidirectional (0.00s)
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO Stream.Close
+=== RUN   TestStreamSensorHostWorkflow
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://router-a err="context canceled"
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 19:42:31 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 19:42:31 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 19:42:31 ERROR remote.Read endpoint=stream://router-b err="context canceled"
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 19:42:31 INFO Stream.Close
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306ca01d50
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c9f93b0
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306cb068c0
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306cb06af0
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306cb06d20
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306c9f9b20
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306cb07110
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306ca420e0
+2026/11/08 19:42:31 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 19:42:31 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0xa306cb060e0
+2026/11/08 19:42:31 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 19:42:31 INFO Notify wrappers route=types.Foo@topology.intentC
+--- PASS: TestStreamSensorHostWorkflow (0.00s)
+PASS
+ok  	github.com/itohio/dndm/x/bus	1.185s
+test_exit=0

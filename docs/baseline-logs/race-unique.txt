@@ -1,0 +1,24 @@
+55 reports, 23 unique access pairs
+github.com/itohio/dndm.(*IntentRouter).removeWrapper() intent.go:358 <-> github.com/itohio/dndm.TestIntentRouter_NotifyWrappers() intent_test.go:261 | TestIntentRouter_NotifyWrappers
+github.com/itohio/dndm.(*IntentRouter).removeWrapper() intent.go:358 <-> github.com/itohio/dndm.TestIntentRouter_NotifyWrappers() intent_test.go:265 | TestIntentRouter_NotifyWrappers
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:227 | TestLinker_AddRemoveInterest,TestStreamProducerConsumer
+github.com/itohio/dndm.(*LocalIntent).Link() intent.go:125 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:73 | TestLinker_AddIntentInterestSend,TestStreamProducerConsumer
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 <-> github.com/itohio/dndm.(*Linker).RemoveIntent() linker.go:164 | TestLinker_AddIntentInterestSend,TestStreamProducerConsumer
+github.com/itohio/dndm.(*LocalIntent).Link() intent.go:129 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:73 | TestLinker_AddInterestIntentSend,TestProducerConsumer,TestStreamProducerConsumer,TestStreamSensorHostWorkflow,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:88 <-> github.com/itohio/dndm.(*Linker).RemoveIntent() linker.go:164 | TestLinker_AddInterestIntentSend,TestStreamProducerConsumer,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*FanOutIntent).notifyRunner() intent.go:269 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:324 | TestCallerHandleReplies,TestCallerServiceRoundTrip,TestModuleRun,TestProducerConsumer,TestStreamSensorHostWorkflow,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*FanOutIntent).notifyRunner() intent.go:270 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:320 | TestCallerHandleReplies,TestCallerServiceRoundTrip,TestModuleRun,TestProducerConsumer,TestStreamSensorHostWorkflow,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*FanInInterest).recvRunner() interest.go:179 <-> github.com/itohio/dndm.NewInterestRouter() interest.go:234 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*FanInInterest).recvRunner() interest.go:180 <-> github.com/itohio/dndm.NewInterestRouter() interest.go:230 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*InterestRouter).routeMsg() interest.go:283 <-> github.com/itohio/dndm.NewInterestRouter() interest.go:230 | TestStreamProducerConsumer
+github.com/itohio/dndm/network/stream.(*contextRW).Close() network/stream/stream.go:145 <-> github.com/itohio/dndm/network/stream.(*contextRW).Request() network/stream/stream.go:198 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*LocalIntent).Notify() intent.go:137 <-> github.com/itohio/dndm.NewIntent.func1() intent.go:72 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*Linker).Close() linker.go:105 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:97 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:94 | TestStreamProducerConsumer
+github.com/itohio/dndm.(*Linker).Close() linker.go:85 <-> github.com/itohio/dndm.(*Linker).unlink() linker.go:274 | TestStreamProducerConsumer,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close() linker.go:105 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:91 | TestStreamProducerConsumer,TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:94 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:231 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:100 <-> github.com/itohio/dndm.(*Linker).Close.func1() linker.go:88 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*Linker).Close.func1() linker.go:101 <-> github.com/itohio/dndm.(*Linker).RemoveInterest() linker.go:231 | TestStreamStarTopologyBidirectional
+github.com/itohio/dndm.(*IntentRouter).Notify() intent.go:370 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:320 | TestStreamSensorHostWorkflow
+github.com/itohio/dndm.(*IntentRouter).Notify() intent.go:372 <-> github.com/itohio/dndm.NewIntentRouter() intent.go:320 | TestStreamSensorHostWorkflow

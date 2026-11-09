@@ -1,0 +1,11 @@
+valid frame len=57
+P1 whole reader: err=<nil>
+P2 one-byte reader: err=not enough bytes
+P3 half reader: err=not enough bytes
+P4 size=0: ReadMessage len=0 err=EOF
+P4 size=1: ReadMessage len=1 err=<nil>
+P4 size=1: DecodeMessage PANIC: runtime error: index out of range [3] with length 1
+P4 size=3: ReadMessage len=3 err=<nil>
+P4 size=3: DecodeMessage PANIC: runtime error: index out of range [3] with length 3
+P5 header-only body: DecodeMessage PANIC: runtime error: index out of range [3] with length 0
+P6 size=2^28 then EOF: err=EOF TotalAlloc delta=256 MiB
