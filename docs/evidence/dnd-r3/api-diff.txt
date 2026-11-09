@@ -1,0 +1,18 @@
+# go doc -all, pinned tree (git archive c7b5b61) vs working tree; exported declarations only ('<' pin, '>' working tree)
+== .
+> type ReadyEndpoint interface {
+> 	Ready() bool
+== ./codec
+> const DefaultMaxFrameSize = 4 << 20
+> func ReadMessageLimit(r io.Reader, max int) ([]byte, uint64, error)
+== ./errors
+> 	ErrBadFrame           = errors.New("bad frame")
+== ./network/stream
+== ./endpoint/remote
+== ./endpoint/direct
+== ./endpoint/mesh
+> func (h *Handshaker) OnReady(f func())
+> func (h *Handshaker) Ready() bool
+== ./network
+== ./network/serial
+== ./x/bus

@@ -1,0 +1,4 @@
+$ go test -race -count=3 -tags dndm_nonce_counter ./x/bus
+ok  	github.com/itohio/dndm/x/bus	5.401s
+$ go test -race -count=3 -tags dndm_nonce_random ./x/bus
+ok  	github.com/itohio/dndm/x/bus	5.417s

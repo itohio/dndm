@@ -1,0 +1,14 @@
+# DND-R5 nonce + streaming tests AFTER the fix; 2026-11-08T21:40:41Z
+$ go test -race -count=30 -run 'TestCallerPredictedNonceForgery|TestCallerStreamingRepliesKeepCallIdentity|TestCaller' ./x/bus  (default build: crypto)
+ok  	github.com/itohio/dndm/x/bus	27.462s
+$ go test -race -count=3 -tags dndm_nonce_counter ./x/bus  (whole package, other default)
+ok  	github.com/itohio/dndm/x/bus	4.586s
+$ go test -race -count=3 -tags dndm_nonce_random ./x/bus  (whole package, other default)
+ok  	github.com/itohio/dndm/x/bus	4.548s
+$ go test -count=1 -run "TestCallerPredictedNonceForgery|TestCallerStreamingRepliesKeepCallIdentity" -v ./x/bus
+--- PASS: TestCallerPredictedNonceForgery (0.00s)
+    --- PASS: TestCallerPredictedNonceForgery/counter (0.00s)
+    --- PASS: TestCallerPredictedNonceForgery/random (0.00s)
+    --- PASS: TestCallerPredictedNonceForgery/crypto (0.00s)
+--- PASS: TestCallerStreamingRepliesKeepCallIdentity (0.05s)
+ok  	github.com/itohio/dndm/x/bus	0.377s

@@ -1,0 +1,11 @@
+# x/bus flake comparison, go test -count=20 -timeout 900s ./x/bus (no -race), 2026-11-08
+## pinned tree c7b5b61 (git archive into _scratch)
+      1 FAIL	github.com/itohio/dndm/x/bus	55.625s
+      1 --- FAIL: TestCallerServiceRoundTrip
+      2 --- FAIL: TestModuleRun
+      2 --- FAIL: TestStreamSensorHostWorkflow
+      4 --- FAIL: TestStreamStarTopologyBidirectional
+## working tree (DND-018 + DND-001)
+      1 FAIL	github.com/itohio/dndm/x/bus	60.502s
+      2 --- FAIL: TestStreamProducerConsumer
+      5 --- FAIL: TestStreamStarTopologyBidirectional

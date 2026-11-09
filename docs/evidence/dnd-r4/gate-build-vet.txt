@@ -1,0 +1,6 @@
+# 2026-11-08T20:38:01Z go build ./...
+build_exit=0
+# go vet ./...
+vet_exit=0
+# gofmt -l .
+gofmt_done

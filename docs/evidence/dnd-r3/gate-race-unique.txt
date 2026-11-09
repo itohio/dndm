@@ -1,0 +1,2 @@
+1 reports, 1 unique access pairs
+github.com/itohio/dndm.(*LocalIntent).Send() intent.go:121 <-> github.com/itohio/dndm.NewInterest.func1() interest.go:68 | TestStreamStarTopologyBidirectional

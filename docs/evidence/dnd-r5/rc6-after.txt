@@ -1,0 +1,17 @@
+# RC6 tests AFTER the fix; 2026-11-08T21:48:23Z
+$ go test -race -count=30 -run 'TestLinker_InterestClose|TestFanInInterest_CloseWhileForwarding' .
+      1 ok  	github.com/itohio/dndm	5.948s
+$ go test -count=100 -run 'TestLinker_InterestClose|TestFanInInterest_CloseWhileForwarding' .
+      1 ok  	github.com/itohio/dndm	14.040s
+$ go test -race -count=10 . (whole root package)
+      1 ok  	github.com/itohio/dndm	4.866s
+
+## TestLinker_ContextCancelDuringSends; 2026-11-08T21:49:24Z
+$ go test -race -count=30 -run TestLinker_ContextCancelDuringSends .
+      1 ok  	github.com/itohio/dndm	3.831s
+## Ablation: working tree copy with only the `<-l.unlinked` wait removed from Link.Close
+$ go test -race -count=10 -run TestLinker_ContextCancelDuringSends .
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm	0.563s
+      9 --- FAIL: TestLinker_ContextCancelDuringSends
+      1 WARNING: DATA RACE

@@ -1,0 +1,14 @@
+# Final race gate with GOFLAGS=-mod=readonly; 2026-11-08T22:01:51Z
+$ go test -race -count=3 -timeout 900s ./...
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm	2.513s
+      1 --- FAIL: TestContainer_Publish (0.03s)
+      1 ok  	github.com/itohio/dndm/codec	1.389s
+      1 ok  	github.com/itohio/dndm/endpoint/mesh	3.241s
+      1 ok  	github.com/itohio/dndm/endpoint/remote	2.145s
+      1 ok  	github.com/itohio/dndm/network	1.945s
+      1 ok  	github.com/itohio/dndm/network/net	2.396s
+      1 ok  	github.com/itohio/dndm/network/stream	2.778s
+      1 ok  	github.com/itohio/dndm/x/bus	6.386s
+$ git status --short go.mod go.sum (dndm)
+(end)

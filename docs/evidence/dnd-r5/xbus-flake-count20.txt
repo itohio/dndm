@@ -1,0 +1,6 @@
+# x/bus x20; 2026-11-08T21:57:34Z
+$ go test -count=20 -timeout 900s ./x/bus
+      1 ok  	github.com/itohio/dndm/x/bus	20.997s
+$ go test -race -count=20 -timeout 900s ./x/bus
+      1 ok  	github.com/itohio/dndm/x/bus	22.854s
+DATA RACE reports: 0

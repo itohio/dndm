@@ -1,0 +1,11 @@
+# 2026-11-08T21:59:31Z EasyRobot abb5c9c, dndm working tree after DND-R5; GOFLAGS=-mod=readonly
+$ go build -o /dev/null ./cmd/display/destination ./cmd/manipulator ./drivers/lidar ./drivers/manipulator
+package github.com/itohio/EasyRobot/drivers/manipulator: build constraints exclude all Go files in ../EasyRobot/drivers/manipulator
+exit=1
+# per package
+./cmd/display/destination exit=1
+./cmd/manipulator exit=0
+./drivers/lidar exit=1
+./drivers/manipulator exit=1
+# git status --short (EasyRobot, read-only check)
+?? docs/

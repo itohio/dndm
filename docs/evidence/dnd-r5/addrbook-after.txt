@@ -1,0 +1,5 @@
+# Addrbook dialing flag test AFTER the fix; 2026-11-08T21:55:45Z
+$ go test -race -count=30 -run TestAddrbookEntry_IsActiveWhileDialing ./endpoint/mesh
+      1 ok  	github.com/itohio/dndm/endpoint/mesh	1.451s
+$ go test -race -count=3 ./endpoint/mesh
+      1 ok  	github.com/itohio/dndm/endpoint/mesh	2.637s

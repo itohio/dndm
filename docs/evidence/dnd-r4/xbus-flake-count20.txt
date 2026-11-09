@@ -1,0 +1,10 @@
+# x/bus -count=20, 2026-11-08
+## pin: 9 failures without -race (../dnd-r2/xbus-flake-count20.txt); after DND-R2: 7; after DND-R3: 10 (../dnd-r3/xbus-flake-count20.txt)
+## after DND-R4, final working tree, without -race
+      1 ok  	github.com/itohio/dndm/x/bus	16.039s
+## after DND-R4, final working tree, with -race
+      1 ok  	github.com/itohio/dndm/x/bus	17.621s
+race reports: 0
+## new DND-R4 tests alone: -count=60 (forwarding + shared-path) and -count=200 (shared-path), without -race
+ok  	github.com/itohio/dndm/x/bus	11.215s
+ok  	github.com/itohio/dndm/x/bus	0.431s

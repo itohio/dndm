@@ -1,0 +1,28 @@
+# Streaming identity test at the pin (pinned tree + Dropped() step 0 + caller_test.go helpers + this test); 2026-11-08T21:39:42Z
+        	            	expected: []string{"b1", "b2", "b3"}
+        	            	actual  : []string{"b1", "a2", "b2", "a3", "b3"}
+        	            	--- Expected
+        	Messages:   	call b received another call's chunk
+        	            	expected: int(2)
+        	            	actual  : uint64(0x0)
+        	Messages:   	a2 and a3 belong to an ended call
+--- FAIL: TestCallerStreamingRepliesKeepCallIdentity (0.05s)
+        	            	expected: []string{"b1", "b2", "b3"}
+        	            	actual  : []string{"b1", "a2", "b2", "a3", "b3"}
+        	            	--- Expected
+        	Messages:   	call b received another call's chunk
+        	            	expected: int(2)
+        	            	actual  : uint64(0x0)
+        	Messages:   	a2 and a3 belong to an ended call
+--- FAIL: TestCallerStreamingRepliesKeepCallIdentity (0.05s)
+        	            	expected: []string{"b1", "b2", "b3"}
+        	            	actual  : []string{"b1", "a2", "b2", "a3", "b3"}
+        	            	--- Expected
+        	Messages:   	call b received another call's chunk
+        	            	expected: int(2)
+        	            	actual  : uint64(0x0)
+        	Messages:   	a2 and a3 belong to an ended call
+--- FAIL: TestCallerStreamingRepliesKeepCallIdentity (0.05s)
+FAIL
+FAIL	github.com/itohio/dndm/x/bus	0.456s
+FAIL

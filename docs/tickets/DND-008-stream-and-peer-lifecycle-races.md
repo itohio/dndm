@@ -1,0 +1,101 @@
+---
+title: "Serialize stream and peer lifecycle state"
+date: "2026-11-08"
+scope: "local-only planning"
+source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
+id: "DND-008"
+status: "in review"
+owner: "dndm"
+priority: "P0"
+milestone: "M1 remote correctness"
+kind: "implementation / fixable defect, runtime-confirmed"
+dependencies: ["DND-001", "DND-004", "DND-007"]
+implementation_evidence: ["evidence/dnd-r5/stream-before.txt", "evidence/dnd-r5/stream-after.txt", "evidence/dnd-r5/addrbook-before.txt", "evidence/dnd-r5/addrbook-after.txt", "evidence/dnd-r5/dial-before.txt", "evidence/dnd-r5/dial-after.txt"]
+---
+
+# DND-008 — Serialize stream and peer lifecycle state
+
+## State and permission
+
+Status: **in review** (DND-R5, working tree, not committed; one acceptance item open, see below). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**.
+Milestone: **M1 remote correctness**. Priority: **P0** — Known unlocked map/state access and unsynchronised writes can invalidate all remote-path results.
+
+Authority: the Leader's DND-R5 task ("Then the remaining DND-008 items (RC6 interest close vs in-flight Send, etc.), failing test first"), under the DND-R2 authorisation. RC6 itself is recorded under [DND-007](DND-007-bounded-dispatch-and-closure.md).
+
+Dependencies: [DND-001](DND-001-bounded-stream-framing.md), [DND-004](DND-004-handshake-registration-replay.md), [DND-007](DND-007-bounded-dispatch-and-closure.md)
+
+## Outcome
+
+Concurrent writes, address-book mutation and shutdown/dial lifecycle have explicit synchronization and cancellation ownership.
+
+## Scope
+
+Serialize frame writes in the plain stream path; protect AddConn map mutation and dialing reads; honor network dial/context options; coordinate cancel/close/reconnect without deadlocks.
+
+## Non-goals
+
+No mesh consensus, partition-tolerance guarantee or universal race-free claim beyond exercised paths.
+
+## Pinned evidence
+
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+
+- [network/stream/stream.go](../../network/stream/stream.go) lines 361–370 — Plain stream write lacks serialized context path.
+- [network/stream/stream.go](../../network/stream/stream.go) lines 110–121,145–165 — Existing serialized context-write pattern.
+- [endpoint/mesh/addrbook.go](../../endpoint/mesh/addrbook.go) lines 218–229 — AddConn map insertion occurs outside mutex.
+- [endpoint/mesh/addrbook.go](../../endpoint/mesh/addrbook.go) lines 322–326 — IsActive reads dialing outside its lock.
+- [network/net/net.go](../../network/net/net.go) lines 31–82 — Network dialing context/options gap recorded by source report.
+
+## Unknowns and decisions
+
+Choose lock ordering and close ownership; current deadlock frequency and effect of ignored options are unmeasured.
+
+## Proposed reproduction or decision fixture — NOT RUN
+
+Barrier two writers mid-frame; concurrently AddConn/traverse/IsActive; cancel a blocked dial and race close against reconnect. Feed resulting bytes to the bounded decoder and inspect connection generations.
+
+## Acceptance
+
+- [x] Concurrent writes remain decodable noninterleaved frames: `TestStream_ConcurrentWritesStayFramed` (4 writers × 25 frames through a writer that accepts 3 bytes at a time).
+- [x] Shared address-book/dial state is synchronized (`TestAddrbookEntry_IsActiveWhileDialing`), and cancellation interrupts admitted dial work for TCP (`TestNode_DialHonoursContext`). `DialOpt`/`DialOptStruct` are empty, so there are no options to honour yet. The serial dialer is not changed: it opens a local port, and it needs hardware to test.
+- [ ] Close/reconnect tests terminate within configured deadlines and do not resurrect stale connections. Not done. The design is [close-reconnect.md](../design/close-reconnect.md) (DND-R7): connection generations with compare-and-clear, a symmetric tie-break for simultaneous connections, and failing tests to write first.
+- [x] `contextRW` never touches a caller's buffer after `Request` returned (`TestStreamContext_CancelledReadKeepsBytes`, `TestStreamContext_CancelledWriteKeepsItsBuffer`). This item was added from the DND-R3 static note.
+
+## Verification procedure — future, not executed
+
+After permission, execute deterministic fixtures plus the Go race detector on the changed paths; record exact toolchain, fixture counts, deadlines and failures. Passing finite runs is not proof of all schedules.
+
+Record the exact revision, inputs/configuration, actual observations, failures and scope limitations in the evidence/log when later authorized. Research decisions may close only on their stated decision deliverable; empirical and implementation tickets require actual execution evidence. A research recommendation never creates an implementation grant.
+
+## Size assumptions
+
+Medium: stream/network/address-book lifecycle; assumes bounded scope rather than a full mesh rewrite.
+
+## Implementation evidence
+
+All tests were written first. Each failed at the pin and in the working tree before its fix, then passed ([stream before](../evidence/dnd-r5/stream-before.txt) / [after](../evidence/dnd-r5/stream-after.txt), [addrbook before](../evidence/dnd-r5/addrbook-before.txt) / [after](../evidence/dnd-r5/addrbook-after.txt), [dial before](../evidence/dnd-r5/dial-before.txt) / [after](../evidence/dnd-r5/dial-after.txt)).
+
+| Defect | Test (file) | Before (pin and tree) | Fix |
+|---|---|---|---|
+| Plain `Stream.Write` interleaves frames when the writer splits a call | `TestStream_ConcurrentWritesStayFramed` (`network/stream/ownership_test.go`) | 3/3 with and without `-race`: "frames interleaved after 0–4 intact frames" | `Stream.writeMu` around `rw.Write` |
+| `contextRW` read: a Read that gave up on its context still had its buffer filled later, and those bytes were lost to the next Read | `TestStreamContext_CancelledReadKeepsBytes` | 3/3: "bytes read for an abandoned Read were lost" | The read loop reads into its own buffer; the caller copies under a hand-over; bytes nobody took are kept and served to the next Read |
+| `contextRW` write: a cancelled `Write` released its frame buffer to the pool while the loop was still writing it; the frame went out with another message's bytes. Its error was also masked as `ErrNotEnoughBytes` | `TestStreamContext_CancelledWriteKeepsItsBuffer` | 3/3 without `-race`: frame read back as `"REUSED!!"`, error not `context.Canceled`. With `-race`, the error check fails 3/3; the reuse shows 1/3 (the race build's `sync.Pool` drops items) | `Request` reports whether the loop may still use the buffer; `Write` releases it only if not. `ErrNotEnoughBytes` only when there is no error |
+| `AddrbookEntry.IsActive` read `dialing` outside the lock, and `Dial` cleared it after unlocking (deferred in the wrong order); the retry goroutine read `Failed`/`Backoff` unlocked | `TestAddrbookEntry_IsActiveWhileDialing` (`endpoint/mesh/addrbook_test.go`) | data race 3/3 with `-race` (passes without) | `dialing` set and cleared under the lock; retry log values captured under the lock |
+| `net.Node.Dial` ignored its context | `TestNode_DialHonoursContext` (`network/net/net_test.go`, loopback listener) | 3/3: "Dial with a cancelled context connected anyway" | `net.Dialer.DialContext` |
+
+Behaviour changes:
+
+- A cancelled `StreamContext.Write` returns the context error (it used to return `ErrNotEnoughBytes`). Plain `Stream.Write` likewise returns the writer's error.
+- Bytes read for a cancelled `StreamContext` read are delivered to the next read instead of being dropped.
+- TCP dials stop when their context ends.
+
+## Dated log
+
+- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08: DND-R2. RC5 (`contextRW.Close` closes `request` while `Request` sends; `stream.go:145` vs `:198` at the pin) is still reported after DND-018 (working tree `:146`/`:199`; [evidence](../evidence/dnd-r2/README.md)). DND-018 made `Stream.Close` idempotent and close the reader/writer before callbacks; the `contextRW` request channel is untouched. Dependency DND-001 is in review. Status unchanged.
+- 2026-11-08: DND-R3. Two DND-008 items fixed as side effects, each forced by a new failing test: RC5 (`contextRW.Close` no longer closes `request`; see [DND-019](DND-019-remote-endpoint-close-self-deadlock.md)) and `Addrbook.AddConn` map insertion now under `b.mu` (see [DND-004](DND-004-handshake-registration-replay.md)). Still open: plain `Stream.Write` serialisation (`stream.go` 361–370 at the pin), `IsActive` reading `dialing` outside its lock, ignored dial context/options, reconnect coordination, and (static reading, not run) `contextRW.Run` may still be filling a caller's buffer after `Request` returned on cancellation. Status unchanged.
+- 2026-11-08: DND-R5. Owner → dndm, status → **in review** with one item open (close/reconnect). Fixed failing-test-first: `Stream.Write` serialisation, `contextRW` buffer ownership (read and write, plus write error identity), `AddrbookEntry` dialing flag, `net.Node.Dial` context.
+- 2026-11-09: DND-R7-design. Close/reconnect design written ([design](../design/close-reconnect.md)): defects R1–R5 read from the code, not yet reproduced. No code.
+- 2026-11-09: DND-R5-fix (review F1). The `StreamContext` read loop now uses a fixed 1 KiB scratch buffer (`readScratchSize`). Before, it kept a buffer as large as the largest frame body, up to 4 MiB per stream, because `codec.ReadMessage` asks for whole bodies. `TestStreamContext_ReadScratchStaysSmall` (256 KiB frame): before, cap 262 183 B, 3/3 fail; after, passes ×30 with `-race` ([evidence](../evidence/DND-R5-fix.md)). Review F4 (two channel allocations per `Request`) and F9 (document that cancelling mid-frame leaves the stream unusable) remain follow-ups.
+
+[Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

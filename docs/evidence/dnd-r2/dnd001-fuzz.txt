@@ -1,0 +1,25 @@
+fuzz: elapsed: 0s, gathering baseline coverage: 0/5 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 5/5 completed, now fuzzing with 10 workers
+fuzz: elapsed: 3s, execs: 225083 (75009/sec), new interesting: 93 (total: 98)
+fuzz: elapsed: 6s, execs: 459219 (78043/sec), new interesting: 130 (total: 135)
+fuzz: elapsed: 9s, execs: 629181 (56666/sec), new interesting: 140 (total: 145)
+fuzz: elapsed: 12s, execs: 845843 (72223/sec), new interesting: 149 (total: 154)
+fuzz: elapsed: 15s, execs: 1002218 (52126/sec), new interesting: 155 (total: 160)
+fuzz: elapsed: 18s, execs: 1133478 (43746/sec), new interesting: 156 (total: 161)
+fuzz: elapsed: 21s, execs: 1280654 (48919/sec), new interesting: 158 (total: 163)
+fuzz: elapsed: 24s, execs: 1377548 (32394/sec), new interesting: 158 (total: 163)
+fuzz: elapsed: 27s, execs: 1545541 (55986/sec), new interesting: 165 (total: 170)
+fuzz: elapsed: 30s, execs: 1718877 (57797/sec), new interesting: 167 (total: 172)
+fuzz: elapsed: 33s, execs: 1932510 (71183/sec), new interesting: 173 (total: 178)
+fuzz: elapsed: 36s, execs: 2098987 (55507/sec), new interesting: 177 (total: 182)
+fuzz: elapsed: 39s, execs: 2288651 (63204/sec), new interesting: 177 (total: 182)
+fuzz: elapsed: 42s, execs: 2450649 (53985/sec), new interesting: 179 (total: 184)
+fuzz: elapsed: 45s, execs: 2625859 (58415/sec), new interesting: 181 (total: 186)
+fuzz: elapsed: 48s, execs: 2745446 (39777/sec), new interesting: 182 (total: 187)
+fuzz: elapsed: 51s, execs: 2857056 (37276/sec), new interesting: 184 (total: 189)
+fuzz: elapsed: 54s, execs: 3028705 (57244/sec), new interesting: 186 (total: 191)
+fuzz: elapsed: 57s, execs: 3219166 (63488/sec), new interesting: 186 (total: 191)
+fuzz: elapsed: 1m0s, execs: 3394677 (58511/sec), new interesting: 187 (total: 192)
+fuzz: elapsed: 1m0s, execs: 3394677 (0/sec), new interesting: 187 (total: 192)
+PASS
+ok  	github.com/itohio/dndm/codec	60.421s

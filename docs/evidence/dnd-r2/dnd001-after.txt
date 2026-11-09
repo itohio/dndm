@@ -1,0 +1,259 @@
+# DND-001 tests after the fix; 2026-11-08T19:11:23Z
+$ go test -race -count=1 -timeout 120s -run "TestReadMessage|TestDecodeMessageTruncated|FuzzReadDecode" -v ./codec
+=== RUN   TestReadMessageFragmented
+=== RUN   TestReadMessageFragmented/split-078
+=== RUN   TestReadMessageFragmented/split-087
+=== RUN   TestReadMessageFragmented/split-006
+=== RUN   TestReadMessageFragmented/split-022
+=== RUN   TestReadMessageFragmented/split-024
+=== RUN   TestReadMessageFragmented/split-028
+=== RUN   TestReadMessageFragmented/split-030
+=== RUN   TestReadMessageFragmented/split-034
+=== RUN   TestReadMessageFragmented/split-039
+=== RUN   TestReadMessageFragmented/split-040
+=== RUN   TestReadMessageFragmented/split-009
+=== RUN   TestReadMessageFragmented/split-043
+=== RUN   TestReadMessageFragmented/split-063
+=== RUN   TestReadMessageFragmented/split-064
+=== RUN   TestReadMessageFragmented/split-065
+=== RUN   TestReadMessageFragmented/split-068
+=== RUN   TestReadMessageFragmented/split-069
+=== RUN   TestReadMessageFragmented/split-077
+=== RUN   TestReadMessageFragmented/split-005
+=== RUN   TestReadMessageFragmented/split-017
+=== RUN   TestReadMessageFragmented/split-038
+=== RUN   TestReadMessageFragmented/split-042
+=== RUN   TestReadMessageFragmented/split-046
+=== RUN   TestReadMessageFragmented/split-047
+=== RUN   TestReadMessageFragmented/split-072
+=== RUN   TestReadMessageFragmented/split-081
+=== RUN   TestReadMessageFragmented/split-023
+=== RUN   TestReadMessageFragmented/split-052
+=== RUN   TestReadMessageFragmented/split-055
+=== RUN   TestReadMessageFragmented/split-100
+=== RUN   TestReadMessageFragmented/split-103
+=== RUN   TestReadMessageFragmented/split-010
+=== RUN   TestReadMessageFragmented/split-020
+=== RUN   TestReadMessageFragmented/split-066
+=== RUN   TestReadMessageFragmented/split-067
+=== RUN   TestReadMessageFragmented/split-092
+=== RUN   TestReadMessageFragmented/split-096
+=== RUN   TestReadMessageFragmented/split-053
+=== RUN   TestReadMessageFragmented/split-085
+=== RUN   TestReadMessageFragmented/split-090
+=== RUN   TestReadMessageFragmented/split-099
+=== RUN   TestReadMessageFragmented/split-104
+=== RUN   TestReadMessageFragmented/split-021
+=== RUN   TestReadMessageFragmented/split-084
+=== RUN   TestReadMessageFragmented/split-089
+=== RUN   TestReadMessageFragmented/split-008
+=== RUN   TestReadMessageFragmented/split-014
+=== RUN   TestReadMessageFragmented/split-016
+=== RUN   TestReadMessageFragmented/split-037
+=== RUN   TestReadMessageFragmented/split-054
+=== RUN   TestReadMessageFragmented/split-060
+=== RUN   TestReadMessageFragmented/split-070
+=== RUN   TestReadMessageFragmented/split-079
+=== RUN   TestReadMessageFragmented/one-byte
+=== RUN   TestReadMessageFragmented/split-025
+=== RUN   TestReadMessageFragmented/split-057
+=== RUN   TestReadMessageFragmented/split-059
+=== RUN   TestReadMessageFragmented/split-073
+=== RUN   TestReadMessageFragmented/split-082
+=== RUN   TestReadMessageFragmented/split-086
+=== RUN   TestReadMessageFragmented/split-048
+=== RUN   TestReadMessageFragmented/half
+=== RUN   TestReadMessageFragmented/split-015
+=== RUN   TestReadMessageFragmented/split-019
+=== RUN   TestReadMessageFragmented/split-026
+=== RUN   TestReadMessageFragmented/split-036
+=== RUN   TestReadMessageFragmented/split-091
+=== RUN   TestReadMessageFragmented/split-093
+=== RUN   TestReadMessageFragmented/split-012
+=== RUN   TestReadMessageFragmented/split-035
+=== RUN   TestReadMessageFragmented/split-049
+=== RUN   TestReadMessageFragmented/split-050
+=== RUN   TestReadMessageFragmented/split-061
+=== RUN   TestReadMessageFragmented/split-097
+=== RUN   TestReadMessageFragmented/split-101
+=== RUN   TestReadMessageFragmented/split-027
+=== RUN   TestReadMessageFragmented/split-031
+=== RUN   TestReadMessageFragmented/split-033
+=== RUN   TestReadMessageFragmented/split-075
+=== RUN   TestReadMessageFragmented/split-094
+=== RUN   TestReadMessageFragmented/split-095
+=== RUN   TestReadMessageFragmented/split-013
+=== RUN   TestReadMessageFragmented/split-029
+=== RUN   TestReadMessageFragmented/split-045
+=== RUN   TestReadMessageFragmented/split-062
+=== RUN   TestReadMessageFragmented/split-076
+=== RUN   TestReadMessageFragmented/split-080
+=== RUN   TestReadMessageFragmented/split-083
+=== RUN   TestReadMessageFragmented/split-098
+=== RUN   TestReadMessageFragmented/split-001
+=== RUN   TestReadMessageFragmented/split-011
+=== RUN   TestReadMessageFragmented/split-018
+=== RUN   TestReadMessageFragmented/split-044
+=== RUN   TestReadMessageFragmented/split-088
+=== RUN   TestReadMessageFragmented/split-102
+=== RUN   TestReadMessageFragmented/split-002
+=== RUN   TestReadMessageFragmented/split-003
+=== RUN   TestReadMessageFragmented/split-004
+=== RUN   TestReadMessageFragmented/split-032
+=== RUN   TestReadMessageFragmented/split-041
+=== RUN   TestReadMessageFragmented/split-056
+=== RUN   TestReadMessageFragmented/split-071
+=== RUN   TestReadMessageFragmented/split-074
+=== RUN   TestReadMessageFragmented/split-007
+=== RUN   TestReadMessageFragmented/split-051
+=== RUN   TestReadMessageFragmented/split-058
+--- PASS: TestReadMessageFragmented (0.01s)
+    --- PASS: TestReadMessageFragmented/split-078 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-087 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-006 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-022 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-024 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-028 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-030 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-034 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-039 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-040 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-009 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-043 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-063 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-064 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-065 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-068 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-069 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-077 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-005 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-017 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-038 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-042 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-046 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-047 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-072 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-081 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-023 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-052 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-055 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-100 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-103 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-010 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-020 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-066 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-067 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-092 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-096 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-053 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-085 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-090 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-099 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-104 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-021 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-084 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-089 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-008 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-014 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-016 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-037 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-054 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-060 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-070 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-079 (0.00s)
+    --- PASS: TestReadMessageFragmented/one-byte (0.00s)
+    --- PASS: TestReadMessageFragmented/split-025 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-057 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-059 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-073 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-082 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-086 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-048 (0.00s)
+    --- PASS: TestReadMessageFragmented/half (0.00s)
+    --- PASS: TestReadMessageFragmented/split-015 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-019 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-026 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-036 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-091 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-093 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-012 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-035 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-049 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-050 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-061 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-097 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-101 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-027 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-031 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-033 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-075 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-094 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-095 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-013 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-029 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-045 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-062 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-076 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-080 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-083 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-098 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-001 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-011 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-018 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-044 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-088 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-102 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-002 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-003 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-004 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-032 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-041 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-056 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-071 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-074 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-007 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-051 (0.00s)
+    --- PASS: TestReadMessageFragmented/split-058 (0.00s)
+=== RUN   TestReadMessageLengthBounds
+--- PASS: TestReadMessageLengthBounds (0.00s)
+=== RUN   TestDecodeMessageTruncated
+=== RUN   TestDecodeMessageTruncated/header_len_>_body
+=== RUN   TestDecodeMessageTruncated/header_len_>_2048
+=== RUN   TestDecodeMessageTruncated/header_only
+=== RUN   TestDecodeMessageTruncated/message_len_!=_remain
+=== RUN   TestDecodeMessageTruncated/nil
+=== RUN   TestDecodeMessageTruncated/1_byte
+=== RUN   TestDecodeMessageTruncated/3_bytes
+--- PASS: TestDecodeMessageTruncated (0.00s)
+    --- PASS: TestDecodeMessageTruncated/header_len_>_body (0.00s)
+    --- PASS: TestDecodeMessageTruncated/header_len_>_2048 (0.00s)
+    --- PASS: TestDecodeMessageTruncated/header_only (0.00s)
+    --- PASS: TestDecodeMessageTruncated/message_len_!=_remain (0.00s)
+    --- PASS: TestDecodeMessageTruncated/nil (0.00s)
+    --- PASS: TestDecodeMessageTruncated/1_byte (0.00s)
+    --- PASS: TestDecodeMessageTruncated/3_bytes (0.00s)
+=== RUN   TestReadMessageReleasesOnError
+=== RUN   TestReadMessageReleasesOnError/eof_after_preamble
+=== RUN   TestReadMessageReleasesOnError/eof_mid_body
+=== RUN   TestReadMessageReleasesOnError/error_mid_body
+=== RUN   TestReadMessageReleasesOnError/bad_magic
+--- PASS: TestReadMessageReleasesOnError (0.00s)
+    --- PASS: TestReadMessageReleasesOnError/eof_after_preamble (0.00s)
+    --- PASS: TestReadMessageReleasesOnError/eof_mid_body (0.00s)
+    --- PASS: TestReadMessageReleasesOnError/error_mid_body (0.00s)
+    --- PASS: TestReadMessageReleasesOnError/bad_magic (0.00s)
+=== RUN   FuzzReadDecode
+=== RUN   FuzzReadDecode/seed#0
+=== RUN   FuzzReadDecode/seed#1
+=== RUN   FuzzReadDecode/seed#2
+=== RUN   FuzzReadDecode/seed#3
+=== RUN   FuzzReadDecode/seed#4
+--- PASS: FuzzReadDecode (0.00s)
+    --- PASS: FuzzReadDecode/seed#0 (0.00s)
+    --- PASS: FuzzReadDecode/seed#1 (0.00s)
+    --- PASS: FuzzReadDecode/seed#2 (0.00s)
+    --- PASS: FuzzReadDecode/seed#3 (0.00s)
+    --- PASS: FuzzReadDecode/seed#4 (0.00s)
+PASS
+ok  	github.com/itohio/dndm/codec	1.255s
+exit=0

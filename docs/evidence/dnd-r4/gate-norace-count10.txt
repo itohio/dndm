@@ -1,0 +1,27 @@
+# 2026-11-08T20:37:23Z go test -count=10 -timeout 900s ./...
+ok  	github.com/itohio/dndm	1.951s
+ok  	github.com/itohio/dndm/codec	0.368s
+?   	github.com/itohio/dndm/endpoint/direct	[no test files]
+ok  	github.com/itohio/dndm/endpoint/mesh	4.887s
+ok  	github.com/itohio/dndm/endpoint/remote	0.674s
+?   	github.com/itohio/dndm/errors	[no test files]
+?   	github.com/itohio/dndm/examples	[no test files]
+?   	github.com/itohio/dndm/examples/bench	[no test files]
+?   	github.com/itohio/dndm/examples/bus_direct	[no test files]
+?   	github.com/itohio/dndm/examples/bus_module	[no test files]
+?   	github.com/itohio/dndm/examples/bus_request	[no test files]
+?   	github.com/itohio/dndm/examples/direct	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/embedded	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/host	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/types	[no test files]
+?   	github.com/itohio/dndm/examples/node	[no test files]
+ok  	github.com/itohio/dndm/network	0.978s
+?   	github.com/itohio/dndm/network/net	[no test files]
+?   	github.com/itohio/dndm/network/serial	[no test files]
+ok  	github.com/itohio/dndm/network/stream	0.862s
+?   	github.com/itohio/dndm/testutil	[no test files]
+?   	github.com/itohio/dndm/types/core	[no test files]
+?   	github.com/itohio/dndm/types/p2p	[no test files]
+?   	github.com/itohio/dndm/types/test	[no test files]
+ok  	github.com/itohio/dndm/x/bus	11.085s
+test_exit=0

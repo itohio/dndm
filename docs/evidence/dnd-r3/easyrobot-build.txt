@@ -1,0 +1,9 @@
+# 2026-11-08T19:52:30Z EasyRobot abb5c9c, dndm working tree after DND-R3
+$ GOTOOLCHAIN=local GOPROXY=off go build -o /dev/null ./cmd/display/destination ./cmd/manipulator ./drivers/lidar ./drivers/manipulator
+package github.com/itohio/EasyRobot/drivers/manipulator: build constraints exclude all Go files in ../EasyRobot/drivers/manipulator
+exit=1
+# per package
+./cmd/display/destination exit=1
+./cmd/manipulator exit=0
+./drivers/lidar exit=1
+./drivers/manipulator exit=1

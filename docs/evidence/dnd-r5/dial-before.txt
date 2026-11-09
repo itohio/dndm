@@ -1,0 +1,15 @@
+# Dial context test BEFORE the fix (loopback listener only); 2026-11-08T21:56:19Z
+## pin c7b5b61
+$ go test -count=3 -run TestNode_DialHonoursContext -v ./network/net
+      3 Error:      	Expected error with "context canceled" in chain but got nil.
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/network/net	0.305s
+      3 --- FAIL: TestNode_DialHonoursContext
+      3 Messages:   	Dial with a cancelled context connected anyway
+## working tree before the fix
+$ go test -count=3 -run TestNode_DialHonoursContext -v ./network/net
+      3 Error:      	Expected error with "context canceled" in chain but got nil.
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/network/net	0.195s
+      3 --- FAIL: TestNode_DialHonoursContext
+      3 Messages:   	Dial with a cancelled context connected anyway

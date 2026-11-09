@@ -1,0 +1,23 @@
+# DND-R5-fix tests BEFORE the fixes (working tree after DND-R5 + step 0: ErrNonceSource declared only); 2026-11-08T23:48:58Z
+$ go test -race -count=3 -timeout 120s -run 'TestStreamContext_ReadScratchStaysSmall' -v ./network/stream
+      3 Error:      	"262183" is not less than or equal to "4096"
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/network/stream	0.360s
+      3 --- FAIL: TestStreamContext_ReadScratchStaysSmall
+      3 Messages:   	read scratch grew with the frame size
+$ go test -race -count=3 -timeout 120s -run 'TestHandshaker_OnReadyAfterCloseStartsNothing|TestHandshaker_MarkReadyAfterCloseStartsNothing' -v ./endpoint/mesh
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/endpoint/mesh	0.356s
+      3 --- FAIL: TestHandshaker_MarkReadyAfterCloseStartsNothing
+      3 --- FAIL: TestHandshaker_OnReadyAfterCloseStartsNothing
+      3 ready_close_test.go:53: an OnReady callback started after Close
+      3 ready_close_test.go:65: an OnReady callback started after Close
+$ go test -race -count=3 -timeout 120s -run 'TestProducerSendOnClosedRouteIsBusErrClosed|TestCallerRejectsBrokenNonceSource' -v ./x/bus
+      2 Error:      	Target error should be in err chain:
+      1 FAIL
+      1 FAIL	github.com/itohio/dndm/x/bus	120.326s
+      1 --- FAIL: TestProducerSendOnClosedRouteIsBusErrClosed
+      1 Messages:   	SendDirect: errors.Is(err, bus.ErrClosed) must match a closed route
+      1 Messages:   	Send: errors.Is(err, bus.ErrClosed) must match a closed route
+      1 nonce_source_test.go:38: Caller froze on a nonce source that returns 0
+      1 panic: test timed out after 2m0s

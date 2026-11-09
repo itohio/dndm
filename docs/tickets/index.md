@@ -1,0 +1,60 @@
+---
+title: "dndm ticket index"
+date: "2026-11-08"
+scope: "local-only planning"
+source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
+---
+
+# dndm ticket index
+
+21 stable tickets: **8 in review, 10 backlog, 3 blocked, 0 done**. Owners: DND-001, 002, 003, 004, 005, 008, 018, 019, 020 and 021 **dndm**; the rest unassigned. Authority: R1-04 ("properly update dndm, easyrobot projects so i can start improving on them") and DND-R2–R5 ("dndm should be able to support lacking features and existing features should be hardened", 2026-11-08, [roster decisions](../../../docs/decisions.md)), which authorise working-tree source and test changes; no commits or pushes. Owner decisions of 2026-11-08 are copied verbatim into DND-002, 005, 006, 009, 010 and 011. The owner also accepted the DND-R2/R3 behaviour changes and dndm's four extra DND-R4 fixes, and said yes to an F21 ticket (DND-020). Per-ticket gates below still apply. IDs are never reused. Runtime evidence: [baseline](../baseline-2026-11-08.md), [DND-R2](../evidence/dnd-r2/README.md), [DND-R3](../evidence/dnd-r3/README.md), [DND-R4](../evidence/dnd-r4/README.md), [DND-R5](../evidence/dnd-r5/README.md), [DND-R5-fix](../evidence/DND-R5-fix.md).
+
+- `in review`: implemented in the working tree with failing-first evidence; awaiting verification and owner review; not committed.
+- `ready`: checkable acceptance, reproduction plan, files to touch and an owner; no unmet dependency.
+- `backlog`: scoped future work; dependencies and the ticket's own gate still apply.
+- `blocked`: an explicit security/protocol or owner decision prevents reliable implementation sizing/start.
+- P0: remote correctness or isolation prerequisite. P1: resolve decision/feasibility. P2: optional integration or measurement after gates.
+- Research decision-ready means the question, alternatives and closure artifact are bounded. It does not mean the decision is answered. Decision tickets close only on an owner decision. DND-002, DND-006, DND-009 and DND-010 carry a decision memo (options, recommendation) since DND-R2.
+
+| Ticket | Kind | Status | Priority | Milestone | Hard dependencies |
+|---|---|---|---|---|---|
+| [DND-001](DND-001-bounded-stream-framing.md) — Bound stream framing and return pooled buffers | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | None |
+| [DND-002](DND-002-local-buffer-ownership-contract.md) — Choose local shared-message ownership | research / fundamental tradeoff (decided: immutable after Send) | **in review** (owner dndm) | P0 | M0 decisions | None |
+| [DND-003](DND-003-single-owner-remote-forwarding.md) — Remove competing remote-interest readers | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | [DND-002](DND-002-local-buffer-ownership-contract.md) |
+| [DND-004](DND-004-handshake-registration-replay.md) — Register routes across handshake completion | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | None |
+| [DND-005](DND-005-caller-scoped-correlation.md) — Make reply correlation caller-scoped | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | None |
+| [DND-006](DND-006-delivery-and-overload-classes.md) — Define delivery, overload and close classes | research / fundamental tradeoff | backlog | P0 | M0 decisions | None |
+| [DND-007](DND-007-bounded-dispatch-and-closure.md) — Enforce bounded dispatch and explicit closure | implementation / fixable static defect | backlog | P0 | M1 remote correctness | [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-005](DND-005-caller-scoped-correlation.md), [DND-006](DND-006-delivery-and-overload-classes.md) |
+| [DND-008](DND-008-stream-and-peer-lifecycle-races.md) — Serialize stream and peer lifecycle state | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm; close/reconnect item open) | P0 | M1 remote correctness | [DND-001](DND-001-bounded-stream-framing.md), [DND-004](DND-004-handshake-registration-replay.md), [DND-007](DND-007-bounded-dispatch-and-closure.md) |
+| [DND-009](DND-009-identity-auth-and-profile-boundary.md) — Decide authenticated identity and profile isolation | research / missing feature | backlog | P0 | M0 decisions | None |
+| [DND-010](DND-010-packet-broadcast-decision.md) — Decide whether to build packet broadcast | research / missing feature and tradeoff | backlog | P1 | M2 packet decision | [DND-006](DND-006-delivery-and-overload-classes.md), [DND-009](DND-009-identity-auth-and-profile-boundary.md) |
+| [DND-011](DND-011-bounded-packet-transport.md) — Implement the selected bounded packet path | implementation / missing feature | blocked | P2 | M2 packet implementation | [DND-001](DND-001-bounded-stream-framing.md), [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-010](DND-010-packet-broadcast-decision.md) |
+| [DND-012](DND-012-durability-and-command-boundary.md) — Choose durability and command ownership | research / missing feature and tradeoff | backlog | P1 | M0 decisions | [DND-006](DND-006-delivery-and-overload-classes.md), [DND-009](DND-009-identity-auth-and-profile-boundary.md) |
+| [DND-013](DND-013-capability-negotiation-contract.md) — Define explicit capability negotiation | research / missing feature | backlog | P1 | M3 bridge contract | [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-006](DND-006-delivery-and-overload-classes.md), [DND-009](DND-009-identity-auth-and-profile-boundary.md), [DND-010](DND-010-packet-broadcast-decision.md), [DND-012](DND-012-durability-and-command-boundary.md) |
+| [DND-014](DND-014-scoped-nats-bridge.md) — Build a narrow profile-scoped NATS bridge | implementation / missing feature | blocked | P2 | M3 bridge implementation | [DND-003](DND-003-single-owner-remote-forwarding.md), [DND-004](DND-004-handshake-registration-replay.md), [DND-005](DND-005-caller-scoped-correlation.md), [DND-007](DND-007-bounded-dispatch-and-closure.md), [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-012](DND-012-durability-and-command-boundary.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-017](DND-017-enforce-profile-gateway-boundary.md) |
+| [DND-015](DND-015-embedded-target-feasibility.md) — Decide embedded feasibility on a named target | research / feasibility uncertainty | backlog | P1 | M4 feasibility | [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-006](DND-006-delivery-and-overload-classes.md), [DND-010](DND-010-packet-broadcast-decision.md), [DND-013](DND-013-capability-negotiation-contract.md) |
+| [DND-016](DND-016-reproducible-transport-measurement.md) — Measure only implemented comparable transports | research / empirical measurement | backlog | P2 | M4 measurement | [DND-001](DND-001-bounded-stream-framing.md), [DND-003](DND-003-single-owner-remote-forwarding.md), [DND-004](DND-004-handshake-registration-replay.md), [DND-005](DND-005-caller-scoped-correlation.md), [DND-007](DND-007-bounded-dispatch-and-closure.md), [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-015](DND-015-embedded-target-feasibility.md) |
+| [DND-017](DND-017-enforce-profile-gateway-boundary.md) — Enforce the selected identity/isolation boundary | implementation / missing feature | blocked | P0 | M1 isolation enforcement | [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-009](DND-009-identity-auth-and-profile-boundary.md) |
+| [DND-018](DND-018-race-clean-core-lifecycle.md) — Race-clean core lifecycle | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | None |
+| [DND-019](DND-019-remote-endpoint-close-self-deadlock.md) — Remote endpoint Close self-deadlock | implementation / fixable defect, runtime-confirmed | **in review** (owner dndm) | P0 | M1 remote correctness | None |
+| [DND-020](DND-020-remote-linker-route-direction.md) — Key the remote linker by route and direction | implementation / fixable defect, runtime-observed | backlog (owner dndm) | P1 | M1 remote correctness | [DND-003](DND-003-single-owner-remote-forwarding.md), [DND-006](DND-006-delivery-and-overload-classes.md) |
+| [DND-021](DND-021-container-publish-test-flake.md) — Make TestContainer_Publish wait for events instead of sleeping | implementation / flaky test, runtime-confirmed | backlog (owner dndm) | P2 | M1 remote correctness | None |
+
+## Starting order
+
+Implemented, in review: **DND-018**, **DND-001** (DND-R2); **DND-019**, **DND-004** (DND-R3); **DND-005**, **DND-002** (contract), **DND-003** (DND-R4); **DND-005** nonce sources and **DND-008** (DND-R5; close/reconnect still open). RC6 (DND-007) was fixed in DND-R5; the rest of DND-007 waits for DND-006. Waiting for designs: **DND-006**, **DND-009**, **DND-010** (owner decisions recorded; designs wait for ideation's research in `docs/research/ideation/`), then DND-011/012/013. Next: **DND-020** (F21) after the DND-006 delivery design, and the DND-008 close/reconnect item. Finish dependencies before integration; backlog status alone does not make a ticket runnable.
+
+DND-011 now has a positive packet decision ("Build it") but still waits for its dependencies and the design; DND-014 needs approved contracts and verified enforcement; DND-017 needs a selected threat model and enforcement primitive. DND-016 has a conditional packet arm requiring DND-011.
+
+## Baseline gate
+
+At the pin `go test -race ./...` was red ([baseline](../baseline-2026-11-08.md#race-reports)). DND-018 fixed RC1–RC4 (DND-R2), and DND-019 fixed RC5 (DND-R3). DND-R4 made the whole suite pass ([evidence](../evidence/dnd-r4/README.md#gates)). DND-R5 fixed RC6 and the DND-008 races. Its gates ([evidence](../evidence/dnd-r5/README.md#gates)):
+
+- `go test -race -count=3 ./...`: all 8 packages ok, 0 race reports.
+- `go test -count=10 ./...`: ok.
+- x/bus ×20 without and with `-race`: ok.
+- One later read-only rerun failed `TestContainer_Publish` once (0.03 s); it is recorded in the DND-R5 evidence.
+
+Every ticket verifies with the full `-race` suite: no failing package and no race report.
+
+[Overview](../index.md) · [Roadmap](../roadmap.md) · [Pinned findings](../research/pinned-findings.md)

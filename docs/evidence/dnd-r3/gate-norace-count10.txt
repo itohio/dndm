@@ -1,0 +1,2095 @@
+# 2026-11-08T19:51:02Z go test -count=10 -timeout 900s ./...
+ok  	github.com/itohio/dndm	1.794s
+ok  	github.com/itohio/dndm/codec	1.415s
+?   	github.com/itohio/dndm/endpoint/direct	[no test files]
+ok  	github.com/itohio/dndm/endpoint/mesh	5.515s
+ok  	github.com/itohio/dndm/endpoint/remote	1.653s
+?   	github.com/itohio/dndm/errors	[no test files]
+?   	github.com/itohio/dndm/examples	[no test files]
+?   	github.com/itohio/dndm/examples/bench	[no test files]
+?   	github.com/itohio/dndm/examples/bus_direct	[no test files]
+?   	github.com/itohio/dndm/examples/bus_module	[no test files]
+?   	github.com/itohio/dndm/examples/bus_request	[no test files]
+?   	github.com/itohio/dndm/examples/direct	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/embedded	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/host	[no test files]
+?   	github.com/itohio/dndm/examples/embedded/types	[no test files]
+?   	github.com/itohio/dndm/examples/node	[no test files]
+ok  	github.com/itohio/dndm/network	2.166s
+?   	github.com/itohio/dndm/network/net	[no test files]
+?   	github.com/itohio/dndm/network/serial	[no test files]
+ok  	github.com/itohio/dndm/network/stream	1.931s
+?   	github.com/itohio/dndm/testutil	[no test files]
+?   	github.com/itohio/dndm/types/core	[no test files]
+?   	github.com/itohio/dndm/types/p2p	[no test files]
+?   	github.com/itohio/dndm/types/test	[no test files]
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ca2fc0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0be6540
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0be6f50
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d00e70
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d01880
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d427e0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d42150
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0dae310
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0d42e00
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:06 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e500e0
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0f888c0
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0de6230
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e1f7a0
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cca770
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0cca4d0
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0f89d50
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0fba2a0
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO RemoteInterest close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f1bce0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e51570
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e557a0
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e55b90
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d437a0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e542a0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0cda3f0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0cda7e0
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e549a0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d62700
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec0000
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec0a10
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e628c0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e632d0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f6e770
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d630a0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0d63730
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0d639d0
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e79340
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e790a0
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0de7c70
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0fba8c0
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0d720e0
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0d6dce0
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0d6cbd0
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0d6ce70
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:06 INFO RemoteInterest close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:06 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:06 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:06 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:06 INFO Stream.Close
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d730a0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec6ee0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1110690
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1110a80
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1196770
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec7ab0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1196ee0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11972d0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f6f730
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fc8690
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fc9110
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fc9b20
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0cdb110
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1197dc0
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ecea80
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:06 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b10302a0
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:06 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:06 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:06 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:06 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b11baaf0
+2026/11/08 21:51:06 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:06 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:06 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11ba850
+2026/11/08 21:51:06 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+--- FAIL: TestStreamProducerConsumer (5.00s)
+    bus_test.go:310: 
+        	Error Trace:	x/bus/bus_test.go:310
+        	Error:      	Received unexpected error:
+        	            	context deadline exceeded
+        	Test:       	TestStreamProducerConsumer
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cda620
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0cda380
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11ec850
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1110ee0
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cdbe30
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0cdbb90
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0cda850
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cdaaf0
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1300460
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1208850
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b10838f0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1083ce0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0c622a0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1209420
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1110a10
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1110e00
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1209b20
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d73730
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b13007e0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b13011f0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1111960
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0be6690
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d019d0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d01340
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0ef7b90
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0dae690
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0daf490
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0f88e00
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e1fab0
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e1fd50
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e51ab0
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e51730
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e50a10
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e50e00
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e809a0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e81ab0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e63e30
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d62620
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d62a10
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e627e0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d63180
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d63570
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e62ee0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e783f0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e78f50
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e79a40
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f1b810
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec0380
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fbaa10
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fba380
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1197490
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0fbb2d0
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0ecea10
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0ece770
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0de6540
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0d6d110
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11bb110
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cea000
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0be7030
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b105e150
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b105f6c0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f46850
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f66a80
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f66e70
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f67260
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f47420
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f679d0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f67dc0
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f47b20
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0cea4d0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ceae70
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ceb880
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec1110
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec1c00
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1112b60
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11124d0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b10845b0
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b11133b0
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1076a10
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1076770
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b105fb20
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cbed90
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e9db90
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e9de30
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b111fa40
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b111fce0
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Stream.Close
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:11 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO RemoteInterest close endpoint=stream://router-b
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:11 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11acee0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11ad5e0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1127c70
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11301c0
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11305b0
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ea25b0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1130d20
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1131110
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1126e70
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ea2af0
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ea3490
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec4000
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11d0310
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11d0d20
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1138230
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:11 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11d1490
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:11 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:11 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:11 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1138d20
+2026/11/08 21:51:11 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b11d1a40
+2026/11/08 21:51:11 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:11 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+--- FAIL: TestStreamProducerConsumer (5.00s)
+    bus_test.go:310: 
+        	Error Trace:	x/bus/bus_test.go:310
+        	Error:      	Received unexpected error:
+        	            	context deadline exceeded
+        	Test:       	TestStreamProducerConsumer
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0ec4b60
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0ec4e00
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11d1dc0
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0f9ed20
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1149880
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11495e0
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1149030
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1201570
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11ff3b0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f9f500
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fbf730
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fbfb20
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fd0070
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fbe230
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fd07e0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fd0bd0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fbe930
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1288310
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1288d90
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b12897a0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11ffab0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0fd18f0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1316620
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b11ffe30
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b14002a0
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1400000
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b120f110
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b120ee70
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0fda0e0
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1289570
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b1084fc0
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b1084d20
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0cda3f0
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0cda690
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b14010a0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1316d90
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d72e70
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d73260
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d73650
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1082770
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1401730
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1401b20
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1083b90
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b10855e0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ef61c0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d01420
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d01b20
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e51880
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b10312d0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1030b60
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b11ed2d0
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b11ed030
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e1f960
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e1f6c0
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0f89b20
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0ef69a0
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ba.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0dae770
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ba.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0dae460
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-a route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ba.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e621c0
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ba.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e62460
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO RemoteInterest close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-a send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ba.src
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=STOP
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0dafe30
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0e78690
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ccb810
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ccbc00
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0c621c0
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f1b570
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0c62e00
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0c63490
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f1bc70
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@test.producer
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@test.producer intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1301180
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@test.producer
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@test.producer
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@call.req
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@call.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@call.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d42af0
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@call.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@call.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0d43b20
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@call.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@call.req
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@call.resp
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@stream.req
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@call.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@stream.req intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b1209810
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@stream.req
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@stream.resp intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ece770
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@module.in
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Bar@module.out
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Bar@module.out intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ecf960
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Bar@module.out
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@stream.resp
+2026/11/08 21:51:16 INFO linked endpoint=direct route=types.Foo@module.in intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ecef50
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@module.in
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@stream.req
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@module.in
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Bar@module.out
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Foo@module.in
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO unlinked endpoint=direct route=types.Bar@module.out
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.simple intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0e797a0
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.simple intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0e79420
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.simple
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Stream.Close
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=START
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=START
+2026/11/08 21:51:16 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.simple
+2026/11/08 21:51:16 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context canceled"
+2026/11/08 21:51:16 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://star-b loop=START
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://star-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO registered endpoint=direct interest=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO LocalInterest endpoint=stream://router-b send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0fbaa80
+2026/11/08 21:51:16 INFO remote interest registered endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0fba7e0
+2026/11/08 21:51:16 INFO interest registered endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:16 INFO intent registered endpoint=direct intent=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO LocalIntent endpoint=stream://router-a send=Intent.Register err=<nil>
+2026/11/08 21:51:16 INFO linked endpoint=stream://star-a route=types.Foo@streams.star.ab.src intent=*remote.RemoteIntent interest=*remote.LocalInterest C=0x5615b0be6b60
+2026/11/08 21:51:16 INFO remote intent registered endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO linked endpoint=stream://router-a route=types.Foo@streams.star.ab.src intent=*remote.LocalIntent interest=*remote.RemoteInterest C=0x5615b0be6e00
+2026/11/08 21:51:16 INFO intent registered endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:16 INFO Notify wrappers route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:26 INFO RemoteIntent close endpoint=stream://router-a
+2026/11/08 21:51:26 ERROR remote.Read endpoint=stream://star-a err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:26 INFO Stream.Close
+2026/11/08 21:51:26 INFO unlinked endpoint=stream://router-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:26 ERROR remote.Read endpoint=stream://router-a err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:26 ERROR remote.Read endpoint=stream://router-b err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:26 INFO Stream.Close
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:26 INFO unlinked endpoint=stream://router-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:26 INFO messageHandler endpoint=stream://router-a loop=STOP
+2026/11/08 21:51:26 INFO RemoteIntent close endpoint=stream://router-b
+2026/11/08 21:51:26 INFO Stream.Close
+2026/11/08 21:51:26 INFO messageHandler endpoint=stream://router-b loop=STOP
+2026/11/08 21:51:26 ERROR remote.Read endpoint=stream://star-b err="bad frame: preamble: context deadline exceeded"
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://router-b
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://star-b
+2026/11/08 21:51:26 INFO Stream.Close
+2026/11/08 21:51:26 INFO unlinked endpoint=stream://star-b route=types.Foo@streams.star.ab.dst
+2026/11/08 21:51:26 INFO unlinked endpoint=stream://star-a route=types.Foo@streams.star.ab.src
+2026/11/08 21:51:26 INFO RemoteIntent close endpoint=stream://star-a
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://star-a
+2026/11/08 21:51:26 INFO messageHandler endpoint=stream://star-a loop=STOP
+2026/11/08 21:51:26 INFO Remote.Close endpoint=stream://router-a
+2026/11/08 21:51:26 INFO LocalIntent endpoint=stream://star-b send=Intent.Close err="not enough bytes"
+2026/11/08 21:51:26 INFO LocalInterest endpoint=stream://star-b send=Intent.Register err="not enough bytes"
+2026/11/08 21:51:26 INFO messageHandler endpoint=stream://star-b loop=STOP
+--- FAIL: TestStreamStarTopologyBidirectional (10.00s)
+    bus_test.go:353: 
+        	Error Trace:	x/bus/bus_test.go:353
+        	Error:      	Received unexpected error:
+        	            	context deadline exceeded
+        	Test:       	TestStreamStarTopologyBidirectional
+    bus_test.go:106: 
+        	Error Trace:	x/bus/bus_test.go:106
+        	            				/opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/panic.go:694
+        	            				/opt/homebrew/Cellar/go/1.27.2/libexec/src/testing/testing.go:1106
+        	            				x/bus/bus_test.go:353
+        	            				/opt/homebrew/Cellar/go/1.27.2/libexec/src/runtime/asm_arm64.s:1039
+        	Error:      	Received unexpected error:
+        	            	context deadline exceeded
+        	Test:       	TestStreamStarTopologyBidirectional
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f46690
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f46d90
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec0fc0
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentA intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec13b0
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0de68c0
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0f47960
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentD intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0de7340
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Bar@topology.intentB intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0de7730
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO registered endpoint=direct interest=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO linked endpoint=direct route=types.Foo@topology.intentC intent=*dndm.LocalIntent interest=*dndm.LocalInterest C=0x5615b0ec01c0
+2026/11/08 21:51:26 INFO intent registered endpoint=direct intent=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentC
+2026/11/08 21:51:26 INFO Notify wrappers route=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Foo@topology.intentD
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Foo@topology.intentA
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Bar@topology.intentB
+FAIL
+2026/11/08 21:51:26 INFO unlinked endpoint=direct route=types.Foo@topology.intentC
+FAIL	github.com/itohio/dndm/x/bus	22.438s
+FAIL
+test_exit=1

@@ -1,0 +1,34 @@
+# go doc -all, pinned tree (git archive c7b5b61) vs working tree; exported declarations only ('<' pin, '>' working tree); GOFLAGS=-mod=readonly; 2026-11-08T21:59:30Z
+== .
+> func (l *Link) Close() error
+> type ReadyEndpoint interface {
+> 	Ready() bool
+> 	OnReady(f func())
+== ./codec
+> const DefaultMaxFrameSize = 4 << 20
+> func ReadMessageLimit(r io.Reader, max int) ([]byte, uint64, error)
+== ./endpoint/direct
+== ./endpoint/mesh
+> func (h *Handshaker) OnReady(f func())
+> func (h *Handshaker) Ready() bool
+== ./endpoint/remote
+> func (i *RemoteIntent) Peer() dndm.Peer
+> func (i *RemoteInterest) Peer() dndm.Peer
+== ./errors
+> 	ErrBadFrame           = errors.New("bad frame")
+== ./network
+== ./network/net
+== ./network/serial
+== ./network/stream
+== ./x/bus
+> func (c *Caller[Req, Resp]) Dropped() uint64
+> func WithCallerNonceSource[Req proto.Message, Resp proto.Message](src NonceSource) CallerOption[Req, Resp]
+> type CounterNonce struct {
+> func NewCounterNonce() *CounterNonce
+> func (c *CounterNonce) Next() uint64
+> type CryptoNonce struct {
+> func (c *CryptoNonce) Next() uint64
+> type NonceSource interface {
+> 	Next() uint64
+> type RandomNonce struct{}
+> func (RandomNonce) Next() uint64

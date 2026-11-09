@@ -1,0 +1,218 @@
+# DND-004 before: pinned tree + endpoint/mesh/handshake_test.go only; 2026-11-08T19:36:50Z
+$ go test -count=1 -timeout 60s -run TestContainerRegistersRoutesAcrossHandshakeCompletion -v ./endpoint/mesh
+=== RUN   TestContainerRegistersRoutesAcrossHandshakeCompletion
+2026/11/08 21:36:51 INFO messageHandler loop=START
+2026/11/08 21:36:51 INFO messageHandler loop=START
+2026/11/08 21:36:51 INFO Addrbook.AddConn peer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:51 INFO Sending Handshake state=1 local=tcp://127.0.0.1:1/a peer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:51 INFO Got Handshake state=1 peer=tcp://127.0.0.1:1/a them=tcp://127.0.0.1:1/a us=tcp://127.0.0.1:2/b stage=INITIAL
+2026/11/08 21:36:51 INFO Handshaker.UpdatePeer them=tcp://127.0.0.1:1/a us=tcp://127.0.0.1:2/b prevPeer=tcp://127.0.0.1:1/a
+2026/11/08 21:36:51 INFO Addrbook.AddConn peer=tcp://127.0.0.1:1/a
+2026/11/08 21:36:51 WARN AddIntent.Publish err=forbidden route=types.Foo@existing
+2026/11/08 21:36:51 WARN AddIntent.Publish err=forbidden route=types.Foo@removed
+    handshake_test.go:104: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:104
+        	Error:      	Received unexpected error:
+        	            	forbidden
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	publishing while one connection is mid-handshake must not fail
+2026/11/08 21:36:51 INFO Got Handshake state=1 peer=tcp://127.0.0.1:2/b them=tcp://127.0.0.1:2/b us=tcp://127.0.0.1:1/a stage=FINAL
+2026/11/08 21:36:51 INFO Addrbook ACTIVE PEERS peer=tcp://127.0.0.1:1/a active=true
+2026/11/08 21:36:51 INFO Handshaker.UpdatePeer them=tcp://127.0.0.1:2/b us=tcp://127.0.0.1:1/a prevPeer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:51 ERROR Setting Connection on Active Peer peer=tcp://127.0.0.1:2/b conn.remote=tcp://127.0.0.1:2/b conn.local=tcp://127.0.0.1:1/a
+    handshake_test.go:110: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:110
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "existing" never reached the remote after the handshake completed
+    handshake_test.go:110: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:110
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "during" never reached the remote after the handshake completed
+2026/11/08 21:36:58 INFO LocalIntent send=Intent.Register err="not enough bytes"
+    handshake_test.go:115: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:115
+        	Error:      	Received unexpected error:
+        	            	not enough bytes
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+2026/11/08 21:36:58 INFO Handshaker.Close
+2026/11/08 21:36:58 INFO Stream.Close
+2026/11/08 21:36:58 INFO Handshaker.Close
+2026/11/08 21:36:58 INFO Stream.Close
+2026/11/08 21:36:58 INFO Handshaker.Close
+2026/11/08 21:36:58 INFO Handshaker Remote.OnClose name=tcp://127.0.0.1:2/b
+2026/11/08 21:36:58 INFO Handshaker.Close
+2026/11/08 21:36:58 INFO Container OnClose name=tcp://127.0.0.1:2/b
+2026/11/08 21:36:58 INFO Handshaker Remote.OnClose name=tcp://127.0.0.1:1/a
+2026/11/08 21:36:58 INFO Handshaker.Close
+2026/11/08 21:36:58 INFO Remote.Close
+2026/11/08 21:36:58 INFO Remote.Close
+--- FAIL: TestContainerRegistersRoutesAcrossHandshakeCompletion (7.01s)
+2026/11/08 21:36:58 INFO Addrbook Peer closed peer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:58 INFO Stream.Close
+2026/11/08 21:36:58 INFO Stream.Close
+FAIL
+2026/11/08 21:36:58 INFO Stream.Close
+FAIL	github.com/itohio/dndm/endpoint/mesh	7.314s
+FAIL
+exit=1
+
+# DND-004 before: working tree (DND-018 + DND-001 + DND-019), no DND-004 fix
+=== RUN   TestContainerRegistersRoutesAcrossHandshakeCompletion
+2026/11/08 21:36:59 INFO messageHandler loop=START
+2026/11/08 21:36:59 INFO messageHandler loop=START
+2026/11/08 21:36:59 INFO Addrbook.AddConn peer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:59 INFO Sending Handshake state=1 local=tcp://127.0.0.1:1/a peer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:59 INFO Got Handshake state=1 peer=tcp://127.0.0.1:1/a them=tcp://127.0.0.1:1/a us=tcp://127.0.0.1:2/b stage=INITIAL
+2026/11/08 21:36:59 INFO Handshaker.UpdatePeer them=tcp://127.0.0.1:1/a us=tcp://127.0.0.1:2/b prevPeer=tcp://127.0.0.1:1/a
+2026/11/08 21:36:59 INFO Addrbook.AddConn peer=tcp://127.0.0.1:1/a
+2026/11/08 21:36:59 WARN AddIntent.Publish err=forbidden route=types.Foo@existing
+2026/11/08 21:36:59 WARN AddIntent.Publish err=forbidden route=types.Foo@removed
+    handshake_test.go:104: 
+        	Error Trace:	endpoint/mesh/handshake_test.go:104
+        	Error:      	Received unexpected error:
+        	            	forbidden
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	publishing while one connection is mid-handshake must not fail
+2026/11/08 21:36:59 INFO Addrbook ACTIVE PEERS peer=tcp://127.0.0.1:1/a active=true
+2026/11/08 21:36:59 INFO Got Handshake state=1 peer=tcp://127.0.0.1:2/b them=tcp://127.0.0.1:2/b us=tcp://127.0.0.1:1/a stage=FINAL
+2026/11/08 21:36:59 INFO Handshaker.UpdatePeer them=tcp://127.0.0.1:2/b us=tcp://127.0.0.1:1/a prevPeer=tcp://127.0.0.1:2/b
+2026/11/08 21:36:59 ERROR Setting Connection on Active Peer peer=tcp://127.0.0.1:2/b conn.remote=tcp://127.0.0.1:2/b conn.local=tcp://127.0.0.1:1/a
+    handshake_test.go:110: 
+        	Error Trace:	endpoint/mesh/handshake_test.go:110
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "existing" never reached the remote after the handshake completed
+    handshake_test.go:110: 
+        	Error Trace:	endpoint/mesh/handshake_test.go:110
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "during" never reached the remote after the handshake completed
+2026/11/08 21:37:06 INFO LocalIntent send=Intent.Register err="not enough bytes"
+    handshake_test.go:115: 
+        	Error Trace:	endpoint/mesh/handshake_test.go:115
+        	Error:      	Received unexpected error:
+        	            	not enough bytes
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+2026/11/08 21:37:06 INFO Remote.Close
+2026/11/08 21:37:06 INFO Handshaker.Close
+2026/11/08 21:37:06 INFO Stream.Close
+2026/11/08 21:37:06 INFO Container OnClose name=tcp://127.0.0.1:2/b
+2026/11/08 21:37:06 INFO Handshaker.Close
+2026/11/08 21:37:06 INFO Stream.Close
+2026/11/08 21:37:06 INFO Remote.Close
+2026/11/08 21:37:06 INFO Handshaker Remote.OnClose name=tcp://127.0.0.1:1/a
+2026/11/08 21:37:06 INFO Handshaker.Close
+2026/11/08 21:37:06 INFO Addrbook Peer closed peer=tcp://127.0.0.1:1/a
+2026/11/08 21:37:06 INFO Handshaker Remote.OnClose name=tcp://127.0.0.1:2/b
+2026/11/08 21:37:06 INFO Handshaker.Close
+2026/11/08 21:37:06 INFO Addrbook Peer closed peer=tcp://127.0.0.1:2/b
+--- FAIL: TestContainerRegistersRoutesAcrossHandshakeCompletion (7.01s)
+FAIL
+FAIL	github.com/itohio/dndm/endpoint/mesh	7.314s
+FAIL
+exit=1
+
+# DND-004 follow-on before: pinned tree + lifecycle_test.go; 2026-11-08T19:46:03Z
+$ go test -count=1 -timeout 60s -run TestRouters_AddAfterCloseRefused -v .
+=== RUN   TestRouters_AddAfterCloseRefused
+    lifecycle_test.go:201: 
+        	Error Trace:	~/src/tmp/dndm/base/lifecycle_test.go:201
+        	Error:      	Expected error with "closed" in chain but got nil.
+        	Test:       	TestRouters_AddAfterCloseRefused
+    lifecycle_test.go:202: 
+        	Error Trace:	~/src/tmp/dndm/base/lifecycle_test.go:202
+        	Error:      	Should be empty, but was [0x5ae19b1605a0]
+        	Test:       	TestRouters_AddAfterCloseRefused
+    lifecycle_test.go:208: 
+        	Error Trace:	~/src/tmp/dndm/base/lifecycle_test.go:208
+        	Error:      	Expected error with "closed" in chain but got nil.
+        	Test:       	TestRouters_AddAfterCloseRefused
+    lifecycle_test.go:209: 
+        	Error Trace:	~/src/tmp/dndm/base/lifecycle_test.go:209
+        	Error:      	Should be empty, but was [0x5ae19b1b0000]
+        	Test:       	TestRouters_AddAfterCloseRefused
+--- FAIL: TestRouters_AddAfterCloseRefused (0.00s)
+FAIL
+FAIL	github.com/itohio/dndm	0.298s
+FAIL
+exit=1
+
+# DND-004 reconnect test before: pinned tree
+=== RUN   TestContainerRegistersRoutesAcrossHandshakeCompletion
+    handshake_test.go:182: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:182
+        	Error:      	Received unexpected error:
+        	            	forbidden
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	publishing while one connection is mid-handshake must not fail
+    handshake_test.go:186: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:186
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "existing" never reached the remote after the handshake completed
+    handshake_test.go:186: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:186
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "during" never reached the remote after the handshake completed
+    handshake_test.go:194: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:194
+        	Error:      	Not equal: 
+        	            	expected: 1
+        	            	actual  : 0
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "existing" has more than one remote intent
+    handshake_test.go:194: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:194
+        	Error:      	Not equal: 
+        	            	expected: 1
+        	            	actual  : 0
+        	Test:       	TestContainerRegistersRoutesAcrossHandshakeCompletion
+        	Messages:   	route "during" has more than one remote intent
+--- FAIL: TestContainerRegistersRoutesAcrossHandshakeCompletion (6.22s)
+=== RUN   TestContainerRegistersRoutesOnReconnect
+    handshake_test.go:214: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:214
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+        	Messages:   	route "kept" never reached the remote after the handshake completed
+    handshake_test.go:214: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:214
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+        	Messages:   	route "dropped" never reached the remote after the handshake completed
+    handshake_test.go:224: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:224
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+        	Messages:   	route "kept" never reached the remote after the handshake completed
+    handshake_test.go:224: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:161
+        	            				~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:224
+        	Error:      	Condition never satisfied
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+        	Messages:   	route "new" never reached the remote after the handshake completed
+    handshake_test.go:227: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:227
+        	Error:      	Not equal: 
+        	            	expected: 1
+        	            	actual  : 0
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+    handshake_test.go:228: 
+        	Error Trace:	~/src/tmp/dndm/base/endpoint/mesh/handshake_test.go:228
+        	Error:      	Not equal: 
+        	            	expected: 1
+        	            	actual  : 0
+        	Test:       	TestContainerRegistersRoutesOnReconnect
+--- FAIL: TestContainerRegistersRoutesOnReconnect (12.21s)
+FAIL
+FAIL	github.com/itohio/dndm/endpoint/mesh	18.719s
+FAIL
+exit=0
