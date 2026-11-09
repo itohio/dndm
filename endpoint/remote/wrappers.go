@@ -12,6 +12,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	_ dndm.RemoteIntent   = (*RemoteIntent)(nil)
+	_ dndm.RemoteInterest = (*RemoteInterest)(nil)
+)
+
 const DefaultTimeToLive = time.Hour * 24 * 30 * 365
 
 type Watchdog struct {
@@ -143,6 +148,11 @@ func (i *RemoteIntent) Link(c chan<- proto.Message) {
 	i.LocalIntent.Link(c)
 }
 
+// Peer returns the remote peer that published this intent; it makes RemoteIntent a dndm.RemoteIntent.
+func (i *RemoteIntent) Peer() dndm.Peer {
+	return i.remote.Remote()
+}
+
 type RemoteInterest struct {
 	*dndm.LocalInterest
 	log    *slog.Logger
@@ -234,4 +244,10 @@ func (i *RemoteInterest) Close() error {
 	i.log.Info("RemoteInterest close")
 	i.wd.Reset()
 	return i.LocalInterest.Close()
+}
+
+// Peer returns the remote peer that registered this interest; it makes RemoteInterest a
+// dndm.RemoteInterest. Its channel has one reader, the forwarder to that peer (DND-003).
+func (i *RemoteInterest) Peer() dndm.Peer {
+	return i.remote.Remote()
 }

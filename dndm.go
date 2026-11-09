@@ -49,6 +49,12 @@ func New(opts ...Option) (*Router, error) {
 }
 
 func (d *Router) addInterest(interest Interest, t Endpoint) error {
+	if _, ok := interest.(RemoteInterest); ok {
+		// A remote interest's channel is read only by its endpoint's forwarder to the
+		// remote peer. A router fan-in on it would be a second reader that steals
+		// remote-bound messages (DND-003).
+		return nil
+	}
 	route := interest.Route()
 	go func() {
 		d.mu.Lock()
