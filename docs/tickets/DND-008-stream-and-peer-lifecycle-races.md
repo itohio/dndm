@@ -128,7 +128,7 @@ Behaviour changes:
   - **G2, data race.** `Handshaker.Name()` (`handshake.go:176`) reads `h.remotePeer` in the Container's close callback, while `handshakeMsg` writes it (`:296`). Seen 1/120.
     - Both lines date from the pin; the alias case (close during the handshake) makes them meet.
     - Fix: guard `remotePeer` (a mutex or `atomic.Pointer`).
-- 2026-11-09: DND-008-G1G2, not committed ([report](../evidence/DND-008-G1G2.md)).
+- 2026-11-09: DND-008-G1G2, committed as fe26a5f (G2) and 62f9b14 (G1), docs b485ece; awaiting verify and review rechecks ([report](../evidence/DND-008-G1G2.md)).
   - **G2 fixed.** `Handshaker.remotePeer` is guarded by `peerMu`, and every read goes through `h.peer()`.
     - `TestHandshaker_NameDuringHandshake` reads `Name()` on both handshakers during the handshake. Before: a race was detected in 8 of 10 fresh processes. After: 0 of 100 runs.
   - **G1 fixed in the test.** The alias subtest now retries `Send` while it returns `ErrNoInterest` (nothing was sent, so no duplicate), then checks the message arrives once.
