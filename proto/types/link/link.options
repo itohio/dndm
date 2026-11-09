@@ -1,0 +1,18 @@
+# nanopb options for link.proto (DND-022, link-context-wire.md §6). Part of the contract.
+# Sizes are the MCU defaults; a build may override them per face. Not yet run through
+# nanopb (no MCU target in this repo yet; DND-015). The control messages are a oneof:
+# nanopb generates a union with which_control.
+
+# Data path: payload and sealed are decoded in place (callback), sized by the face MTU.
+types.link.LinkFrame.payload    type:FT_CALLBACK
+types.link.LinkFrame.sealed     type:FT_CALLBACK
+
+# Control.
+types.link.Hello.nonce          max_size:32
+types.link.Handshake.data       max_size:128
+types.link.Announce.path        max_size:128
+types.link.Announce.type        max_size:96
+types.link.Bind.path            max_size:128
+types.link.Bind.type            max_size:96
+types.link.Bind.policy          max_size:32
+types.link.Close.text           max_size:64

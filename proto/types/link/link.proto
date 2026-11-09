@@ -1,0 +1,201 @@
+syntax = "proto3";
+package types.link;
+option go_package = "github.com/itohio/dndm/types/link";
+
+// Link-context wire (DND-022, docs/design/link-context-wire.md §2).
+//
+// Schema rules for every generator (§6): uint32 for ids and counters, no maps, Any or
+// well-known types, enums start at *_UNSPECIFIED = 0, field numbers 1-15 only for
+// per-frame fields. The data path is flat (no oneof, no proto3 optional: presence comes
+// from zero values); the control messages are one oneof, so a frame carries at most one
+// (review R-DND-R9 L2; same field numbers and wire bytes as plain fields). The nanopb
+// sizes are in link.options next to this file.
+
+// LinkFrame is one frame on a link-context link. Exactly one of the groups is set:
+//   DATA:    route_id != 0, payload (or ctr + sealed on a secured link), seq when the route buffers.
+//   CONTROL: route_id == 0 and exactly one control message (the oneof, fields 16+).
+// Faces delimit frames themselves: UDP datagram, COBS on serial, CAN frame, or a varint
+// length prefix on byte streams (TCP).
+message LinkFrame {
+  // ---- data path (1-byte tags) ----
+
+  // Per link, per sending side, per session; 0 = control frame. Allocated lowest-free,
+  // so it stays below 128 unless more than 127 routes are bound at once (§4).
+  uint32 route_id = 1;
+  // The application message, serialized protobuf.
+  bytes payload = 2;
+  // Per route, starts at 1; 0 = absent (latest routes omit it).
+  uint32 seq = 3;
+  // Fragment index << 1 | last, only on faces with a small MTU.
+  uint32 frag = 4;
+  // AEAD counter, low 7 or 14 bits per link profile (§4); 0 is sent as absent.
+  uint32 ctr = 5;
+  // Ciphertext || tag; replaces payload on secured links.
+  bytes sealed = 6;
+  // 7..15: future data-path fields.
+  reserved 7 to 15;
+
+  // ---- control (2-byte tags) ----
+
+  // At most one control message per frame. A decoder that also finds DATA fields
+  // (route_id != 0) rejects the frame.
+  oneof control {
+    // Session start: version, profile, limits.
+    Hello hello = 16;
+    // Profile-specific handshake step.
+    Handshake handshake = 17;
+    // Route announcement (who has, who wants).
+    Announce announce = 18;
+    // Route id binding, sent by the data sender.
+    Bind bind = 19;
+    // Answer to Bind.
+    BindAck bind_ack = 20;
+    // Release of a route id.
+    Unbind unbind = 21;
+    // Answer to Unbind; the id may be reused after it (plus a quarantine on reordering faces).
+    UnbindAck unbind_ack = 22;
+    // Link close with a reason.
+    Close close = 23;
+  }
+  // 24..31: repair/fetch (DND-006), capability report (DND-013).
+  reserved 24 to 31;
+}
+
+// Profile is the security profile of a link. It is fixed per link by config and never
+// negotiated down.
+enum Profile {
+  // Not set; a link with this profile is refused.
+  PROFILE_UNSPECIFIED = 0;
+  // Trusted on-board wire, zone fixed by build config, no crypto.
+  PROFILE_ONBOARD = 1;
+  // Zone pre-shared key -> link keys (small radios, CAN FD, CRSF).
+  PROFILE_ZONE_PSK = 2;
+  // Ephemeral + static X25519, static key bound to the zone anchor.
+  PROFILE_STATIC_DH = 3;
+  // Broadcast: zone group key, sender slots.
+  PROFILE_GROUP_KEY = 4;
+  // Network link opened with Insecure("reason"); advertised as such.
+  PROFILE_INSECURE = 5;
+}
+
+// Hello starts a session. Each side sends one.
+message Hello {
+  // Link protocol version, 2 for this design.
+  uint32 version = 1;
+  // Fixed per link by config; never negotiated down.
+  Profile profile = 2;
+  // Fresh per session.
+  bytes nonce = 3;
+  // Largest frame this side accepts.
+  uint32 max_frame = 4;
+  // Route table cap per direction (A8).
+  uint32 max_routes = 5;
+  // Random per session; echoed in Close and used by the address book (close-reconnect.md).
+  uint64 session = 6;
+}
+
+// Handshake is one profile-specific step, opaque to the core.
+message Handshake {
+  // Step number within the profile's handshake.
+  uint32 step = 1;
+  // Ephemeral key, proof, signed static key id ...
+  bytes data = 2;
+}
+
+// Role says which side of a route an Announce describes.
+enum Role {
+  // Not set; ignored.
+  ROLE_UNSPECIFIED = 0;
+  // "I can send this route".
+  ROLE_INTENT = 1;
+  // "I want this route".
+  ROLE_INTEREST = 2;
+}
+
+// Announce replaces types.core Intent/Interest on v2 links.
+message Announce {
+  // Intent or interest.
+  Role role = 1;
+  // Zone-local path, e.g. "easyrobot.manipulator.raw".
+  string path = 2;
+  // Full protobuf message name, e.g. "types.control.ManipulatorState".
+  string type = 3;
+  // False = withdraw.
+  bool register = 4;
+}
+
+// Bind is sent by the side that will send DATA on route_id.
+message Bind {
+  // Allocated by the sender: lowest free id, per session (§4).
+  uint32 route_id = 1;
+  // Zone-local path.
+  string path = 2;
+  // Full message name, not a short hash (a 4-byte hash is forgeable).
+  string type = 3;
+  // Bit mask: latest, buffered, history, fragment, e2e-sign, e2e-seal.
+  uint32 stages = 4;
+  // Stage parameters (depth, deadline ...), schema per stage (DND-006).
+  bytes policy = 5;
+}
+
+// BindStatus is the answer to a Bind.
+enum BindStatus {
+  // Not set; treated as a failure.
+  BIND_STATUS_UNSPECIFIED = 0;
+  // Bound: DATA on the id is accepted.
+  BIND_STATUS_OK = 1;
+  // Route not permitted in this zone, or no grant.
+  BIND_STATUS_DENIED = 2;
+  // The type is not registered here.
+  BIND_STATUS_UNKNOWN_TYPE = 3;
+  // The stage policy is invalid.
+  BIND_STATUS_BAD_POLICY = 4;
+  // The route table is at its cap.
+  BIND_STATUS_TABLE_FULL = 5;
+}
+
+// BindAck answers a Bind.
+message BindAck {
+  // The id from the Bind.
+  uint32 route_id = 1;
+  // The outcome.
+  BindStatus status = 2;
+}
+
+// Unbind releases a route id.
+message Unbind {
+  // The id to release.
+  uint32 route_id = 1;
+}
+
+// UnbindAck confirms an Unbind.
+message UnbindAck {
+  // The released id.
+  uint32 route_id = 1;
+}
+
+// CloseReason says why a link closes.
+enum CloseReason {
+  // Not set.
+  CLOSE_REASON_UNSPECIFIED = 0;
+  // Orderly close.
+  CLOSE_REASON_NORMAL = 1;
+  // The peers' profiles differ.
+  CLOSE_REASON_PROFILE_MISMATCH = 2;
+  // Too many failed tags.
+  CLOSE_REASON_AUTH_FAILURES = 3;
+  // The other connection between this pair wins (close-reconnect.md).
+  CLOSE_REASON_DUPLICATE = 4;
+  // Malformed or unexpected frames.
+  CLOSE_REASON_PROTOCOL = 5;
+}
+
+// Close ends a link (best effort).
+message Close {
+  // Why.
+  CloseReason reason = 1;
+  // Human-readable detail.
+  string text = 2;
+  // The session being closed (Hello.session).
+  uint64 session = 3;
+}
