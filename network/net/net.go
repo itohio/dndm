@@ -35,7 +35,8 @@ func (f *Node) Dial(ctx context.Context, peer dndm.Peer, o ...network.DialOpt) (
 	}
 
 	f.log.Debug("Dialing", "peer", peer)
-	conn, err := net.Dial(peer.Scheme(), peer.Address())
+	var d net.Dialer
+	conn, err := d.DialContext(ctx, peer.Scheme(), peer.Address())
 	if err != nil {
 		f.log.Error("Dial", "peer", peer, "err", err)
 		return nil, err
