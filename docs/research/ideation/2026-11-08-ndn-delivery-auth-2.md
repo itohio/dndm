@@ -276,7 +276,7 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 | Link | Usable payload per frame | Recommended profile | Per-message overhead (core + security) | Notes |
 |---|---|---|---|---|
 | **Classic CAN** (8 B data) | 8 B | Z-b inside one robot; authenticated **commands need CAN FD** (decided: decisions.md, DND-R6-fix measurement) | 2 B (route id in the CAN identifier, `payload` tag + length) → 6 B data. Authenticated command: `ctr` 0–2 (7 low bits) + `sealed` 2 + 3 B MAC ≤ 7 B → **1 B data** (design §3) | SecOC-like truncation trades forgery resistance for space (AUTOSAR PRS, reported). With a 3 B MAC, forgery needs lockout (§8.1 A2) |
-| **CAN FD** (64 B) | 64 B | Z-c PSK + 8 B tag | route id in the CAN identifier: `ctr` 0–2 + `sealed` 2 + 8 B tag = 10–12 B → about 51 B data (design §3) | |
+| **CAN FD** (64 B) | 64 B | Z-c PSK + 8 B tag | route id in the CAN identifier: `ctr` 0–3 (14 low bits) + `sealed` 2 + 8 B tag = 10–13 B → about 51 B data (design §3) | |
 | **I²C** | transaction-sized | Z-b only (on-board) | 4 B `LinkFrame`; whether to lift the route id into the register/command byte, as on CAN, is open `#verify` (DND-015) | Master-polled; crypto on a probe-able on-board bus buys little (inferred) |
 | **SPI** | transaction-sized | Z-b only | as I²C | Same as I²C |
 | **ELRS/CRSF** | 60 B payload, 64 B frame (observed `fpv-arena/rig/backend/internal/crsf/crsf.go:14-24`) | Z-c PSK, tag 4 B; `latest` only | `route_id` 2 + `ctr` 0–2 (7 low bits) + `sealed` 2 + 4 B tag = 8–10 B → 50–52 B app data | **RC channels stay native CRSF under the rig's failsafe watchdog (fpv-arena ADR 0022);** dndm carries telemetry/aux only. ELRS's own link protection is outside dndm (`#verify` what ELRS provides) |
