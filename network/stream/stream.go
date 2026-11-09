@@ -5,7 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"sync"
-	"time"
+	"sync/atomic"
 
 	"github.com/itohio/dndm"
 	"github.com/itohio/dndm/codec"
@@ -39,6 +39,7 @@ func NewWithContext(ctx context.Context, localPeer, remotePeer dndm.Peer, rw io.
 	ret.read = contextRW{
 		Base:    dndm.NewBaseWithCtx(ctx),
 		request: make(chan contextRWRequest),
+		copyOut: true,
 	}
 	ret.write = contextRW{
 		Base:    dndm.NewBaseWithCtx(ctx),
@@ -64,7 +65,7 @@ func (c *StreamContext) run() {
 
 func (c *StreamContext) Reader(ctx context.Context) io.Reader {
 	return &reader{
-		c:   c.read,
+		c:   &c.read,
 		ctx: ctx,
 	}
 }
@@ -112,11 +113,13 @@ func (w *StreamContext) Write(ctx context.Context, route dndm.Route, msg proto.M
 	if err != nil {
 		return err
 	}
-	n, err := w.write.Request(ctx, buf)
-	if n != len(buf) {
+	n, inUse, err := w.write.Request(ctx, buf)
+	if err == nil && n != len(buf) {
 		err = errors.ErrNotEnoughBytes
 	}
-	codec.Release(buf)
+	if !inUse { // a cancelled Write may still be on the wire; leave its buffer to the GC
+		codec.Release(buf)
+	}
 	return err
 }
 
@@ -124,28 +127,36 @@ type contextRWRequest struct {
 	ctx      context.Context
 	data     []byte
 	resultCh chan<- contextRWResult
+	ack      <-chan struct{} // read side: the caller has copied src
 }
 type contextRWResult struct {
 	n   int
 	err error
+	src []byte // read side: bytes in the loop's buffer, copied by the caller
 }
 
+// contextRW runs blocking Read or Write calls in one loop goroutine so callers can give
+// up on a context. A caller's buffer is never touched after its Request returned:
+//   - read side (copyOut): the loop reads into its own buffer, and the caller copies the
+//     bytes out. Bytes read for a caller that gave up are kept for the next Request.
+//   - write side: the loop writes the caller's buffer, and Request reports whether the
+//     loop may still be using it.
 type contextRW struct {
 	dndm.Base
 	request chan contextRWRequest
+	copyOut bool
+
+	// Owned by the Run goroutine.
+	scratch    []byte
+	pending    []byte
+	pendingErr error
 }
 
+// Close cancels the request loop. The request channel is never closed: Run is its only
+// receiver and Request selects on the context, so pending senders return instead of
+// sending on a closed channel.
 func (c *contextRW) Close() error {
-	c.Base.Close()
-	time.Sleep(time.Microsecond)
-	for {
-		select {
-		case <-c.request:
-		default:
-			close(c.request)
-			return nil
-		}
-	}
+	return c.Base.Close()
 }
 
 func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
@@ -155,68 +166,107 @@ func (c *contextRW) Run(ctx context.Context, f func([]byte) (int, error)) {
 			return
 		case <-c.Ctx().Done():
 			return
-		case r, ok := <-c.request:
-			if !ok {
-				continue
-			}
-
-			n, err := f(r.data)
-			select {
-			case <-ctx.Done():
-				close(r.resultCh)
+		case r := <-c.request:
+			if !c.serve(ctx, r, f) {
 				return
-			case <-c.Ctx().Done():
-				close(r.resultCh)
-				return
-			case <-r.ctx.Done():
-			case r.resultCh <- contextRWResult{n: n, err: err}:
 			}
-			close(r.resultCh)
 		}
 	}
 }
 
-func (c *contextRW) Request(ctx context.Context, buf []byte) (n int, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			// NOTE: This panic is unavoidable sometimes: we close the channel onClose, however, someone might have
-			// pending request on this channel due to previous call not returning yet.
-			// Since onClosed is sometimes called before context cancel, there is no way to safely
-			// unblock the sending to a channel that is about to be closed.
-			if e, ok := e.(error); !ok || e.Error() != "send on closed channel" {
-				panic(e)
-			}
-			err = context.Canceled
+// readScratchSize bounds the read loop's own buffer. Callers such as codec.ReadMessage
+// ask for a whole frame body at once; sizing the buffer to the request would keep the
+// largest frame (up to codec.DefaultMaxFrameSize) per stream for its whole life.
+const readScratchSize = 1024
+
+// serve handles one request and reports whether the loop should go on.
+func (c *contextRW) serve(ctx context.Context, r contextRWRequest, f func([]byte) (int, error)) bool {
+	var res contextRWResult
+	fromPending := false
+	switch {
+	case !c.copyOut:
+		res.n, res.err = f(r.data)
+	case len(c.pending) > 0 || c.pendingErr != nil:
+		fromPending = true
+		res.src = c.pending[:min(len(c.pending), len(r.data))]
+		res.n = len(res.src)
+		if res.n == len(c.pending) {
+			res.err = c.pendingErr
 		}
-	}()
-	ch := make(chan contextRWResult)
+	default:
+		if c.scratch == nil {
+			c.scratch = make([]byte, readScratchSize)
+		}
+		// A short read is fine: io.ReadFull and codec.ReadMessage ask again for the rest.
+		res.n, res.err = f(c.scratch[:min(len(r.data), len(c.scratch))])
+		res.src = c.scratch[:res.n]
+	}
+
 	select {
 	case <-ctx.Done():
-		return 0, ctx.Err()
+		close(r.resultCh)
+		return false
 	case <-c.Ctx().Done():
-		return 0, c.Ctx().Err()
-	case c.request <- contextRWRequest{data: buf, resultCh: ch, ctx: ctx}:
-		select {
-		case <-ctx.Done():
-			return 0, ctx.Err()
-		case <-c.Ctx().Done():
-			return 0, c.Ctx().Err()
-		case result, ok := <-ch:
-			if !ok {
-				return 0, context.Canceled
-			}
-			return result.n, result.err
+		close(r.resultCh)
+		return false
+	case <-r.ctx.Done():
+		if c.copyOut && !fromPending { // nobody took these bytes; keep them for the next Request
+			c.pending = append(c.pending, res.src...)
+			c.pendingErr = res.err
 		}
+	case r.resultCh <- res:
+		if c.copyOut {
+			<-r.ack
+			if fromPending {
+				c.pending = c.pending[res.n:]
+				if len(c.pending) == 0 {
+					c.pending, c.pendingErr = nil, nil
+				}
+			}
+		}
+	}
+	close(r.resultCh)
+	return true
+}
+
+// Request hands buf to the loop and waits for the result or for ctx. inUse reports that
+// the loop may still be using buf (write side, cancelled after hand-over).
+func (c *contextRW) Request(ctx context.Context, buf []byte) (n int, inUse bool, err error) {
+	ch := make(chan contextRWResult)
+	ack := make(chan struct{})
+	select {
+	case <-ctx.Done():
+		return 0, false, ctx.Err()
+	case <-c.Ctx().Done():
+		return 0, false, c.Ctx().Err()
+	case c.request <- contextRWRequest{data: buf, resultCh: ch, ack: ack, ctx: ctx}:
+	}
+	select {
+	case <-ctx.Done():
+		return 0, !c.copyOut, ctx.Err()
+	case <-c.Ctx().Done():
+		return 0, !c.copyOut, c.Ctx().Err()
+	case result, ok := <-ch:
+		if !ok {
+			return 0, false, context.Canceled
+		}
+		if c.copyOut {
+			n = copy(buf, result.src)
+			close(ack)
+			return n, false, result.err
+		}
+		return result.n, false, result.err
 	}
 }
 
 type reader struct {
-	c   contextRW
+	c   *contextRW
 	ctx context.Context
 }
 
 func (r reader) Read(buf []byte) (int, error) {
-	return r.c.Request(r.ctx, buf)
+	n, _, err := r.c.Request(r.ctx, buf)
+	return n, err
 }
 
 // Stream converts regular ReaderWriter into a Remote
@@ -225,6 +275,8 @@ type Stream struct {
 	localPeer dndm.Peer
 	handlers  map[types.Type]network.MessageHandler
 	rw        io.ReadWriter
+	closed    atomic.Bool
+	writeMu   sync.Mutex // one frame per rw.Write call; writers that split a call must not interleave
 
 	mu         sync.Mutex
 	remotePeer dndm.Peer
@@ -278,14 +330,17 @@ func (w *Stream) UpdateRemotePeer(p dndm.Peer) error {
 	return nil
 }
 
+// Close closes the underlying reader/writer once, then the stream's context and close callbacks.
+// The reader/writer closes first so readers blocked on it return before callbacks wait for them.
 func (w *Stream) Close() error {
+	if !w.closed.CompareAndSwap(false, true) {
+		return nil
+	}
 	slog.Info("Stream.Close")
 	var err error
-	w.Base.AddOnClose(func() {
-		if closer, ok := w.rw.(io.Closer); ok {
-			err = closer.Close()
-		}
-	})
+	if closer, ok := w.rw.(io.Closer); ok {
+		err = closer.Close()
+	}
 	w.Base.Close()
 	return err
 }
@@ -363,8 +418,10 @@ func (w *Stream) Write(ctx context.Context, route dndm.Route, msg proto.Message)
 	if err != nil {
 		return err
 	}
+	w.writeMu.Lock()
 	n, err := w.rw.Write(buf)
-	if n != len(buf) {
+	w.writeMu.Unlock()
+	if err == nil && n != len(buf) {
 		err = errors.ErrNotEnoughBytes
 	}
 	codec.Release(buf)
