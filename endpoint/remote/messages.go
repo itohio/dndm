@@ -37,7 +37,8 @@ func (t *Endpoint) messageHandler() {
 		hdr, msg, err := t.conn.Read(t.Ctx())
 		if err != nil {
 			t.Log.Error("remote.Read", "err", err)
-			t.Close()
+			// shutdown, not Close: Close waits for this goroutine.
+			t.shutdown()
 			return
 		}
 		// t.log.Info("got msg", "route", hdr.Route, "hdr.type", hdr.Type, "type", reflect.TypeOf(msg))

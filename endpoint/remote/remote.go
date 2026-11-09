@@ -56,7 +56,9 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm
 		return err
 	}
 
-	t.conn.OnClose(func() { t.Close() })
+	// The connection's close callback may run on the message handler's goroutine
+	// (handler → shutdown → conn.Close), so it must not wait for the handler.
+	t.conn.OnClose(func() { t.shutdown() })
 
 	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
@@ -103,14 +105,23 @@ func (t *Endpoint) OnClose(f func()) dndm.Endpoint {
 	return t
 }
 
+// Close shuts the endpoint down and waits for its message handler and pinger to exit.
 func (t *Endpoint) Close() error {
+	err := t.shutdown()
+	t.wg.Wait()
+	return err
+}
+
+// shutdown closes the connection, the endpoint context and the linker without waiting
+// for the endpoint's goroutines, so those goroutines may call it themselves. Every step
+// is idempotent.
+func (t *Endpoint) shutdown() error {
 	t.Log.Info("Remote.Close")
 	errarr := make([]error, 0, 3)
 	if closer, ok := t.conn.(io.Closer); ok {
 		errarr = append(errarr, closer.Close())
 	}
 	errarr = append(errarr, t.BaseEndpoint.Close(), t.linker.Close())
-	t.wg.Wait()
 	return errors.Join(errarr...)
 }
 
