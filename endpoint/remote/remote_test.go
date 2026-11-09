@@ -87,3 +87,36 @@ func TestEndpoint_CloseWhileReadingReturns(t *testing.T) {
 		t.Fatal("Close hung while the message handler was reading")
 	}
 }
+
+// DND-022 follow-up 2 (verify's DND-008 recheck): a connection that is already closed
+// when Init registers its close callback runs that callback at once on another
+// goroutine. shutdown then read t.linker while Init was still assigning it: a data race,
+// or a nil-linker panic. Needs -race to fail reliably.
+func TestEndpoint_InitOnClosedConn(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	local, err := dndm.NewPeer("stream", "local", "", nil)
+	require.NoError(t, err)
+	peer, err := dndm.NewPeer("stream", "peer", "", nil)
+	require.NoError(t, err)
+	in, feed := io.Pipe()
+	out, sink := io.Pipe()
+	go io.Copy(io.Discard, out) //nolint:errcheck
+	defer feed.Close()
+	defer sink.Close()
+
+	conn := stream.NewWithContext(ctx, local, peer, pipeRW{Reader: in, Writer: sink}, nil)
+	require.NoError(t, conn.Close()) // the peer went away before Init
+
+	ep := New(local, conn, 1, time.Second, 0)
+	require.NoError(t, ep.Init(ctx, slog.Default(),
+		func(dndm.Intent, dndm.Endpoint) error { return nil },
+		func(dndm.Interest, dndm.Endpoint) error { return nil },
+	))
+	select {
+	case <-ep.Ctx().Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("the endpoint did not shut down after its connection closed")
+	}
+	require.NoError(t, ep.Close())
+}

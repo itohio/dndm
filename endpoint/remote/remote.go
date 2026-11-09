@@ -56,10 +56,6 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm
 		return err
 	}
 
-	// The connection's close callback may run on the message handler's goroutine
-	// (handler → shutdown → conn.Close), so it must not wait for the handler.
-	t.conn.OnClose(func() { t.shutdown() })
-
 	t.linker = dndm.NewLinker(
 		ctx, logger, t.Size,
 		func(intent dndm.Intent) error {
@@ -90,6 +86,12 @@ func (t *Endpoint) Init(ctx context.Context, logger *slog.Logger, addIntent dndm
 		},
 		nil,
 	)
+
+	// Register the close callback only now: on a connection that is already closed it
+	// runs at once on another goroutine, and shutdown reads t.linker (DND-022 follow-up 2).
+	// The callback may also run on the message handler's goroutine (handler → shutdown →
+	// conn.Close), so it must not wait for the handler.
+	t.conn.OnClose(func() { t.shutdown() })
 
 	t.wg.Add(1)
 	go t.messageHandler()
