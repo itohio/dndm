@@ -1,0 +1,34 @@
+# Gate finding during DND-022-tie (endpoint/mesh, committed code, not touched in this round), 2026-11-09T14:10:04Z
+Host load average ~50-60 (other peers). The tie-round gate (go test -race -count=3 ./...) reported 'FAIL endpoint/mesh' once; a plain rerun (-count=3, then -count=10) passed.
+$ go test -race -c -o /tmp/mesh.test ./endpoint/mesh; 12 processes in parallel (xargs -P 12), -test.count=10 each = 120 runs per test
+processes: 12
+     18 Error:      	Received unexpected error:
+     18 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection
+     18 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+      1 WARNING: DATA RACE
+## failure: reconnect_test.go:209 intent.Send -> 'no interest' (TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities), 18/120
+        	Error:      	Received unexpected error:
+        	            	no interest
+        	Test:       	TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+2026/11/09 16:08:55 INFO Handshaker.Close
+## race (1/120): Handshaker.Name (handshake.go:176, reads remotePeer) in Container's close callback vs handshakeMsg writing h.remotePeer (handshake.go:296). Both lines date from 2024 (pin); the alias case makes them meet.
+Read at 0x00c00063d540 by goroutine 2693:
+  github.com/itohio/dndm/endpoint/mesh.(*Handshaker).Name()
+      endpoint/mesh/handshake.go:176 +0x30
+  github.com/itohio/dndm.(*Container).initializeEndpoint.func3()
+      container.go:129 +0x44
+  github.com/itohio/dndm.(*lifecycle).drain()
+      endpoint.go:103 +0x44
+  github.com/itohio/dndm.(*Base).Init.func1()
+      endpoint.go:147 +0x38
+Previous write at 0x00c00063d540 by goroutine 2661:
+  github.com/itohio/dndm/endpoint/mesh.(*Handshaker).handshakeMsg()
+      endpoint/mesh/handshake.go:296 +0x884
+  github.com/itohio/dndm/endpoint/mesh.(*Handshaker).handshakeMsg-fm()
+  github.com/itohio/dndm/network/stream.(*StreamContext).Read()
+      network/stream/stream.go:100 +0x278
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).messageHandler()
+      endpoint/remote/messages.go:37 +0x224
+  github.com/itohio/dndm/endpoint/remote.(*Endpoint).Init.gowrap1()
+      endpoint/remote/remote.go:95 +0x2c
+  github.com/stretchr/testify/require.NoError()

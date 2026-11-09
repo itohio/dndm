@@ -121,5 +121,12 @@ Behaviour changes:
   - R1 (above);
   - F9 (mid-frame cancel doc);
   - the v2 close/reconnect tests and session ids, carried by DND-022.
+- 2026-11-09: two more open items, found by the DND-022-tie gate under host load (load average ~55; [evidence](../evidence/dnd-r10/mesh-gate-finding.txt)). Both are in committed code that this round did not touch. Not fixed yet; each needs a test that fails first.
+  - **G1, flaky alias subtest.** `TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities` failed 18/120 in 12 parallel processes: `intent.Send` returned `no interest`.
+    - [INFERENCE] The test waits for the first interest notification and then sends. During the documented window both connections are ready, and the notification can come from the connection that loses the tie-break. When that connection closes, its remote interest goes, and the survivor's interest may not be linked yet.
+    - Fix: the test waits until the surviving connection's interest is linked, or retries `Send` until it delivers once. Product behaviour stays the documented residual (at-least-once until DND-022).
+  - **G2, data race.** `Handshaker.Name()` (`handshake.go:176`) reads `h.remotePeer` in the Container's close callback, while `handshakeMsg` writes it (`:296`). Seen 1/120.
+    - Both lines date from the pin; the alias case (close during the handshake) makes them meet.
+    - Fix: guard `remotePeer` (a mutex or `atomic.Pointer`).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

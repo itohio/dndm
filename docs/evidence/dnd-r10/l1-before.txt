@@ -1,0 +1,34 @@
+# R-DND-022 L1-L3/L6 BEFORE: new tests against the reviewed link core (+ Stats.DroppedStale field and Link.Close, which the tests call); 2026-11-09T14:38:13Z
+$ go test -count=1 -run "TestHelloRetry|TestLateHello|TestSpoofedHello|TestStaleClose|TestHelloWithoutMaxRoutes|TestProfileMismatch|TestUnbindBeforeBindAck" -v ./network/linkctx
+Error:      	Should be true
+Messages:   	Hellos still flowing after 100 rounds
+Error:      	"101" is not less than or equal to "2"
+Messages:   	a Hello retry costs at most one Hello each way
+Error:      	Received unexpected error:
+Messages:   	the retry must not drop A's bindings
+--- FAIL: TestHelloRetryOnOpenLinkSettles
+Error:      	Should be true
+Messages:   	Hellos still flowing after 100 rounds
+Error:      	Not equal: 
+Messages:   	a retired session's Hello gets no answer
+Error:      	Not equal: 
+Error:      	Received unexpected error:
+Messages:   	B must not have reset A's routes
+--- FAIL: TestLateHelloFromRetiredSessionIgnored
+Error:      	Should be true
+Messages:   	Hellos still flowing after 100 rounds
+Error:      	"101" is not less than or equal to "1"
+--- FAIL: TestSpoofedHelloBounded
+Error:      	Should be true
+Messages:   	a Close for an unknown session must not close the link
+Error:      	Not equal: 
+Error:      	Received unexpected error:
+--- FAIL: TestStaleCloseIgnored
+Error:      	Received unexpected error:
+Messages:   	max_routes 0 must not leave a link that cannot bind
+--- FAIL: TestHelloWithoutMaxRoutesUsesDefault
+--- PASS: TestProfileMismatchCloses
+--- PASS: TestUnbindBeforeBindAck
+FAIL
+FAIL	github.com/itohio/dndm/network/linkctx	0.405s
+FAIL

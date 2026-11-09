@@ -181,6 +181,16 @@ Recommendation, **adopted** (decision 1): `LinkFrame` everywhere (4 B), plus (a)
 
 **When BIND is allowed.** A link drops every frame except `hello`/`handshake` until its handshake has completed and the profile is confirmed (verify A1). On `PROFILE_ONBOARD` the handshake is just the Hello exchange.
 
+**Session rules** (review R-DND-022 L1–L3; implemented in `network/linkctx`):
+
+- **Our session is kept until we reconnect.** `Start` picks a random session once; calling it again resends the same Hello (a retry). Only `Restart` (our reconnect) picks a new one.
+- **A peer's new session resets the tables, not our session.** An open side that gets a Hello with a new peer session drops both id tables and records the new session. It keeps its own session, so the peer sees nothing new and does not react again. So the pair (our session, peer session) is what makes a "session" for ids and counters.
+- **Answer at most once per received Hello.** A side answers a Hello with its own only if it has not sent a Hello since the last one it received. A retry or a reconnecting peer gets one answer, and two sides can never keep answering each other. On a lossy face, at least every second retry is answered.
+- **Retired sessions are ignored.** The last 4 of a peer's replaced sessions are remembered. A Hello from one of them (a late duplicate on a reordering face) is dropped and counted (`DroppedStale`), and cannot reset the link.
+- **`Close` names a current session:** the sender's own `Hello.session`, or the receiver's when the sender has none yet. A `Close` naming neither side's current session is dropped and counted (an old session's late `Close`, or a forged one).
+- **`max_routes` 0 means "not specified"**, and the receiver assumes 64. An older or minimal peer that omits it does not get a link with no routes.
+- **Residual on unauthenticated profiles (ONBOARD, INSECURE).** One spoofed Hello with an unknown session still resets the receiver's tables once. It costs at most one answer each way, never a storm. Secured profiles authenticate the Hello (DND-009).
+
 **Zone per link type** (decided "zone binding per link type"):
 
 | Face | Profile | How the zone is fixed | BIND check |
@@ -217,7 +227,7 @@ DATA for an id without a `BIND_STATUS_OK` is dropped and counted.
 - The AEAD counter is per direction, per session, and starts at 1. Fresh keys per session make restarting safe.
 - `ctr` carries only its low bits: **7 bits** on profiles where every byte counts (classic CAN, CRSF), **14 bits** elsewhere. The varint is therefore at most 1 or 2 B.
 - The receiver rebuilds the full counter from the highest one it has accepted. It takes the value with the same low bits that is **closest** to it, either ahead (frames lost in between) or behind (a late frame that the replay window can still accept), as SecOC and DTLS do. The nonce always uses the full counter.
-- Because the rebuilt value may be ahead or behind, it is unambiguous only within half the window: up to 63 frames lost or late at 7 bits, up to 8 191 at 14 bits. With a larger gap the rebuilt counter is wrong, the tags fail, and after N failures the link closes and runs a new handshake. A mis-rebuilt counter can only fail the tag; it cannot be accepted.
+- Because the rebuilt value may be ahead or behind, it is unambiguous only within half the window: up to 63 frames lost or late at 7 bits, up to 8 191 at 14 bits. A gap of exactly half the window (64 at 7 bits) is a tie between ahead and behind; it resolves ahead (`linkctx.RebuildCounter`). With a larger gap the rebuilt counter is wrong, the tags fail, and after N failures the link closes and runs a new handshake. A mis-rebuilt counter can only fail the tag; it cannot be accepted.
 
 **Control reliability on lossy faces:**
 
@@ -280,7 +290,7 @@ Why two tool modules: buf v1.75.0 requires an unreleased protobuf (`v1.36.13-0.2
 
 ## 8. Byte-count test
 
-`codec/link_frame_test.go`. The first four tests below exist since DND-R9 (failing first, then passing with `codec/link_frame.go`); the others need the link state machine and stay with DND-022:
+The tests live in `codec/link_frame_test.go` (frame bytes, DND-R9) and `network/linkctx/linkctx_test.go` (link core, after DND-R9; plus A1/A3/A8 tests). Each failed first as a build failure for the missing API, and a mutation run shows that each fails by assertion against a wrong implementation ([evidence](../evidence/DND-022-link-core.md)):
 
 - **TestLinkFrameOverhead**: encode DATA for payloads of 26 B and 62 B (the sizes of EasyRobot's ManipulatorTarget and ManipulatorState above) and 127/128/16 383/16 384 B (varint boundaries), and assert:
   - overhead = 4 B below 128 B, 5 B up to 16 383 B, 6 B above (UDP/serial framing);

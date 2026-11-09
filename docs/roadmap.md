@@ -127,5 +127,10 @@ These checks establish document consistency only. They do not validate source be
   - protobuf bumped to v1.36.12. EasyRobot makes the same one-line bump in parallel, coordinated by Leader; it was not yet committed when dndm's commit landed;
   - DND-022's `link.proto` (control `oneof`) and DATA codec added, with 4 byte-count tests (they failed first as a build failure: no API yet).
   ([report](evidence/DND-R9-tools.md))
+- 2026-11-09: DND-022 link core committed: 9e34601 (code as verify accepted it), then 63df1c4 (review R-DND-022 L1–L6 fixes). New package `network/linkctx`:
+  - Hello-gated link state machine, ONBOARD profile only, with session rules (no Hello ping-pong; stale Close dropped);
+  - per-session lowest-free route ids with a reuse quarantine; the receiver's table is capped and live ids are never retargeted;
+  - counter low bits and the rebuild window;
+  - 14 tests: the first six failed first as a build failure and are mutation-checked, and the review-fix tests failed first by assertion; ×20 `-race` ok ([report](evidence/DND-022-link-core.md)).
 
 [Overview](index.md) · [Pinned findings](research/pinned-findings.md) · [Unknown map](research/known-unknowns.md) · [Ticket index](tickets/index.md)

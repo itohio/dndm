@@ -130,6 +130,7 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 - [ ] Every case names the trusted decision point and deny behavior.
 - [ ] Profile/zone isolation survives reconnect, revocation and reply forwarding; lexical matching never grants authority.
 - [ ] Decision records trusted-local-only limitations or the chosen authenticated remote design plus key lifecycle.
+- [ ] On secured link-context profiles (ZONE_PSK, STATIC_DH, GROUP_KEY), an unauthenticated `Close` that arrives before the handshake completes is not accepted: the link stays as it was and the frame is dropped and counted, like every other frame before the handshake (design link-context-wire §4). Test failing first: a forged `Close` before the handshake must not tear down a link that is mid-handshake. Background: `network/linkctx` today honours `Close` in any state, which is harmless on ONBOARD (no authentication exists there) but would let anyone on a secured face reset links (verify DND-022, optional 2).
 
 ## Verification procedure — future, not executed
 
@@ -147,5 +148,6 @@ Medium research decision: one threat model and gateway/direct alternative compar
 
 - 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 - 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
+- 2026-11-09: acceptance item added from verify DND-022 (optional 2). On secured profiles, an unauthenticated pre-handshake `Close` must not be accepted. Today `linkctx.Link.Receive` accepts `Close` in any state; ONBOARD-only, so no change there until secured profiles land with this ticket.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

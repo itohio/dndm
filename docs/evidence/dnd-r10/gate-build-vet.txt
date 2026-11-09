@@ -1,0 +1,21 @@
+# DND-022 link core gates 2026-11-09T10:20:27Z go version go1.27.2 darwin/arm64
+$ gofmt -l .
+(end)
+build=0
+vet default=0
+vet dndm_nonce_counter=0
+vet dndm_nonce_random=0
+ok  	github.com/itohio/dndm/x/bus	5.384s
+ok  	github.com/itohio/dndm/x/bus	5.395s
+$ go test -count=10 ./...
+ok  	github.com/itohio/dndm	1.578s
+ok  	github.com/itohio/dndm/codec	0.511s
+ok  	github.com/itohio/dndm/endpoint/mesh	23.774s
+ok  	github.com/itohio/dndm/endpoint/remote	2.278s
+ok  	github.com/itohio/dndm/network	1.429s
+ok  	github.com/itohio/dndm/network/linkctx	2.791s
+ok  	github.com/itohio/dndm/network/net	0.837s
+ok  	github.com/itohio/dndm/network/stream	2.281s
+ok  	github.com/itohio/dndm/testutil	2.514s
+ok  	github.com/itohio/dndm/x/bus	14.473s
+WIRE-IDENTICAL

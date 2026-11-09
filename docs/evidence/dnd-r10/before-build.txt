@@ -1,0 +1,17 @@
+# DND-022 link core BEFORE: tests written, no implementation; 2026-11-09T10:16:52Z, HEAD 7c52a2f
+$ go test ./network/linkctx
+# github.com/itohio/dndm/network/linkctx [github.com/itohio/dndm/network/linkctx.test]
+network/linkctx/linkctx_test.go:47:14: undefined: Link
+network/linkctx/linkctx_test.go:54:32: undefined: Config
+network/linkctx/linkctx_test.go:59:8: undefined: New
+network/linkctx/linkctx_test.go:62:8: undefined: New
+network/linkctx/linkctx_test.go:99:18: undefined: Config
+network/linkctx/linkctx_test.go:144:18: undefined: Config
+network/linkctx/linkctx_test.go:183:10: undefined: LowBits
+network/linkctx/linkctx_test.go:196:27: undefined: RebuildCounter
+network/linkctx/linkctx_test.go:196:53: undefined: LowBits
+network/linkctx/linkctx_test.go:200:34: undefined: RebuildCounter
+network/linkctx/linkctx_test.go:200:34: too many errors
+FAIL	github.com/itohio/dndm/network/linkctx [build failed]
+FAIL
+exit=1

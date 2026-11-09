@@ -1,0 +1,11 @@
+# verify DND-022 optional 1: same-window tie case, 2026-11-09T14:04:59Z
+## mutant T (counter.go: `c-highest > half` -> `>= half`, the tie resolved behind in the same-window path), scratch copy
+$ go test -run '^TestCounterLowBits$' ./network/linkctx -> exit 1
+Error:      	Not equal:
+expected: 0xc2
+actual  : 0x42
+Messages:   	a tie resolves ahead (same window)
+--- FAIL: TestCounterLowBits (0.00s)
+## real code
+$ go test -race -count=20 -run '^TestCounterLowBits$' ./network/linkctx -> exit 0
+ok  	github.com/itohio/dndm/network/linkctx	1.505s

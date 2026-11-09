@@ -1,0 +1,21 @@
+# DND-022-tie gates 2026-11-09T14:05:31Z go version go1.27.2 darwin/arm64
+$ gofmt -l .
+(end)
+build=0
+vet default=0
+vet dndm_nonce_counter=0
+vet dndm_nonce_random=0
+$ go test -race -count=20 ./network/linkctx
+ok  	github.com/itohio/dndm/network/linkctx	17.368s
+$ go test -race -count=3 ./...
+      1 FAIL	github.com/itohio/dndm/endpoint/mesh	11.362s
+      1 ok  	github.com/itohio/dndm	4.482s
+      1 ok  	github.com/itohio/dndm/codec	3.253s
+      1 ok  	github.com/itohio/dndm/endpoint/remote	3.292s
+      1 ok  	github.com/itohio/dndm/network	3.123s
+      1 ok  	github.com/itohio/dndm/network/linkctx	5.728s
+      1 ok  	github.com/itohio/dndm/network/net	4.344s
+      1 ok  	github.com/itohio/dndm/network/stream	7.546s
+      1 ok  	github.com/itohio/dndm/testutil	5.880s
+      1 ok  	github.com/itohio/dndm/x/bus	9.912s
+WIRE-IDENTICAL

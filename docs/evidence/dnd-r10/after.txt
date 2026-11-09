@@ -1,0 +1,11 @@
+# DND-022 link core AFTER: 2026-11-09T10:20:23Z
+$ go test -race -count=20 -v ./network/linkctx
+      1 ok  	github.com/itohio/dndm/network/linkctx	1.797s
+     20 --- PASS: TestBindRetargetRefused
+     20 --- PASS: TestBindTableFull
+     20 --- PASS: TestCounterLowBits
+     20 --- PASS: TestLinkDropsBeforeHandshake
+     20 --- PASS: TestRouteIdReuseQuarantine
+     20 --- PASS: TestRouteIdsStaySmallAcrossReconnects
+$ go test -cover ./network/linkctx
+ok  	github.com/itohio/dndm/network/linkctx	0.420s	coverage: 82.9% of statements
