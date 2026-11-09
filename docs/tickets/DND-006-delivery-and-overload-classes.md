@@ -146,5 +146,9 @@ Small–medium research: one class/transition matrix; implementation depends on 
 
 - 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 - 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
+- 2026-11-09: DND-R8 note for the delivery-class design. **Until DND-022's session ids land, the v1 transport is at-least-once across a reconnect.**
+  - When two nodes dial each other at the same moment, both connections can be ready briefly before the tie-break settles it ([close-reconnect.md §3.1](../design/close-reconnect.md#31-tie-break-for-simultaneous-connections-decided), DND-008).
+  - A message sent in that window can arrive twice.
+  - Any class that promises "at most once" or exactly-once needs DND-022's session/generation ids, or per-route deduplication by `seq`.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)
