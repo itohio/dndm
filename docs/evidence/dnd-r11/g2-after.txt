@@ -1,0 +1,4 @@
+# DND-008 G2 AFTER (remotePeer guarded by peerMu; all reads via h.peer()), 2026-11-09T14:30:46Z
+$ 20 fresh processes (xargs -P 10) of the race binary, -test.run ^TestHandshaker_NameDuringHandshake$ -test.count=5 each = 100 runs
+processes: 20
+     20 exit=0

@@ -1,0 +1,15 @@
+# DND-008 G1 BEFORE (alias subtest as committed in d9a1793; G2 fix already in the tree), 2026-11-09T14:31:11Z, load: load average: 41.76, 44.56, 44.07
+$ 12 processes (xargs -P 12) of the race binary, -test.run ^TestMesh_SimultaneousDialKeepsOneConnection$ -test.count=10 each = 120 runs per subtest
+processes: 12
+     16 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection
+     16 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+    104 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection
+    104 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+    120 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_higher
+    120 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_lower
+     15 --
+     16 no interest
+## second BEFORE sample (14:31:49Z; the G1 test edit had not applied yet, so the run used the committed subtest; same harness, load ~44)
+     11 --- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+    109 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+    120 --- PASS: .../publisher_higher, 120 --- PASS: .../publisher_lower

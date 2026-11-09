@@ -1,0 +1,16 @@
+# DND-008 G2 BEFORE (HEAD 442f088, mesh code unchanged), 2026-11-09T14:29:11Z
+$ go test -race -count=5 -run TestHandshaker_NameDuringHandshake -v ./endpoint/mesh
+      2 FAIL
+      1 FAIL	github.com/itohio/dndm/endpoint/mesh	0.705s
+      1 --- FAIL: TestHandshaker_NameDuringHandshake
+      4 --- PASS: TestHandshaker_NameDuringHandshake
+      1 testing.go:1867: race detected during execution of test
+      1 WARNING: DATA RACE
+Write at 0x00c0000e6370 by goroutine 13:
+      endpoint/mesh/handshake.go:296 +0x884
+Previous read at 0x00c0000e6370 by goroutine 21:
+$ 10 fresh processes (xargs -P 10) of the race binary, -test.count=1 each (the race detector reports a given race once per process)
+processes: 10
+      2 exit=0
+      8 exit=1
+      8 WARNING: DATA RACE

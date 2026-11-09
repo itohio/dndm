@@ -48,7 +48,7 @@ Both sides see both connections, and both must keep the **same** one:
 
 - Keep the connection **dialled by the peer whose identity sorts lower**: byte compare of the verified key id, or, on v1/PSK links, of the identity string each peer declares in the handshake (`Peer.String()`, its `Me`). Not the address a dialer was configured with: two nodes can know each other by different names (`localhost:4000` vs `127.0.0.1:4000`), and then they would disagree (review R-DND-R8 N2).
 - Each side applies the rule once its handshake completes: the acceptor when INITIAL arrives, the dialer when FINAL arrives. Before that, a dial is only noted (`Addrbook.NoteDial`) and never displaces or refuses a connection. If the new connection loses, it closes itself (with `CLOSE_REASON_DUPLICATE` on v2). If it wins, the old one gets closed: `SetConn` replaces it, bumps `gen`, then closes the old connection.
-- Residual (v1, implemented in DND-R8): both connections can be ready for a moment before the dialers' FINALs settle it, so a message sent in that window may arrive twice.
+- Residual (v1, implemented in DND-R8): both connections can be ready for a moment before the dialers' FINALs settle it, so a message sent in that window may arrive twice. The reverse can also happen: when the losing connection closes, its remote interest goes with it, and until the survivor's interest is linked, `Send` returns `ErrNoInterest` and sends nothing (DND-008 G1, seen in 16 of 120 stressed runs). DND-022's session ids remove both.
 
 Because the rule is symmetric, both sides end with the same connection and never ping-pong.
 

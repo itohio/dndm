@@ -128,5 +128,13 @@ Behaviour changes:
   - **G2, data race.** `Handshaker.Name()` (`handshake.go:176`) reads `h.remotePeer` in the Container's close callback, while `handshakeMsg` writes it (`:296`). Seen 1/120.
     - Both lines date from the pin; the alias case (close during the handshake) makes them meet.
     - Fix: guard `remotePeer` (a mutex or `atomic.Pointer`).
+- 2026-11-09: DND-008-G1G2, not committed ([report](../evidence/DND-008-G1G2.md)).
+  - **G2 fixed.** `Handshaker.remotePeer` is guarded by `peerMu`, and every read goes through `h.peer()`.
+    - `TestHandshaker_NameDuringHandshake` reads `Name()` on both handshakers during the handshake. Before: a race was detected in 8 of 10 fresh processes. After: 0 of 100 runs.
+  - **G1 fixed in the test.** The alias subtest now retries `Send` while it returns `ErrNoInterest` (nothing was sent, so no duplicate), then checks the message arrives once.
+    - Before: 16/120 (and 11/120 in a second sample). After: 0/120.
+    - A mutant whose container never registers routes still fails it, with "B's interest never reached A over the surviving connection".
+    - The product behaviour behind it is the documented residual: during the simultaneous-dial window, `Send` can briefly see no interest. DND-022's session ids remove that window.
+  - The whole `endpoint/mesh` package, 12 processes × 10 runs: 0 failures, 0 races.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

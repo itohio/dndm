@@ -1,0 +1,14 @@
+# DND-008 G1 AFTER (test waits until Send stops returning ErrNoInterest, then checks the message arrives once), 2026-11-09T14:32:57Z
+$ 12 processes (xargs -P 12) of the race binary, -test.count=10 each = 120 runs per subtest; host load average ~45-50
+processes: 12
+ 120     --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities
+ 120     --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_higher
+ 120     --- PASS: TestMesh_SimultaneousDialKeepsOneConnection/publisher_lower
+ 120 --- PASS: TestMesh_SimultaneousDialKeepsOneConnection
+
+## mutant (scratch copy): Container.registerEndpointWithRouters returns at once, so B's interest never reaches A
+$ go test -run '^TestMesh_SimultaneousDialKeepsOneConnection$/dial_targets' -> exit 1
+--- FAIL: TestMesh_SimultaneousDialKeepsOneConnection (5.04s)
+--- FAIL: TestMesh_SimultaneousDialKeepsOneConnection/dial_targets_differ_from_declared_identities (5.03s)
+Error:      	Condition never satisfied
+Messages:   	B's interest never reached A over the surviving connection

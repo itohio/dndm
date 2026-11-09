@@ -1,0 +1,4 @@
+# DND-008 G1+G2 AFTER: whole endpoint/mesh package, 12 processes x -test.count=10 = 120 runs of every test, race binary, 2026-11-09T14:33:39Z, load average: 55.81, 47.76, 45.37
+processes: 12
+     12 exit=0
+top-level PASS lines: 1200
