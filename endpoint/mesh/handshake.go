@@ -52,7 +52,8 @@ type Handshaker struct {
 	conn         network.Conn
 	remote       atomic.Pointer[remote.Endpoint]
 	addrbook     *Addrbook
-	remotePeer   dndm.Peer
+	peerMu       sync.RWMutex
+	remotePeer   dndm.Peer // guarded by peerMu: the handshake replaces it while Name() is read elsewhere
 	isSeed       bool
 	dialer       bool // this node dialled the connection; set in Init before the handler starts
 
@@ -173,7 +174,16 @@ func (h *Handshaker) markReady() {
 }
 
 func (h *Handshaker) Name() string {
-	return h.remotePeer.String()
+	return h.peer().String()
+}
+
+// peer returns the remote peer: the dial target until the handshake replaces it with the
+// identity the peer declared. Other goroutines read it through Name() (the Container's
+// close callback), so every access goes through peerMu (DND-008 G2).
+func (h *Handshaker) peer() dndm.Peer {
+	h.peerMu.RLock()
+	defer h.peerMu.RUnlock()
+	return h.remotePeer
 }
 
 func (h *Handshaker) SetName(name string) {
@@ -213,7 +223,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 	}
 
 	h.conn = stream.NewWithContext(h.Ctx(),
-		h.addrbook.Self(), h.remotePeer,
+		h.addrbook.Self(), h.peer(),
 		h.rw, map[types.Type]network.MessageHandler{
 			types.Type_HANDSHAKE: h.handshakeMsg,
 			types.Type_ADDRBOOK:  h.addrbookMsg,
@@ -221,7 +231,7 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 			types.Type_RESULT:    h.resultMsg,
 		})
 
-	tr := remote.New(h.remotePeer, h.conn, h.Size, h.timeout, h.pingDuration)
+	tr := remote.New(h.peer(), h.conn, h.Size, h.timeout, h.pingDuration)
 
 	// Decide the state before tr.Init starts the message handler, which reads it.
 	dialing := h.state == HS_INIT
@@ -245,11 +255,11 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 		// Record the dial for the address book (IsActive) without deciding anything: the
 		// peer's declared identity is not known yet. Simultaneous connections are settled
 		// when the handshake completes (close-reconnect.md §3.1, review R-DND-R8 N2).
-		h.addrbook.NoteDial(h.remotePeer, h.conn)
-		h.Log.Info("Sending Handshake", "state", HS_WAIT, "local", h.addrbook.Self(), "peer", h.remotePeer)
+		h.addrbook.NoteDial(h.peer(), h.conn)
+		h.Log.Info("Sending Handshake", "state", HS_WAIT, "local", h.addrbook.Self(), "peer", h.peer())
 		h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
-			You:       h.remotePeer.String(),
+			You:       h.peer().String(),
 			Stage:     p2ptypes.HandshakeStage_INITIAL,
 			Intents:   nil, // FIXME
 			Interests: nil,
@@ -268,17 +278,17 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 	h.hsCount++
 	if h.hsCount > 5 {
 		h.Close()
-		h.Log.Error("Handshake", "state", h.state, "peer", h.remotePeer, "count", h.hsCount)
+		h.Log.Error("Handshake", "state", h.state, "peer", h.peer(), "count", h.hsCount)
 		return false, errors.ErrForbidden
 	}
 
 	hs, ok := msg.(*p2ptypes.Handshake)
 	if !ok {
-		h.Log.Error("Handshake", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
+		h.Log.Error("Handshake", "state", h.state, "peer", h.peer(), "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.Log.Info("Got Handshake", "state", h.state, "peer", h.remotePeer, "them", hs.Me, "us", hs.You, "stage", hs.Stage)
+	h.Log.Info("Got Handshake", "state", h.state, "peer", h.peer(), "them", hs.Me, "us", hs.You, "stage", hs.Stage)
 
 	switch h.state {
 	case HS_WAIT:
@@ -292,14 +302,16 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		if err != nil {
 			return false, err
 		}
-		h.Log.Info("Handshaker.UpdatePeer", "them", hs.Me, "us", hs.You, "prevPeer", h.remotePeer)
+		h.Log.Info("Handshaker.UpdatePeer", "them", hs.Me, "us", hs.You, "prevPeer", h.peer())
+		h.peerMu.Lock()
 		h.remotePeer = peer
+		h.peerMu.Unlock()
 		// Both roles pass here: the acceptor on INITIAL, the dialer on FINAL. Now both
 		// declared identities are known, so the tie-break gives the same answer on both
 		// sides. A losing connection closes before it becomes ready (or, on the dialer,
 		// before it replies), and the peer's side of it then closes too.
-		if err := h.addrbook.AddConn(h.remotePeer, h.dialer, h.conn); err != nil {
-			h.Log.Info("Handshaker: dropping duplicate connection", "peer", h.remotePeer, "err", err)
+		if err := h.addrbook.AddConn(peer, h.dialer, h.conn); err != nil {
+			h.Log.Info("Handshaker: dropping duplicate connection", "peer", peer, "err", err)
 			h.Close()
 			return false, err
 		}
@@ -336,7 +348,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 
 		return true, nil
 	case HS_DONE:
-		h.Log.Info("Handshaker DONE", "remote", h.remotePeer)
+		h.Log.Info("Handshaker DONE", "remote", h.peer())
 		h.hsCount = 0
 		return true, nil
 	}
@@ -352,11 +364,11 @@ func (h *Handshaker) peersMsg(hdr *types.Header, msg proto.Message, remote netwo
 
 	peers, ok := msg.(*p2ptypes.Peers)
 	if !ok {
-		h.Log.Error("peers", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
+		h.Log.Error("peers", "state", h.state, "peer", h.peer(), "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.Log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", peers)
+	h.Log.Info("Got Peers", "state", h.state, "peer", h.peer(), "peers", peers)
 
 	for _, p := range peers.Ids {
 		peer, err := dndm.PeerFromString(p)
@@ -378,11 +390,11 @@ func (h *Handshaker) addrbookMsg(hdr *types.Header, msg proto.Message, remote ne
 
 	book, ok := msg.(*p2ptypes.Addrbook)
 	if !ok {
-		h.Log.Error("addrbook", "state", h.state, "peer", h.remotePeer, "type", reflect.TypeOf(msg))
+		h.Log.Error("addrbook", "state", h.state, "peer", h.peer(), "type", reflect.TypeOf(msg))
 		return true, errors.ErrBadArgument
 	}
 
-	h.Log.Info("Got Peers", "state", h.state, "peer", h.remotePeer, "peers", book)
+	h.Log.Info("Got Peers", "state", h.state, "peer", h.peer(), "peers", book)
 
 	return false, nil
 }
