@@ -3,6 +3,7 @@ package dndm
 import (
 	"context"
 	"log/slog"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ func Test_NewContainer(t *testing.T) {
 	require.NotNil(t, container)
 	assert.Equal(t, "test", container.Name())
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // a deadline only (R-DND-R8 N3)
 	defer cancel()
 
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -36,19 +37,16 @@ func Test_NewContainer(t *testing.T) {
 	container.OnClose(nil)
 	onClose := testutil.NewFunc(ctx, t, "on close")
 	container.OnClose(onClose.F)
-	container.Close()
-	time.Sleep(time.Millisecond)
+	container.Close() // runs the close callbacks before it returns
 	onClose.WaitCalled()
 	addIntent.NotCalled()
 	addInterest.NotCalled()
-
-	<-ctx.Done()
 }
 
 func TestContainer_AddEndpoint(t *testing.T) {
 	container := NewContainer("test", 10)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // a deadline only (R-DND-R8 N3)
 	defer cancel()
 
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -70,8 +68,7 @@ func TestContainer_AddEndpoint(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(container.endpoints))
 	assert.Contains(t, container.endpoints, endpoint)
-	container.Close()
-	time.Sleep(time.Millisecond)
+	container.Close() // closes its endpoints before it returns
 	endpoint.AssertExpectations(t)
 }
 
@@ -102,7 +99,8 @@ func TestContainer_RemoveEndpoint(t *testing.T) {
 }
 
 func TestContainer_Publish(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	// A deadline, not a timing assumption: the waits below return as soon as events happen.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	container := NewContainer("test", 10)
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -123,7 +121,9 @@ func TestContainer_Publish(t *testing.T) {
 	mockIntent.On("Route").Return(route)
 	mockIntent.On("OnClose", mock.Anything).Return(mockIntent)
 	ch := make(chan Route)
-	mockIntent.On("Interest").Return((<-chan Route)(ch))
+	read := make(chan struct{}) // closed once the fan-out's notify runner reads Interest()
+	var readOnce sync.Once
+	mockIntent.On("Interest").Run(func(mock.Arguments) { readOnce.Do(func() { close(read) }) }).Return((<-chan Route)(ch))
 	endpoint := new(MockEndpoint)
 	endpoint.On("Init", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	endpoint.On("Close").Return(nil)
@@ -137,9 +137,10 @@ func TestContainer_Publish(t *testing.T) {
 	intent, err := container.Publish(route, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, intent)
-	time.Sleep(time.Millisecond)
+	// Wait for the notify runner instead of sleeping (DND-021); it calls Interest() from
+	// its own goroutine, and Close would otherwise beat it on a loaded host.
+	require.True(t, testutil.CtxRecv(ctx, read), "the fan-out never read the intent's Interest()")
 	container.Close()
-	time.Sleep(time.Millisecond)
 	addIntent.WaitCalled()
 	addInterest.NotCalled()
 
@@ -148,7 +149,7 @@ func TestContainer_Publish(t *testing.T) {
 }
 
 func TestContainer_Subscribe(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // a deadline only (DND-021)
 	defer cancel()
 	container := NewContainer("test", 10)
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -168,7 +169,9 @@ func TestContainer_Subscribe(t *testing.T) {
 	mockInterest := new(MockInterest)
 	mockInterest.On("Route").Return(route)
 	ch := make(chan proto.Message)
-	mockInterest.On("C").Return((<-chan proto.Message)(ch))
+	read := make(chan struct{}) // closed once the fan-in's receive runner reads C()
+	var readOnce sync.Once
+	mockInterest.On("C").Run(func(mock.Arguments) { readOnce.Do(func() { close(read) }) }).Return((<-chan proto.Message)(ch))
 	mockInterest.On("OnClose", mock.Anything).Return(mockInterest)
 	endpoint := new(MockEndpoint)
 	endpoint.On("Init", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -183,9 +186,8 @@ func TestContainer_Subscribe(t *testing.T) {
 	interest, err := container.Subscribe(route, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, interest)
-	time.Sleep(time.Millisecond)
+	require.True(t, testutil.CtxRecv(ctx, read), "the fan-in never read the interest's C()") // DND-021
 	container.Close()
-	time.Sleep(time.Millisecond)
 	addInterest.WaitCalled()
 	addIntent.NotCalled()
 
@@ -194,7 +196,9 @@ func TestContainer_Subscribe(t *testing.T) {
 }
 
 func TestContainer_SubscribePublish(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
+	// A deadline only (R-DND-R8 N3): with 100 ms a loaded host could cancel the
+	// container's context before Publish, which then returned "closed".
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	container := NewContainer("test", 10)
 	addIntent := testutil.NewFunc(ctx, t, "add intent")
@@ -214,13 +218,17 @@ func TestContainer_SubscribePublish(t *testing.T) {
 	mockIntent := new(MockIntentInternal)
 	mockIntent.On("Route").Return(route)
 	chI := make(chan Route, 1)
-	mockIntent.On("Interest").Return((<-chan Route)(chI))
+	intentRead := make(chan struct{}) // the fan-out's notify runner read Interest()
+	var intentOnce sync.Once
+	mockIntent.On("Interest").Run(func(mock.Arguments) { intentOnce.Do(func() { close(intentRead) }) }).Return((<-chan Route)(chI))
 	mockIntent.On("OnClose", mock.Anything).Return(mockIntent)
 
 	mockInterest := new(MockInterestInternal)
 	mockInterest.On("Route").Return(route)
 	ch := make(chan proto.Message)
-	mockInterest.On("C").Return((<-chan proto.Message)(ch))
+	interestRead := make(chan struct{}) // the fan-in's receive runner read C()
+	var interestOnce sync.Once
+	mockInterest.On("C").Run(func(mock.Arguments) { interestOnce.Do(func() { close(interestRead) }) }).Return((<-chan proto.Message)(ch))
 	mockInterest.On("OnClose", mock.Anything).Return(mockInterest)
 	endpoint := new(MockEndpoint)
 	endpoint.On("Init", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -238,15 +246,14 @@ func TestContainer_SubscribePublish(t *testing.T) {
 	interest, err := container.Subscribe(route, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, interest)
-	time.Sleep(time.Millisecond)
+	require.True(t, testutil.CtxRecv(ctx, interestRead), "the fan-in never read the interest's C()")
 
 	intent, err := container.Publish(route, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, intent)
-	time.Sleep(time.Millisecond)
+	require.True(t, testutil.CtxRecv(ctx, intentRead), "the fan-out never read the intent's Interest()")
 
 	container.Close()
-	time.Sleep(time.Millisecond)
 	addInterest.WaitCalled()
 	addIntent.WaitCalled()
 

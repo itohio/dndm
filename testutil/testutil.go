@@ -56,10 +56,22 @@ func IsClosed[T any](c <-chan T) bool {
 	}
 }
 
+// CtxRecv waits for a receive on c or for ctx. A value (or close) that is already
+// available wins over an expired context; select alone would pick at random (DND-021).
 func CtxRecv[T any](ctx context.Context, c <-chan T) bool {
 	select {
+	case <-c:
+		return true
+	default:
+	}
+	select {
 	case <-ctx.Done():
-		return false
+		select {
+		case <-c:
+			return true
+		default:
+			return false
+		}
 	case <-c:
 		return true
 	}
