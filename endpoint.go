@@ -32,6 +32,17 @@ type RemoteEndpoint interface {
 	Remote() Peer
 }
 
+// ReadyEndpoint is implemented by endpoints that cannot publish or subscribe until some
+// setup completes, such as a handshake. A Container skips such an endpoint while it is
+// not ready and registers all of its current routes with it once it becomes ready.
+type ReadyEndpoint interface {
+	// Ready reports whether Publish and Subscribe can succeed now. Once true it stays true.
+	Ready() bool
+	// OnReady runs f once, on its own goroutine, after the endpoint becomes ready
+	// (at once if it already is).
+	OnReady(f func())
+}
+
 // Base provides basic context management functionalities for components that require
 // initialization with a context, cancellation, and cleanup operations.
 //

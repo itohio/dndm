@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"reflect"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -18,7 +19,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var _ dndm.Endpoint = (*Handshaker)(nil)
+var (
+	_ dndm.Endpoint      = (*Handshaker)(nil)
+	_ dndm.ReadyEndpoint = (*Handshaker)(nil)
+)
 
 type HandshakeState int
 
@@ -34,6 +38,9 @@ type Container interface {
 	Remove(dndm.Endpoint) error
 }
 
+// Handshaker wraps a remote endpoint and gates Publish/Subscribe on handshake completion.
+// state is only touched by Init (before the message handler starts) and by the handlers
+// that run on the remote endpoint's message goroutine; Publish/Subscribe use ready.
 type Handshaker struct {
 	dndm.BaseEndpoint
 
@@ -47,6 +54,13 @@ type Handshaker struct {
 	addrbook     *Addrbook
 	remotePeer   dndm.Peer
 	isSeed       bool
+
+	readyMu sync.Mutex
+	ready   bool
+	closing bool // set under readyMu before Close waits; no callback starts after that
+	onReady []func()
+	readyWG sync.WaitGroup // OnReady callbacks; Close waits for them
+	closed  atomic.Bool
 }
 
 // NewHandshake creates a Endpoint wrapper over Remote endpoint that acts as a handshake middleware.
@@ -81,24 +95,80 @@ func (h *Handshaker) OnClose(f func()) dndm.Endpoint {
 	return h
 }
 
+// Close closes the connection and the endpoint once, then waits for running OnReady
+// callbacks. Later calls return nil at once; several close paths (context, remote close
+// callback, container) call it.
 func (h *Handshaker) Close() error {
+	if !h.closed.CompareAndSwap(false, true) {
+		return nil
+	}
 	h.Log.Info("Handshaker.Close")
-	errarr := make([]error, 0, 3)
+	// From here on OnReady and markReady start nothing, so readyWG.Add never races Wait.
+	h.readyMu.Lock()
+	h.closing = true
+	h.onReady = nil
+	h.readyMu.Unlock()
 
+	errarr := make([]error, 0, 3)
 	if h.conn != nil {
 		errarr = append(errarr, h.conn.Close())
-		h.conn = nil
 	}
-	if h.rw != nil {
-		if closer, ok := h.rw.(io.Closer); ok {
-			errarr = append(errarr, closer.Close())
-		}
-		h.rw = nil
+	if closer, ok := h.rw.(io.Closer); ok {
+		errarr = append(errarr, closer.Close())
 	}
 
 	errarr = append(errarr, h.BaseEndpoint.Close())
+	h.readyWG.Wait()
 
 	return errors.Join(errarr...)
+}
+
+// Ready reports whether the handshake has completed. Once true it stays true.
+func (h *Handshaker) Ready() bool {
+	h.readyMu.Lock()
+	defer h.readyMu.Unlock()
+	return h.ready
+}
+
+// OnReady runs f once, on its own goroutine, after the handshake completes (at once if it
+// already has). Running it inline in the message handler could deadlock: f may publish,
+// which writes to the peer while this side is not reading. After Close has begun, f is
+// dropped and never runs.
+func (h *Handshaker) OnReady(f func()) {
+	h.readyMu.Lock()
+	defer h.readyMu.Unlock()
+	switch {
+	case h.closing:
+	case !h.ready:
+		h.onReady = append(h.onReady, f)
+	default:
+		h.startReadyLocked(f)
+	}
+}
+
+// startReadyLocked starts f on its own goroutine. readyMu must be held, so the
+// WaitGroup Add is ordered before Close sets closing and waits.
+func (h *Handshaker) startReadyLocked(f func()) {
+	h.readyWG.Add(1)
+	go func() {
+		defer h.readyWG.Done()
+		f()
+	}()
+}
+
+// markReady flips ready once and starts the queued OnReady callbacks, unless Close has begun.
+func (h *Handshaker) markReady() {
+	h.readyMu.Lock()
+	defer h.readyMu.Unlock()
+	if h.ready || h.closing {
+		return
+	}
+	h.ready = true
+	callbacks := h.onReady
+	h.onReady = nil
+	for _, f := range callbacks {
+		h.startReadyLocked(f)
+	}
 }
 
 func (h *Handshaker) Name() string {
@@ -114,7 +184,7 @@ func (h *Handshaker) SetName(name string) {
 // Publish will advertise an intent to publish named and typed data.
 func (h *Handshaker) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent, error) {
 	tr := h.remote.Load()
-	if h.state != HS_DONE || tr == nil {
+	if !h.Ready() || tr == nil {
 		return nil, errors.ErrForbidden
 	}
 
@@ -124,7 +194,7 @@ func (h *Handshaker) Publish(route dndm.Route, opt ...dndm.PubOpt) (dndm.Intent,
 // Subscribe will advertise an interest in named and typed data.
 func (h *Handshaker) Subscribe(route dndm.Route, opt ...dndm.SubOpt) (dndm.Interest, error) {
 	tr := h.remote.Load()
-	if h.state != HS_DONE || tr == nil {
+	if !h.Ready() || tr == nil {
 		return nil, errors.ErrForbidden
 	}
 
@@ -152,6 +222,12 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 
 	tr := remote.New(h.remotePeer, h.conn, h.Size, h.timeout, h.pingDuration)
 
+	// Decide the state before tr.Init starts the message handler, which reads it.
+	dialing := h.state == HS_INIT
+	if dialing {
+		h.state = HS_WAIT
+	}
+
 	err := tr.Init(h.Ctx(), logger, addIntent, addInterest)
 	if err != nil {
 		return err
@@ -163,10 +239,9 @@ func (h *Handshaker) Init(ctx context.Context, logger *slog.Logger, addIntent dn
 		h.Close()
 	})
 
-	if h.state == HS_INIT {
+	if dialing {
 		h.addrbook.AddConn(h.remotePeer, true, h.conn)
-		h.state = HS_WAIT
-		h.Log.Info("Sending Handshake", "state", h.state, "local", h.addrbook.Self(), "peer", h.remotePeer)
+		h.Log.Info("Sending Handshake", "state", HS_WAIT, "local", h.addrbook.Self(), "peer", h.remotePeer)
 		h.conn.Write(h.Ctx(), dndm.EmptyRoute(), &p2ptypes.Handshake{
 			Me:        h.addrbook.Self().String(),
 			You:       h.remotePeer.String(),
@@ -226,6 +301,7 @@ func (h *Handshaker) handshakeMsg(hdr *types.Header, msg proto.Message, remote n
 		if err != nil {
 			return false, err
 		}
+		h.markReady()
 
 		if !h.isSeed {
 			return true, nil

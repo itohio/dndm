@@ -87,9 +87,32 @@ func (t *Container) Add(ep Endpoint) error {
 
 	t.endpoints = append(t.endpoints, ep)
 
+	if rep, ok := ep.(ReadyEndpoint); ok {
+		// Registration waits for readiness; publish/subscribe skip the endpoint until then.
+		rep.OnReady(func() { t.reconcile(ep) })
+		return nil
+	}
 	t.registerEndpointWithRouters(ep)
 
 	return nil
+}
+
+// reconcile registers every current route with an endpoint that just became ready,
+// unless the endpoint was removed meanwhile. Routes published after readiness are
+// registered by publish/subscribe; duplicates are ignored by the routers.
+func (t *Container) reconcile(ep Endpoint) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if slices.Index(t.endpoints, ep) < 0 {
+		return
+	}
+	t.registerEndpointWithRouters(ep)
+}
+
+// notReady reports whether ep is a ReadyEndpoint that cannot publish or subscribe yet.
+func notReady(ep Endpoint) bool {
+	rep, ok := ep.(ReadyEndpoint)
+	return ok && !rep.Ready()
 }
 
 // initializeEndpoint handles the initialization and setup of an endpoint.
@@ -241,6 +264,9 @@ func (t *Container) publish(route Route, opt ...PubOpt) (Intent, error) {
 	intents := make([]Intent, 0, len(t.endpoints))
 	// Advertise intents even if we are already publishing
 	for _, ep := range t.endpoints {
+		if notReady(ep) {
+			continue // reconcile registers the route when the endpoint becomes ready
+		}
 		if rep, ok := ep.(RemoteEndpoint); ok {
 			// We can only publish as part of local peer prefix
 			if !rep.Local().HasPrefix(route) {
@@ -289,6 +315,9 @@ func (t *Container) subscribe(route Route, opt ...SubOpt) (Interest, error) {
 	// Advertise interests anyway (even if we are already subscribed)
 	interests := make([]Interest, 0, len(t.endpoints))
 	for _, ep := range t.endpoints {
+		if notReady(ep) {
+			continue // reconcile registers the route when the endpoint becomes ready
+		}
 		if rep, ok := ep.(RemoteEndpoint); ok {
 			// We can only subscribe to remote peers as part of remote peer prefix
 			if !rep.Remote().HasPrefix(route) {
