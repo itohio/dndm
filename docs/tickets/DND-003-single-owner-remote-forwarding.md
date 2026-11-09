@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-003"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r4/dnd003-before.txt", "evidence/dnd-r4/
 
 ## State and permission
 
-Status: **in review** (DND-R4, working tree, not committed). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**.
+Status: **done** (DND-R4; verified, reviewed, committed locally as 464a02d). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**.
 Milestone: **M1 remote correctness**. Priority: **P0**: two consumers on one channel steal remote-bound messages.
 
 No further owner decision was needed. The intended semantics follow from the remote design and the DND-002 contract: a remote interest exists to carry data to its remote peer, so its forwarder must be the only reader.
@@ -88,5 +88,6 @@ Medium: remote wrapper/router integration with deterministic fixtures; assumes n
 - 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 - 2026-11-08: DND-R3. x/bus flake data: `TestStreamProducerConsumer` started failing after DND-R2: 2/20 runs without `-race` in the working tree, 0/20 at the pin, and once in verify's `-race` run ([flake comparison](../evidence/dnd-r2/xbus-flake-count20.txt), [verify DND-R2](../../../docs/verification/DND-R2.md)). Overall x/bus timeouts: 9/20 at the pin, 7/20 after DND-R2. [INFERENCE] same competing-reader cause; DND-018's synchronous close changed timing. Track here until single-owner forwarding lands. Status unchanged.
 - 2026-11-08: DND-R4. Failing test first (at the pin and in the DND-R3 tree), then fixed; status → **in review**. `TestCallerHandleReplies` also failed once in verify's DND-R3 race run (x/bus flake list). After DND-R4: x/bus ×20 without and with `-race`, 0 failures.
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 464a02d `fix(core,remote): remote interests have one reader; remote wrappers implement RemoteIntent/RemoteInterest` (DND-commit).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

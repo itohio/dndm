@@ -4,7 +4,7 @@ date: "2026-11-09"
 scope: "local-only planning; test-only change"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-021"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P2"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r8/dnd021-parallel.txt", "evidence/dnd-r
 
 ## State and permission
 
-Status: **in review** (DND-R8, working tree, not committed). Owner: **dndm**. Opened in DND-R5-fix on verify's optional item 2 ([verify DND-R5](../../../docs/verification/DND-R5.md)). Test-only change: `container_test.go` and the `testutil.CtxRecv` helper; no product code.
+Status: **done** (DND-R8 and its fix round; verified, reviewed, committed locally as 67e47bd). Owner: **dndm**. Opened in DND-R5-fix on verify's optional item 2 ([verify DND-R5](../../../docs/verification/DND-R5.md)). Test-only change: `container_test.go` and the `testutil.CtxRecv` helper; no product code.
 
 ## Defect (pre-existing at the pin)
 
@@ -52,5 +52,6 @@ Both trees fail the same two ways: `Interest()` never called, or `addIntent` not
 
 - 2026-11-09: DND-R5-fix. Opened from verify's DND-R5 optional item. Review R-DND-R5 notes the same cause. No code.
 - 2026-11-09: DND-R8. Fixed as above; status → **in review**. The other container tests (`Test_NewContainer`, `TestContainer_RemoveEndpoint`, `TestContainer_SubscribePublish`) still use 1 ms sleeps and 100 ms contexts. They have not been seen failing; left as they are.
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 67e47bd `test(core): container tests wait on events, not sleeps; CtxRecv prefers a ready value`. That commit also covers review R-DND-R8 N3, the remaining three container tests, so the note above is resolved.
 
 [Ticket index](index.md) · [DND-018](DND-018-race-clean-core-lifecycle.md)

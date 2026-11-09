@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-001"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r2/dnd001-before.txt", "evidence/dnd-r2/
 
 ## State and permission
 
-Status: **in review** (implemented in the working tree under DND-R2, not committed). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed** ([baseline probe](../baseline-2026-11-08.md#dnd-001-probe)). Milestone: **M1 remote correctness**. Priority: **P0**: a remote peer could make the decoder panic, reject valid fragmented frames, or force a large allocation from one 8-byte preamble. Measured: 256 MiB (probe P6). [INFERENCE] up to ~4 GiB: the size is a wire `uint32`, and `go-buffer-pool` `Get` calls `make` directly above `MaxInt32` (pool.go:63–64). Not run.
+Status: **done** (implemented in DND-R2, verified and reviewed, committed locally as 5e2532a; follow-up nit F14 in 7e27991). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed** ([baseline probe](../baseline-2026-11-08.md#dnd-001-probe)). Milestone: **M1 remote correctness**. Priority: **P0**: a remote peer could make the decoder panic, reject valid fragmented frames, or force a large allocation from one 8-byte preamble. Measured: 256 MiB (probe P6). [INFERENCE] up to ~4 GiB: the size is a wire `uint32`, and `go-buffer-pool` `Get` calls `make` directly above `MaxInt32` (pool.go:63–64). Not run.
 
 Authority: R1-04 made it ready under "properly update dndm, easyrobot projects so i can start improving on them"; DND-R2 implemented it under "dndm should be able to support lacking features and existing features should be hardened" (2026-11-08), which authorises working-tree source and test changes. Commits, pushes and network/hardware use still need explicit owner approval. The documented defaults (4 MiB cap, `ErrBadFrame`, close without resync) were used as written.
 
@@ -100,5 +100,6 @@ Small: roughly 40–80 changed source lines and 150–250 test lines [estimate].
 - 2026-11-08: R1-04. Status backlog → **ready**, owner → **dndm**, under the owner's start-improving instruction. Throwaway probe (deleted after the run) confirmed partial-read rejection, decode panics on 1–3-byte and header-only bodies, and a 256 MiB allocation from one preamble ([probe log](../baseline-logs/dnd001-probe.txt)). Proposed defaults for cap and policy. No test written, no source changed.
 - 2026-11-08: DND-R2. Implemented with the documented defaults; failing tests recorded first; status ready → **in review**. Evidence: [DND-R2 evidence](../evidence/dnd-r2/README.md). Not committed.
 - 2026-11-08: DND-R3. Recorded the error-identity change above (verify DND-R2 fix 1).
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 5e2532a `fix(codec): read whole frames with a body cap; malformed input wraps ErrBadFrame` (DND-commit), and 7e27991 (review nit F14: `ReadMessageLimit` rejects a cap below 8). Evidence in 31321d3.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Baseline](../baseline-2026-11-08.md)

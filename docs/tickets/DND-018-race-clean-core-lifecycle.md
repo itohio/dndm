@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-018"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r2/dnd018-before.txt", "evidence/dnd-r2/
 
 ## State and permission
 
-Status: **in review** (implemented in the working tree, not committed). Owner: **dndm**. Authority: owner instruction "dndm should be able to support lacking features and existing features should be hardened" (2026-11-08, roster task DND-R2), which authorises source and test changes in the working tree; no commits or pushes.
+Status: **done** (DND-R2 and DND-R4; verified, reviewed, committed locally as 1f85174 and 7d088f7). Owner: **dndm**. Authority: owner instruction "dndm should be able to support lacking features and existing features should be hardened" (2026-11-08, roster task DND-R2), which authorises source and test changes in the working tree; commits when Leader says.
 
 Dependencies: none. Opened from the [baseline](../baseline-2026-11-08.md#race-reports) races RC1–RC4 and the owner decision recorded in the [ticket index](index.md#baseline-gate).
 
@@ -67,5 +67,9 @@ Changed existing test: `linker_test.go` `TestLinker_AddInterestIntentSend` now w
 - 2026-11-08: created and implemented under DND-R2. Failing tests recorded at `c7b5b61` before the fix; gates and remaining failures in the [DND-R2 evidence](../evidence/dnd-r2/README.md).
 - 2026-11-08: DND-R3. RC5, listed as a non-goal here, was fixed under [DND-019](DND-019-remote-endpoint-close-self-deadlock.md). Adding to a closed fan-out now returns `ErrClosed` ([DND-004](DND-004-handshake-registration-replay.md)), which closes the WaitGroup Add/Wait race left in the fan-out close path.
 - 2026-11-08: DND-R4. One more unowned goroutine removed: `Link.Link()` linked and notified from a goroutine that could run after `Close` and re-link a closed link's intent. It now runs in the caller and does nothing once the link is closed. `link_test.go` lost two mock `Ctx()` expectations that only described the old goroutine. `TestLinker_AddRemoveInterest`'s 10 ms deadline (which cancelled the linker on a loaded machine) is now 1 s.
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally (DND-commit):
+  - 1f85174 `fix(core): Base owns close callbacks; synchronous ordered Close; close-vs-send and router readiness`;
+  - 7d088f7 `fix(stream): contextRW owns buffers and never closes its request channel; serialised frame writes; idempotent Close`.
+  - 7e27991, the core follow-ups: F6 (`Close` stops the AfterFunc) and N1 (a link's close forgets only its own match).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Baseline](../baseline-2026-11-08.md)

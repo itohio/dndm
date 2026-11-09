@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-002"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M0 decisions"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r4/dnd002-probe.txt", "evidence/dnd-r4/d
 
 ## State and permission
 
-Status: **in review** (DND-R4: decision taken, contract written into godoc, aliasing test added; not committed). Owner: **dndm**. Kind: **research / fundamental tradeoff**, now decided.
+Status: **done** (DND-R4: decision taken, contract written into godoc, aliasing test added; verified, reviewed, committed locally as 3907a77). Owner: **dndm**. Kind: **research / fundamental tradeoff**, now decided.
 Milestone: **M0 decisions**. Priority: **P0**.
 
 **Owner decision, 2026-11-08 (verbatim, from the roster):** "DND-002: **Accept** (immutable after Send, written contract)."
@@ -135,5 +135,6 @@ Small research decision: one local ownership model; implementation size remains 
 - 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 - 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
 - 2026-11-08: DND-R4. Owner accepted A (immutable after Send). Contract written into godoc and this ticket; aliasing test added; mutate-after-send race probe recorded. Status → **in review**.
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 3907a77 `docs(api): message ownership contract for Send and C` (DND-commit).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

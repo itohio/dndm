@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-004"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r3/dnd004-before.txt", "evidence/dnd-r3/
 
 ## State and permission
 
-Status: **in review** (working tree, not committed). Owner: **dndm**. Made ready and implemented under DND-R3, with the DND-R2 authorisation ("dndm should be able to support lacking features and existing features should be hardened"). No owner decision was needed: it is a local snapshot-and-reconcile with no wire or handshake-payload change. Dependencies: none.
+Status: **done** (DND-R3 and DND-R5-fix; verified, reviewed, committed locally as c93ba0c and 9d6515f). Owner: **dndm**. Made ready and implemented under DND-R3, with the DND-R2 authorisation ("dndm should be able to support lacking features and existing features should be hardened"). No owner decision was needed: it is a local snapshot-and-reconcile with no wire or handshake-payload change. Dependencies: none.
 
 ## Outcome
 
@@ -79,5 +79,8 @@ See [DND-R3 evidence](../evidence/dnd-r3/README.md). Separate pre-existing defec
 - 2026-11-08: created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed.
 - 2026-11-08: DND-R3. Made ready (no owner decision needed), reproduced at the pin, implemented; status → **in review**. Not committed.
 - 2026-11-09: DND-R5-fix (review F2). After `Close` has begun, `Handshaker.OnReady`/`markReady` start no callbacks: a `closing` flag is set under `readyMu`, and the `WaitGroup.Add` happens under the same lock. Before this, a late `OnReady` or a `markReady` racing `Close` started a callback after `Close` began waiting. Tests `TestHandshaker_OnReadyAfterCloseStartsNothing`/`MarkReadyAfterCloseStartsNothing` (`endpoint/mesh/ready_close_test.go`) failed 3/3 before the fix and passed ×30 with `-race` after ([evidence](../evidence/DND-R5-fix.md)).
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally (DND-commit):
+  - c93ba0c `fix(mesh): addrbook AddConn under lock; dialing flag and retry log without races`;
+  - 9d6515f `fix(mesh): gate publish on handshake readiness; Container registers routes when ready`, which includes the DND-R5-fix F2 change.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-019"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r3/dnd019-before.txt", "evidence/dnd-r3/
 
 ## State and permission
 
-Status: **in review** (working tree, not committed). Owner: **dndm**. Found by verify in DND-R2 ([verification](../../../docs/verification/DND-R2.md)); created and implemented under DND-R3 with the DND-R2 authorisation ("dndm should be able to support lacking features and existing features should be hardened"). Dependencies: none.
+Status: **done** (DND-R3; verified, reviewed, committed locally as 214f490 and 7d088f7). Owner: **dndm**. Found by verify in DND-R2 ([verification](../../../docs/verification/DND-R2.md)); created and implemented under DND-R3 with the DND-R2 authorisation ("dndm should be able to support lacking features and existing features should be hardened"). Dependencies: none.
 
 ## Defect (pre-existing at the pin)
 
@@ -48,5 +48,8 @@ It is remotely triggerable: a peer sending 8 bytes with a bad magic number makes
 ## Dated log
 
 - 2026-11-08: DND-R3. Created from verify's DND-R2 finding, reproduced at the pin, fixed. RC5 fixed along the way because the fix makes that path common.
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally (DND-commit):
+  - 214f490 `fix(remote): Close no longer waits on its own handler`;
+  - 7d088f7, the stream part (RC5).
 
 [Ticket index](index.md) · [DND-R3 evidence](../evidence/dnd-r3/README.md)

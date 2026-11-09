@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-008"
-status: "in review"
+status: "in progress"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r5/stream-before.txt", "evidence/dnd-r5/
 
 ## State and permission
 
-Status: **in review** (DND-R5, working tree, not committed; one acceptance item open, see below). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**.
+Status: **in progress**. Every acceptance item below is met, verified, reviewed and committed locally: fff99f7, c93ba0c, 7d088f7, 1e38ecc, d9a1793. It stays open only for three carried parts: R1 (alias address-book entries are redialled every monitor pass, see the log), F9 (document that cancelling a read mid-frame leaves the stream unusable), and the two v2 close/reconnect tests and session/generation ids, which [DND-022](DND-022-link-context-core.md) carries (until then, delivery across a reconnect is at-least-once). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**.
 Milestone: **M1 remote correctness**. Priority: **P0** — Known unlocked map/state access and unsynchronised writes can invalidate all remote-path results.
 
 Authority: the Leader's DND-R5 task ("Then the remaining DND-008 items (RC6 interest close vs in-flight Send, etc.), failing test first"), under the DND-R2 authorisation. RC6 itself is recorded under [DND-007](DND-007-bounded-dispatch-and-closure.md).
@@ -111,5 +111,15 @@ Behaviour changes:
     - when the handshake reveals a declared identity that differs from the dial target, bind or merge the target entry with the declared entry, so it counts as active while that entry is;
     - refuse to dial an entry whose declared identity is this node itself.
   - Not fixed in DND-R8.
+- 2026-11-09: status → **in progress**. Verify accepted the DND-R5 and DND-R8 work and it is committed locally:
+  - fff99f7 `fix(net): Dial honours its context`;
+  - c93ba0c `fix(mesh): addrbook AddConn under lock; dialing flag and retry log without races`;
+  - 7d088f7 `fix(stream): contextRW owns buffers and never closes its request channel; serialised frame writes; idempotent Close`;
+  - 1e38ecc `fix(stream): large reads borrow a pooled buffer for one request; no ack channel on writes` (F4);
+  - d9a1793 `fix(mesh): connection generations, refuse closed conns, identity tie-break for simultaneous dials`.
+- 2026-11-09: still open on DND-008, and the only reason it is not done:
+  - R1 (above);
+  - F9 (mid-frame cancel doc);
+  - the v2 close/reconnect tests and session ids, carried by DND-022.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

@@ -4,7 +4,7 @@ date: "2026-11-08"
 scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-005"
-status: "in review"
+status: "done"
 owner: "dndm"
 priority: "P0"
 milestone: "M1 remote correctness"
@@ -17,7 +17,7 @@ implementation_evidence: ["evidence/dnd-r4/dnd005-before.txt", "evidence/dnd-r4/
 
 ## State and permission
 
-Status: **in review** (DND-R4, working tree, not committed). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**. Milestone: **M1 remote correctness**. Priority: **P0**: nonce collisions deliver one caller's reply to another.
+Status: **done** (DND-R4 and DND-R5; verified, reviewed, committed locally as 12b4916; nonce nits F11/F13 in 7e27991). Owner: **dndm**. Kind: **implementation / fixable defect, runtime-confirmed**. Milestone: **M1 remote correctness**. Priority: **P0**: nonce collisions deliver one caller's reply to another.
 
 **Owner decision, 2026-11-08 (verbatim, from the roster):** "DND-005: **Accept** (random per-caller nonce start; with a hook, foreign/missing-nonce replies dropped and counted; FIFO only without hooks)."
 
@@ -150,5 +150,8 @@ Medium: caller/service envelope or routing contract and tests; migration effort 
 - 2026-11-08: DND-R4. Owner accepted option A with policy (1). Failing tests written first and recorded at the pin, then implemented; status → **in review**. DND-R3 cross-caller comparison corrected after verification (bimodal at both trees).
 - 2026-11-08: DND-R5. Verify's residual risk (A3/A4) recorded. Owner's nonce-generator decision implemented: `NonceSource`, three sources, build-tag default, per-Caller option. The forgery test was failing first. The streaming identity test was added (acceptance 3); it fails at the pin.
 - 2026-11-09: DND-R5-fix (verify's optional F1). A `NonceSource` that keeps returning 0 or a nonce still in use froze the Caller: `registerWaiter` spun under `c.mu`, so even a timed-out call could not unregister. Now `Next` is called outside the lock with at most 8 tries, after which `Call`/`HandleReplies` return the new `bus.ErrNonceSource`. The `NonceSource` contract is documented. `TestCallerRejectsBrokenNonceSource` (zero, repeated): before, it froze and the binary timed out; after, it passes ×30 with `-race` ([evidence](../evidence/DND-R5-fix.md)).
+- 2026-11-09: status → **done**. Verify accepted it and it is committed locally:
+  - 12b4916 `feat(x/bus): caller-scoped nonces with a pluggable nonce source` (DND-commit), including the DND-R5-fix `ErrNonceSource` change;
+  - 7e27991: review nits F11 (`CryptoNonce` is a value type) and F13.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)
