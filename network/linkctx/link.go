@@ -192,10 +192,17 @@ func (l *Link) maybeOpenLocked() {
 // Restart forgets the session (our reconnect): every id, binding and route is dropped, and
 // Start then begins a new session. The peer's session is not retired: a peer that sees our
 // new session keeps its own (helloLocked), so its next Hello still carries it.
+//
+// The retired list is cleared too. With random session ids, arrival order cannot tell a
+// peer's old session from its new one, so we may have retired the peer's live session
+// (reordered Hellos, or a spoofed one). Our new session makes every peer session
+// acceptable once; keeping the list would lock that peer out until it reconnected
+// (verify DND-022 recheck, follow-up 1).
 func (l *Link) Restart() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.resetLocked()
+	l.retired = l.retired[:0]
 }
 
 // Close sends a Close naming our session (or, before we have one, the peer's) and closes
