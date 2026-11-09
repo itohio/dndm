@@ -20,9 +20,24 @@ all: test build build-docker
 .PHONY: build
 build: $(BUILD_TARGETS)
 
+# buf and protoc-gen-go are pinned Go tools in tools/ (DND-R9-tools); config in buf.yaml/buf.gen.yaml.
+BUF=go tool -modfile=tools/buf/go.mod buf
+
 .PHONY: proto
 proto:
-	cd proto &&	buf generate 
+	$(BUF) generate
+
+.PHONY: proto-lint
+proto-lint:
+	$(BUF) lint
+
+# Breaking-change check against a git ref, offline (buf reads the local .git). The default
+# compares the working tree with the last commit; override, e.g. PROTO_BASE=.git\#ref=HEAD~1.
+PROTO_BASE ?= .git\#ref=HEAD
+
+.PHONY: proto-breaking
+proto-breaking:
+	$(BUF) breaking --against '$(PROTO_BASE)'
 
 .PHONY: mocks
 mocks:

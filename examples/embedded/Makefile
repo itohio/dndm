@@ -7,7 +7,7 @@ all: build
 
 # Generate protobuf Go code
 proto:
-	cd proto && buf generate
+	cd proto && go tool -modfile=../../../tools/buf/go.mod buf generate
 
 # Build Go binaries
 build:

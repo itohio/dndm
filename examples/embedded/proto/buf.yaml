@@ -1,14 +1,23 @@
-version: v1
-deps:
-  - buf.build/protocolbuffers/wellknowntypes
-breaking:
-  use:
-    - FILE
+# Standalone buf v2 module for the embedded example (DND-R9-tools); see the root buf.yaml.
+# Run from this directory: go tool -modfile=../../../tools/buf/go.mod buf generate
+version: v2
 lint:
   use:
-    - DEFAULT
+    - STANDARD
     - COMMENTS
     - FILE_LOWER_SNAKE_CASE
   except:
     - COMMENT_FIELD
+    - FIELD_NOT_REQUIRED
+    - PACKAGE_NO_IMPORT_CYCLE
     - PACKAGE_VERSION_SUFFIX
+  disallow_comment_ignores: true
+  ignore_only:
+    PACKAGE_DIRECTORY_MATCH: # example file, package "embedded" in types/ (kept as generated Go uses it)
+      - types/embedded.proto
+breaking:
+  use:
+    - FILE
+  except:
+    - EXTENSION_NO_DELETE
+    - FIELD_SAME_DEFAULT

@@ -1,0 +1,11 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/itohio/dndm/
+plugins:
+  # protoc-gen-go pinned in tools/go.mod, at the same version as the runtime in go.mod.
+  - local: ["go", "tool", "-modfile=tools/go.mod", "protoc-gen-go"]
+    out: .
+    opt: paths=source_relative

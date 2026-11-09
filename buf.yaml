@@ -1,0 +1,38 @@
+# buf v2 workspace (DND-R9-tools). Run buf as a pinned Go tool from the repo root:
+#   go tool -modfile=tools/buf/go.mod buf <lint|breaking|generate>   (or make proto / proto-lint)
+# No deps: no .proto imports google/protobuf/* (the unused WKT dep was dropped).
+# Rules kept equal to the v1 config (buf config migrate output); STANDARD is v1's DEFAULT.
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+    - COMMENTS
+    - FILE_LOWER_SNAKE_CASE
+  except:
+    - COMMENT_FIELD
+    - FIELD_NOT_REQUIRED
+    - PACKAGE_NO_IMPORT_CYCLE
+    - PACKAGE_VERSION_SUFFIX
+  disallow_comment_ignores: true
+  # Legacy v1 wire files: renaming their enum values or packages would change the
+  # generated Go API that EasyRobot uses. New files (types/link) get every rule.
+  ignore_only:
+    COMMENT_ENUM_VALUE:
+      - proto/types/core/header.proto
+      - proto/types/p2p/peering.proto
+    ENUM_VALUE_PREFIX:
+      - proto/types/core/header.proto
+      - proto/types/p2p/peering.proto
+    ENUM_ZERO_VALUE_SUFFIX:
+      - proto/types/core/header.proto
+      - proto/types/p2p/peering.proto
+    PACKAGE_DIRECTORY_MATCH:
+      - proto/types/test/message.proto
+breaking:
+  use:
+    - FILE
+  except:
+    - EXTENSION_NO_DELETE
+    - FIELD_SAME_DEFAULT
