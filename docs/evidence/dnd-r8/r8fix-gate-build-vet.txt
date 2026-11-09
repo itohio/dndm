@@ -1,7 +1,0 @@
-# DND-R8-fix gates 2026-11-09T01:30:05Z go version go1.27.2 darwin/arm64
-$ gofmt -l .
-(end)
-build exit=0
-vet default exit=0
-vet dndm_nonce_counter exit=0
-vet dndm_nonce_random exit=0

@@ -61,13 +61,13 @@ Record T1–T4 failure output at `c7b5b61` (after step 0) in the dated log befor
 
 ## Acceptance
 
-- [x] T1–T5 exist in `codec/codec_frame_test.go`; output at `c7b5b61` + step 0 shows the failures ([before](../evidence/dnd-r2/dnd001-before.txt)). Step 0 also added `ErrBadFrame`, `DefaultMaxFrameSize` and a `ReadMessageLimit` stub ignoring `max`, so the tests compile.
-- [x] After the fix: `go test -race -count=1 ./codec ./network/stream` passes ([after](../evidence/dnd-r2/dnd001-after.txt); also `-race -count=3 ./codec ./network/...` ok).
-- [x] `go test -run='^$' -fuzz=FuzzReadDecode -fuzztime=60s ./codec`: 3,394,677 execs, no crasher ([fuzz log](../evidence/dnd-r2/dnd001-fuzz.txt)).
-- [ ] `go vet ./...` clean ✔; `go test -count=1 ./...` passes for every package except `x/bus`, which stays flaky at about the pinned rate (timeouts in remote-stream tests, [flake comparison](../evidence/dnd-r2/xbus-flake-count20.txt)). Open until x/bus is deterministic (DND-003/007/008).
-- [x] `go test -race -count=3 ./...`: no newly failing package; no race report with a frame in `codec/`, and the only `stream.go` report is RC5 (now lines 146/199 because an import line was added) ([gate](../evidence/dnd-r2/gate-race-unique.txt)).
+- [x] T1–T5 exist in `codec/codec_frame_test.go`; output at `c7b5b61` + step 0 shows the failures (before (evidence: `~/src/docs/evidence/dnd-r2/dnd001-before.txt`, outside the repo)). Step 0 also added `ErrBadFrame`, `DefaultMaxFrameSize` and a `ReadMessageLimit` stub ignoring `max`, so the tests compile.
+- [x] After the fix: `go test -race -count=1 ./codec ./network/stream` passes (after (evidence: `~/src/docs/evidence/dnd-r2/dnd001-after.txt`, outside the repo); also `-race -count=3 ./codec ./network/...` ok).
+- [x] `go test -run='^$' -fuzz=FuzzReadDecode -fuzztime=60s ./codec`: 3,394,677 execs, no crasher (fuzz log (evidence: `~/src/docs/evidence/dnd-r2/dnd001-fuzz.txt`, outside the repo)).
+- [ ] `go vet ./...` clean ✔; `go test -count=1 ./...` passes for every package except `x/bus`, which stays flaky at about the pinned rate (timeouts in remote-stream tests, flake comparison (evidence: `~/src/docs/evidence/dnd-r2/xbus-flake-count20.txt`, outside the repo)). Open until x/bus is deterministic (DND-003/007/008).
+- [x] `go test -race -count=3 ./...`: no newly failing package; no race report with a frame in `codec/`, and the only `stream.go` report is RC5 (now lines 146/199 because an import line was added) (gate (evidence: `~/src/docs/evidence/dnd-r2/gate-race-unique.txt`, outside the repo)).
 - [x] Policy (cap, `ErrBadFrame`, close without resync) documented in the `codec` package comment and on `ReadMessageLimit`.
-- [x] Wire format unchanged: a fixed-header frame encodes byte-identically on the pinned and working trees and decodes on both ([base](../evidence/dnd-r2/wire-probe-base.txt), [current](../evidence/dnd-r2/wire-probe-current.txt)); `TestDecodeMessage` passes.
+- [x] Wire format unchanged: a fixed-header frame encodes byte-identically on the pinned and working trees and decodes on both (base (evidence: `~/src/docs/evidence/dnd-r2/wire-probe-base.txt`, outside the repo), current (evidence: `~/src/docs/evidence/dnd-r2/wire-probe-current.txt`, outside the repo)); `TestDecodeMessage` passes.
 
 ## Non-goals
 
@@ -91,14 +91,14 @@ Small: roughly 40–80 changed source lines and 150–250 test lines [estimate].
 - `codec/codec.go`: package comment; `bufferPool` seam; `ReadMessage` delegates to `ReadMessageLimit(r, DefaultMaxFrameSize)`; `io.ReadFull` for preamble and body; body length checked against `[8, max]` before `buffers.Get`; buffer returned on every body-read error; clean EOF before a frame stays `io.EOF`, everything else wraps `ErrBadFrame`. `DecodeMessage` checks each length field and remaining bytes before reading or slicing.
 - `errors/errors.go`: `ErrBadFrame`.
 - `network/stream/stream_test.go`: `TestStreamContext_Read`'s mock returned `(10, io.EOF)` for an 8-byte read without filling the buffer, which breaks the `io.Reader` contract; it now returns `(0, io.EOF)`. With `io.ReadFull` the old mock produced a zero preamble (bad magic) instead of EOF.
-- Public API: exported symbols are additive only (`DefaultMaxFrameSize`, `ReadMessageLimit`, `ErrBadFrame`; [api-diff](../evidence/dnd-r2/api-diff.txt)).
+- Public API: exported symbols are additive only (`DefaultMaxFrameSize`, `ReadMessageLimit`, `ErrBadFrame`; api-diff (evidence: `~/src/docs/evidence/dnd-r2/api-diff.txt`, outside the repo)).
 - **Behaviour change for callers that check sentinels** (DND-R2 verification fix): `ReadMessage`/`DecodeMessage` used to return `ErrNotEnoughBytes` (short read, bad nested lengths), `ErrBadArgument` (bad magic) or the reader's raw error (e.g. `io.EOF` after a partial preamble or body). They now return errors wrapping `ErrBadFrame`; a frame cut off mid-way also wraps `io.ErrUnexpectedEOF`. A clean `io.EOF` before a frame starts is unchanged. No caller in dndm or EasyRobot tests these sentinels (grep for `ErrNotEnoughBytes`/`ErrBadArgument` with `errors.Is` finds none); `endpoint/remote/messages.go:37–41` closes on any read error either way.
 
 ## Dated log
 
 - 2026-11-08: created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance unchecked; implementation evidence empty.
 - 2026-11-08: R1-04. Status backlog → **ready**, owner → **dndm**, under the owner's start-improving instruction. Throwaway probe (deleted after the run) confirmed partial-read rejection, decode panics on 1–3-byte and header-only bodies, and a 256 MiB allocation from one preamble ([probe log](../baseline-logs/dnd001-probe.txt)). Proposed defaults for cap and policy. No test written, no source changed.
-- 2026-11-08: DND-R2. Implemented with the documented defaults; failing tests recorded first; status ready → **in review**. Evidence: [DND-R2 evidence](../evidence/dnd-r2/README.md). Not committed.
+- 2026-11-08: DND-R2. Implemented with the documented defaults; failing tests recorded first; status ready → **in review**. Evidence: DND-R2 evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo). Not committed.
 - 2026-11-08: DND-R3. Recorded the error-identity change above (verify DND-R2 fix 1).
 - 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 5e2532a `fix(codec): read whole frames with a body cap; malformed input wraps ErrBadFrame` (DND-commit), and 7e27991 (review nit F14: `ReadMessageLimit` rejects a cap below 8). Evidence in 31321d3.
 

@@ -1,8 +1,0 @@
-# R-DND-022 L4 BEFORE (unmasked low), 2026-11-09T14:40:38Z
-expected: 0x48
-actual  : 0xc8
-Messages:   	low is masked to the window
---- FAIL: TestCounterLowBits
-FAIL
-FAIL	github.com/itohio/dndm/network/linkctx	0.518s
-FAIL

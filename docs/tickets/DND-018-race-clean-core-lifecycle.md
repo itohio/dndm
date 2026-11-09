@@ -47,7 +47,7 @@ RC5 (`contextRW.Close` closing `request` while `Request` sends, `network/stream/
 
 ## Public API
 
-Additive only. `Base` gains an unexported field; exported signatures are unchanged. Observable behaviour changes: `Close` now returns after callbacks finish (it used to return immediately); callbacks run in registration order instead of concurrently. EasyRobot uses none of `Base`, `Linker` or `codec` directly ([DND-R2 evidence](../evidence/dnd-r2/README.md)).
+Additive only. `Base` gains an unexported field; exported signatures are unchanged. Observable behaviour changes: `Close` now returns after callbacks finish (it used to return immediately); callbacks run in registration order instead of concurrently. EasyRobot uses none of `Base`, `Linker` or `codec` directly (DND-R2 evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo)).
 
 ## Tests (failing first, kept)
 
@@ -57,14 +57,14 @@ Changed existing test: `linker_test.go` `TestLinker_AddInterestIntentSend` now w
 
 ## Acceptance
 
-- [x] Each new test fails at `c7b5b61` (or panics/reports a race) and passes after the fix ([before](../evidence/dnd-r2/dnd018-before.txt), [after](../evidence/dnd-r2/dnd018-after.txt)).
-- [x] `go test -race -count=3 ./...`: no race report in the root package or `x/bus` at an RC1–RC4 location ([gate log](../evidence/dnd-r2/gate-race-count3.txt)).
+- [x] Each new test fails at `c7b5b61` (or panics/reports a race) and passes after the fix (before (evidence: `~/src/docs/evidence/dnd-r2/dnd018-before.txt`, outside the repo), after (evidence: `~/src/docs/evidence/dnd-r2/dnd018-after.txt`, outside the repo)).
+- [x] `go test -race -count=3 ./...`: no race report in the root package or `x/bus` at an RC1–RC4 location (gate log (evidence: `~/src/docs/evidence/dnd-r2/gate-race-count3.txt`, outside the repo)).
 - [x] Close callbacks have an owner (`Base.lc`) and `Close` waits for them; a pending callback holds no goroutine.
 - [ ] Owner review of the behaviour change (synchronous, ordered callbacks).
 
 ## Dated log
 
-- 2026-11-08: created and implemented under DND-R2. Failing tests recorded at `c7b5b61` before the fix; gates and remaining failures in the [DND-R2 evidence](../evidence/dnd-r2/README.md).
+- 2026-11-08: created and implemented under DND-R2. Failing tests recorded at `c7b5b61` before the fix; gates and remaining failures in the DND-R2 evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo).
 - 2026-11-08: DND-R3. RC5, listed as a non-goal here, was fixed under [DND-019](DND-019-remote-endpoint-close-self-deadlock.md). Adding to a closed fan-out now returns `ErrClosed` ([DND-004](DND-004-handshake-registration-replay.md)), which closes the WaitGroup Add/Wait race left in the fan-out close path.
 - 2026-11-08: DND-R4. One more unowned goroutine removed: `Link.Link()` linked and notified from a goroutine that could run after `Close` and re-link a closed link's intent. It now runs in the caller and does nothing once the link is closed. `link_test.go` lost two mock `Ctx()` expectations that only described the old goroutine. `TestLinker_AddRemoveInterest`'s 10 ms deadline (which cancelled the linker on a loaded machine) is now 1 s.
 - 2026-11-09: status → **done**. Verify accepted it and it is committed locally (DND-commit):

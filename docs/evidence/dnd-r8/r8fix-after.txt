@@ -1,8 +1,0 @@
-# DND-R8-fix AFTER the fixes; 2026-11-09T01:28:58Z
-$ go test -race -count=30 -run TestLinker_OldMatchCloseKeepsNewMatch .  ; and -count=100 without -race
-ok  	github.com/itohio/dndm	1.495s
-ok  	github.com/itohio/dndm	0.818s
-$ go test -race -count=30 -run "TestAddrbookEntry_|TestMesh_" ./endpoint/mesh
-      1 ok  	github.com/itohio/dndm/endpoint/mesh	48.168s
-$ go test -race -count=30 -run "Test_NewContainer|TestContainer_" .
-ok  	github.com/itohio/dndm	1.312s

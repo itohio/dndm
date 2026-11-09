@@ -1,4 +1,0 @@
-# Binary size per default nonce source; scratch main (NewCaller with the build default, nothing else from x/bus); 2026-11-08T21:42:14Z; go version go1.27.2 darwin/arm64
-tags='default(crypto)' stripped_bytes=7768098 NonceSource.Next methods linked: github.com/itohio/dndm/x/bus.(*CryptoNonce).Next github.com/itohio/dndm/x/bus.(*CryptoNonce).Next.deferwrap1 
-tags='dndm_nonce_counter' stripped_bytes=7768082 NonceSource.Next methods linked: github.com/itohio/dndm/x/bus.(*CounterNonce).Next 
-tags='dndm_nonce_random' stripped_bytes=7768050 NonceSource.Next methods linked: github.com/itohio/dndm/x/bus.(*RandomNonce).Next github.com/itohio/dndm/x/bus.RandomNonce.Next 

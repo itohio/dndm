@@ -1,3 +1,0 @@
-# Dial context test AFTER the fix; 2026-11-08T21:56:27Z
-$ go test -race -count=20 -run TestNode_DialHonoursContext ./network/net
-      1 ok  	github.com/itohio/dndm/network/net	1.344s

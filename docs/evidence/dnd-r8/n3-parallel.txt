@@ -1,3 +1,0 @@
-# N3: the three remaining container tests, race binaries, xargs -P 16 x 1000 runs; 2026-11-09T01:26:02Z
-## before-HEAD: processes 16, runs of SubscribePublish 16000, failures 0
-## after: processes 16, runs of SubscribePublish 16000, failures 0

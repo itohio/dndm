@@ -1,7 +1,0 @@
-# DND-R5-fix tests AFTER the fixes; 2026-11-08T23:53:07Z; GOFLAGS=-mod=readonly
-$ go test -race -count=30 -timeout 300s -run 'TestStreamContext_ReadScratchStaysSmall' ./network/stream
-      1 ok  	github.com/itohio/dndm/network/stream	1.368s
-$ go test -race -count=30 -timeout 300s -run 'TestHandshaker_OnReadyAfterCloseStartsNothing|TestHandshaker_MarkReadyAfterCloseStartsNothing' ./endpoint/mesh
-      1 ok  	github.com/itohio/dndm/endpoint/mesh	7.486s
-$ go test -race -count=30 -timeout 300s -run 'TestProducerSendOnClosedRouteIsBusErrClosed|TestCallerRejectsBrokenNonceSource' ./x/bus
-      1 ok  	github.com/itohio/dndm/x/bus	10.768s

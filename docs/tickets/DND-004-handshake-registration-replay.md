@@ -60,11 +60,11 @@ No new discovery protocol, durable identity or handshake payload change. The han
 
 ## Acceptance
 
-- [x] Every route active at completion propagates once; removed routes are not resurrected. At the pin + tests: mid-handshake Publish returns `forbidden`, "existing"/"during" never reach the peer, and the reconnect test fails ([before](../evidence/dnd-r3/dnd004-before.txt), last two sections use the final harness). After: both pass ×10 with `-race` ([after](../evidence/dnd-r3/dnd004-after.txt)).
+- [x] Every route active at completion propagates once; removed routes are not resurrected. At the pin + tests: mid-handshake Publish returns `forbidden`, "existing"/"during" never reach the peer, and the reconnect test fails (before (evidence: `~/src/docs/evidence/dnd-r3/dnd004-before.txt`, outside the repo), last two sections use the final harness). After: both pass ×10 with `-race` (after (evidence: `~/src/docs/evidence/dnd-r3/dnd004-after.txt`, outside the repo)).
 - [x] Registrations after completion keep their behaviour ("after"/"new" routes, one remote intent each).
 - [x] Reconnect does not replay stale-generation registrations or duplicate live links (reconnect test; membership check in `reconcile`).
-- [x] 60 `-race` runs of both mesh tests: no race report after the AddConn fix; 3 pairs before it ([summary](../evidence/dnd-r3/dnd004-race-count60-summary.txt)).
-- [ ] Owner review of the behaviour changes listed in the [DND-R3 evidence](../evidence/dnd-r3/README.md#behaviour-changes-vs-the-pin).
+- [x] 60 `-race` runs of both mesh tests: no race report after the AddConn fix; 3 pairs before it (summary (evidence: `~/src/docs/evidence/dnd-r3/dnd004-race-count60-summary.txt`, outside the repo)).
+- [ ] Owner review of the behaviour changes listed in the DND-R3 evidence (evidence: `~/src/docs/evidence/dnd-r3/README.md#behaviour-changes-vs-the-pin`, outside the repo).
 
 ## Pinned evidence
 
@@ -72,13 +72,13 @@ Revision `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`: [container.go](../../contai
 
 ## Implementation evidence
 
-See [DND-R3 evidence](../evidence/dnd-r3/README.md). Separate pre-existing defect seen while testing (not fixed): the remote endpoint reports each new remote intent to its `addIntent` callback twice, once from the linker callback and once from `handleRemoteIntent` ([messages.go](../../endpoint/remote/messages.go) line 231).
+See DND-R3 evidence (evidence: `~/src/docs/evidence/dnd-r3/README.md`, outside the repo). Separate pre-existing defect seen while testing (not fixed): the remote endpoint reports each new remote intent to its `addIntent` callback twice, once from the linker callback and once from `handleRemoteIntent` ([messages.go](../../endpoint/remote/messages.go) line 231).
 
 ## Dated log
 
 - 2026-11-08: created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed.
 - 2026-11-08: DND-R3. Made ready (no owner decision needed), reproduced at the pin, implemented; status → **in review**. Not committed.
-- 2026-11-09: DND-R5-fix (review F2). After `Close` has begun, `Handshaker.OnReady`/`markReady` start no callbacks: a `closing` flag is set under `readyMu`, and the `WaitGroup.Add` happens under the same lock. Before this, a late `OnReady` or a `markReady` racing `Close` started a callback after `Close` began waiting. Tests `TestHandshaker_OnReadyAfterCloseStartsNothing`/`MarkReadyAfterCloseStartsNothing` (`endpoint/mesh/ready_close_test.go`) failed 3/3 before the fix and passed ×30 with `-race` after ([evidence](../evidence/DND-R5-fix.md)).
+- 2026-11-09: DND-R5-fix (review F2). After `Close` has begun, `Handshaker.OnReady`/`markReady` start no callbacks: a `closing` flag is set under `readyMu`, and the `WaitGroup.Add` happens under the same lock. Before this, a late `OnReady` or a `markReady` racing `Close` started a callback after `Close` began waiting. Tests `TestHandshaker_OnReadyAfterCloseStartsNothing`/`MarkReadyAfterCloseStartsNothing` (`endpoint/mesh/ready_close_test.go`) failed 3/3 before the fix and passed ×30 with `-race` after (evidence (evidence: `~/src/docs/evidence/DND-R5-fix.md`, outside the repo)).
 - 2026-11-09: status → **done**. Verify accepted it and it is committed locally (DND-commit):
   - c93ba0c `fix(mesh): addrbook AddConn under lock; dialing flag and retry log without races`;
   - 9d6515f `fix(mesh): gate publish on handshake readiness; Container registers routes when ready`, which includes the DND-R5-fix F2 change.

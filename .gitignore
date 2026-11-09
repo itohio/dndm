@@ -22,3 +22,6 @@ go.work
 .coverage.tmp
 # Obsidian per-user layout
 docs/.obsidian/workspace*.json
+
+# Evidence (test logs, reports) lives outside the repo: ~/src/docs/evidence/ (EVIDENCE-CLEANUP)
+docs/evidence/

@@ -59,7 +59,7 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
   - The four byte-count tests failed first (encoder undefined) and pass ×10 with `-race`.
   - Measured in the test: EasyRobot's state route 148 → 66 B, target route 120 → 30 B.
   - Design §8 corrected: the TCP prefix is 3 B for frames of 16 384 B or more.
-  - [Evidence](../evidence/DND-R9-tools.md).
+  - Evidence (evidence: `~/src/docs/evidence/DND-R9-tools.md`, outside the repo).
 - 2026-11-09: DND-R9-fix (review R-DND-R9).
   - L1: `DecodeLinkData` rejects payload together with sealed.
   - L2: the control messages are now `oneof control`, with identical wire bytes. The decoder also rejects two control fields in one frame.
@@ -70,7 +70,7 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
   - The six tests first failed as a build failure (no package yet). A mutation run then showed that each test fails by assertion against a wrong implementation. For example, the F1 rule of ids increasing across sessions reaches id 650 and 5 B frames.
   - The tests pass ×20 with `-race`; package coverage is 82.9 %.
   - Not yet: secured profiles and tags (DND-009), the counter in DATA frames, Bind retries, the Bind rate limit, enforcing `max_frame`, v1 negotiation (A5), trusted origin (A5), and wiring into the remote endpoint.
-  - [Evidence](../evidence/DND-022-link-core.md).
+  - Evidence (evidence: `~/src/docs/evidence/DND-022-link-core.md`, outside the repo).
 - 2026-11-09: review R-DND-022 fixes, committed as 63df1c4.
   - L1, the Hello ping-pong: our session is kept until `Restart`; a peer reconnect resets only the tables; at most one answer per received Hello; retired peer sessions are ignored.
   - L2: `Close` must name a current session.
@@ -78,6 +78,6 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
   - L4: the counter mask. L5: `Face.Send` must not block.
   - L6: tests for profile mismatch and Unbind before BindAck.
   - Six new tests, the L1–L3 ones failing first by assertion. 14 tests ×20 `-race`; coverage 90.2 %.
-  - Design §4 "Session rules" added ([evidence](../evidence/DND-022-link-core.md#r-dnd-022-fixes-l1l6-2026-11-09)).
+  - Design §4 "Session rules" added (evidence (evidence: `~/src/docs/evidence/DND-022-link-core.md#r-dnd-022-fixes-l1l6-2026-11-09`, outside the repo)).
 
 [Ticket index](index.md) · [Design](../design/link-context-wire.md) · [Research-2](../research/ideation/2026-11-08-ndn-delivery-auth-2.md)

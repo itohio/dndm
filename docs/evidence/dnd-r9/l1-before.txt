@@ -1,7 +1,0 @@
-# R-DND-R9 L1 BEFORE (decoder unchanged), 2026-11-09T09:54:15Z
-$ go test -count=3 -run "TestLinkFrameRoundTrip/payload_and_sealed" -v ./codec
-      2 FAIL
-      1 FAIL	github.com/itohio/dndm/codec	0.406s
-      3 --- FAIL: TestLinkFrameRoundTrip
-      3 --- FAIL: TestLinkFrameRoundTrip/payload_and_sealed_in_one_frame
-      3 Messages:   	got <nil>

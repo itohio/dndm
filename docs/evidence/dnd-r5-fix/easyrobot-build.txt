@@ -1,9 +1,0 @@
-# 2026-11-08T23:54:16Z EasyRobot abb5c9c, dndm working tree after DND-R5-fix; GOFLAGS=-mod=readonly
-./cmd/display/destination exit=1
-./cmd/manipulator exit=0
-./drivers/lidar exit=1
-./drivers/manipulator exit=1
-# git status --short (EasyRobot)
- M .gitignore
- M go.mod
-?? docs/

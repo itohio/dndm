@@ -45,7 +45,7 @@ Choose private reply paths or caller identity plus call nonce; reject absent/unk
 
 ## Runtime evidence (DND-R3 probe, throwaway, not a kept test)
 
-Two `Caller`s with nonce hooks share `p.req`/`p.resp` and call one at a time, 10 rounds each ([probe log](../evidence/dnd-r3/dnd005-probe-pin.txt)). **Corrected in DND-R4 after verification:** each tree got one probe run in DND-R3, and the outcome is bimodal per run at both trees.
+Two `Caller`s with nonce hooks share `p.req`/`p.resp` and call one at a time, 10 rounds each (probe log (evidence: `~/src/docs/evidence/dnd-r3/dnd005-probe-pin.txt`, outside the repo)). **Corrected in DND-R4 after verification:** each tree got one probe run in DND-R3, and the outcome is bimodal per run at both trees.
 
 | Tree | Per run (verify, 16 runs per tree) |
 |---|---|
@@ -102,9 +102,9 @@ Create two callers sharing one response path, both issuing their first request. 
 
 - [x] Each accepted reply reaches only the matching live caller/call: `TestCallersSharingResponsePathGetOwnReplies` (deterministic: the service holds both requests and answers caller 1 first), `TestCallerNoncesDifferAcrossCallers`.
 - [x] Unknown, missing and expired (late) identities are not delivered and are counted: `TestCallerDropsReplyWithForeignNonce`, `TestCallerMissingNoncePolicy`, `TestCallerLateReplyDoesNotReachNextCall` (`Caller.Dropped()`). Wrong-generation replies are the same case as foreign nonces (a new Caller has a new random start).
-- [x] Streaming chunks retain call identity; terminal/cancelled calls cannot consume later replies: `TestCallerStreamingRepliesKeepCallIdentity` (two `HandleReplies` calls on one Caller; call a ends after its first chunk; a2/a3 are dropped and counted, call b gets exactly b1–b3). It fails 3/3 at the pin (b received `a2`, `a3`; `Dropped` 0) ([before](../evidence/dnd-r5/streaming-before-pin.txt)). It passes with the DND-R4 matching unchanged and ×30 with `-race` ([after](../evidence/dnd-r5/nonce-after.txt)).
-- [x] Nonce source is pluggable (DND-R5): `TestCallerPredictedNonceForgery`. Before wiring, the random and crypto cases fail 3/3 ("a predicted-nonce forgery was accepted") ([before](../evidence/dnd-r5/nonce-before.txt)); after, all three cases pass ×30 with `-race`, and the whole package passes with each build default ([after](../evidence/dnd-r5/nonce-after.txt)).
-- [x] All of the above fail at the pin (+ the `Dropped()` declaration only) and pass after the fix, with `-race` ×30 (late-reply test ×20) ([before](../evidence/dnd-r4/dnd005-before.txt), [after](../evidence/dnd-r4/dnd005-after.txt)).
+- [x] Streaming chunks retain call identity; terminal/cancelled calls cannot consume later replies: `TestCallerStreamingRepliesKeepCallIdentity` (two `HandleReplies` calls on one Caller; call a ends after its first chunk; a2/a3 are dropped and counted, call b gets exactly b1–b3). It fails 3/3 at the pin (b received `a2`, `a3`; `Dropped` 0) (before (evidence: `~/src/docs/evidence/dnd-r5/streaming-before-pin.txt`, outside the repo)). It passes with the DND-R4 matching unchanged and ×30 with `-race` (after (evidence: `~/src/docs/evidence/dnd-r5/nonce-after.txt`, outside the repo)).
+- [x] Nonce source is pluggable (DND-R5): `TestCallerPredictedNonceForgery`. Before wiring, the random and crypto cases fail 3/3 ("a predicted-nonce forgery was accepted") (before (evidence: `~/src/docs/evidence/dnd-r5/nonce-before.txt`, outside the repo)); after, all three cases pass ×30 with `-race`, and the whole package passes with each build default (after (evidence: `~/src/docs/evidence/dnd-r5/nonce-after.txt`, outside the repo)).
+- [x] All of the above fail at the pin (+ the `Dropped()` declaration only) and pass after the fix, with `-race` ×30 (late-reply test ×20) (before (evidence: `~/src/docs/evidence/dnd-r4/dnd005-before.txt`, outside the repo), after (evidence: `~/src/docs/evidence/dnd-r4/dnd005-after.txt`, outside the repo)).
 
 ## Verification procedure — future, not executed
 
@@ -124,7 +124,7 @@ Medium: caller/service envelope or routing contract and tests; migration effort 
   - undelivered replies are counted (`Dropped() uint64`, new);
   - godoc on the hooks: the nonce needs 64 bits, and a fresh request is needed per call.
 - Step 0 before the failing run: the `Dropped()` method and counter field only, never incremented.
-- The readiness fix in [DND-007](DND-007-bounded-dispatch-and-closure.md) (an `IntentRouter` remembers it was notified and seeds wrappers created later) was needed for the shared-path test to be deterministic. With that fix alone, the test misdelivers 10/10 and never times out ([before log](../evidence/dnd-r4/dnd005-before.txt), last section). This supports the inference that the probe's timeout mode was a lost readiness notification.
+- The readiness fix in [DND-007](DND-007-bounded-dispatch-and-closure.md) (an `IntentRouter` remembers it was notified and seeds wrappers created later) was needed for the shared-path test to be deterministic. With that fix alone, the test misdelivers 10/10 and never times out (before log (evidence: `~/src/docs/evidence/dnd-r4/dnd005-before.txt`, outside the repo), last section). This supports the inference that the probe's timeout mode was a lost readiness notification.
 - API: additive (`Caller.Dropped`). Behaviour: callers with a response-nonce hook no longer get FIFO-matched replies; callers without hooks are unchanged.
 
 ### Nonce generator (DND-R5)
@@ -138,8 +138,8 @@ Medium: caller/service envelope or routing contract and tests; migration effort 
   - **Per Caller:** `WithCallerNonceSource(src)`. The option picks a concrete type at the call site, but the Caller calls it through the interface.
 - The Caller never issues 0 or a nonce that is still live (it redraws). The old `randomNonceStart` is gone.
 - Overhead:
-  - Calls: one interface call per `Call`/`HandleReplies`, 0 allocations for all three sources. Apple M5, go1.27.2, best of 5: counter 2.1 ns, random 4.7 ns, crypto 62 ns ([bench](../evidence/dnd-r5/nonce-bench.txt)).
-  - Code size: a scratch binary using `NewCaller` links only the default source's `Next`, so unused sources cost nothing. Stripped sizes differ by ≤ 48 bytes between the three defaults, because crypto/rand is linked anyway for the counter's start ([size](../evidence/dnd-r5/nonce-size.txt)).
+  - Calls: one interface call per `Call`/`HandleReplies`, 0 allocations for all three sources. Apple M5, go1.27.2, best of 5: counter 2.1 ns, random 4.7 ns, crypto 62 ns (bench (evidence: `~/src/docs/evidence/dnd-r5/nonce-bench.txt`, outside the repo)).
+  - Code size: a scratch binary using `NewCaller` links only the default source's `Next`, so unused sources cost nothing. Stripped sizes differ by ≤ 48 bytes between the three defaults, because crypto/rand is linked anyway for the counter's start (size (evidence: `~/src/docs/evidence/dnd-r5/nonce-size.txt`, outside the repo)).
   - TinyGo was not built here (no toolchain).
 - Behaviour change vs DND-R4: plain Go builds now draw every nonce from crypto/rand instead of counting up from a random start. Matching is unchanged.
 
@@ -149,7 +149,7 @@ Medium: caller/service envelope or routing contract and tests; migration effort 
 - 2026-11-08: DND-R3. Runtime-confirmed with a throwaway two-caller probe; decision memo added; status backlog → **blocked (owner decision)**, owner → dndm. No code changed.
 - 2026-11-08: DND-R4. Owner accepted option A with policy (1). Failing tests written first and recorded at the pin, then implemented; status → **in review**. DND-R3 cross-caller comparison corrected after verification (bimodal at both trees).
 - 2026-11-08: DND-R5. Verify's residual risk (A3/A4) recorded. Owner's nonce-generator decision implemented: `NonceSource`, three sources, build-tag default, per-Caller option. The forgery test was failing first. The streaming identity test was added (acceptance 3); it fails at the pin.
-- 2026-11-09: DND-R5-fix (verify's optional F1). A `NonceSource` that keeps returning 0 or a nonce still in use froze the Caller: `registerWaiter` spun under `c.mu`, so even a timed-out call could not unregister. Now `Next` is called outside the lock with at most 8 tries, after which `Call`/`HandleReplies` return the new `bus.ErrNonceSource`. The `NonceSource` contract is documented. `TestCallerRejectsBrokenNonceSource` (zero, repeated): before, it froze and the binary timed out; after, it passes ×30 with `-race` ([evidence](../evidence/DND-R5-fix.md)).
+- 2026-11-09: DND-R5-fix (verify's optional F1). A `NonceSource` that keeps returning 0 or a nonce still in use froze the Caller: `registerWaiter` spun under `c.mu`, so even a timed-out call could not unregister. Now `Next` is called outside the lock with at most 8 tries, after which `Call`/`HandleReplies` return the new `bus.ErrNonceSource`. The `NonceSource` contract is documented. `TestCallerRejectsBrokenNonceSource` (zero, repeated): before, it froze and the binary timed out; after, it passes ×30 with `-race` (evidence (evidence: `~/src/docs/evidence/DND-R5-fix.md`, outside the repo)).
 - 2026-11-09: status → **done**. Verify accepted it and it is committed locally:
   - 12b4916 `feat(x/bus): caller-scoped nonces with a pluggable nonce source` (DND-commit), including the DND-R5-fix `ErrNonceSource` change;
   - 7e27991: review nits F11 (`CryptoNonce` is a value type) and F13.

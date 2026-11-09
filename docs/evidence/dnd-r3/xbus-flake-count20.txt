@@ -1,8 +1,0 @@
-# x/bus -count=20 without -race, 2026-11-08
-## pin: see ../dnd-r2/xbus-flake-count20.txt (9 failures)
-## after DND-R2: 7 failures (same file)
-## after DND-R3 (working tree)
-      2 FAIL
-      1 FAIL	github.com/itohio/dndm/x/bus	91.248s
-      1 --- FAIL: TestProducerConsumer
-      9 --- FAIL: TestStreamStarTopologyBidirectional

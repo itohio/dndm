@@ -267,7 +267,7 @@ The `.options` file for nanopb lives next to `link.proto` and is part of the con
 
 ## 7. Tooling: current and target
 
-State after DND-R9-tools (2026-11-09, owner approved the download; [evidence](../evidence/DND-R9-tools.md)):
+State after DND-R9-tools (2026-11-09, owner approved the download; evidence (evidence: `~/src/docs/evidence/DND-R9-tools.md`, outside the repo)):
 
 | Item | Before DND-R9 | Now |
 |---|---|---|
@@ -290,7 +290,7 @@ Why two tool modules: buf v1.75.0 requires an unreleased protobuf (`v1.36.13-0.2
 
 ## 8. Byte-count test
 
-The tests live in `codec/link_frame_test.go` (frame bytes, DND-R9) and `network/linkctx/linkctx_test.go` (link core, after DND-R9; plus A1/A3/A8 tests). Each failed first as a build failure for the missing API, and a mutation run shows that each fails by assertion against a wrong implementation ([evidence](../evidence/DND-022-link-core.md)):
+The tests live in `codec/link_frame_test.go` (frame bytes, DND-R9) and `network/linkctx/linkctx_test.go` (link core, after DND-R9; plus A1/A3/A8 tests). Each failed first as a build failure for the missing API, and a mutation run shows that each fails by assertion against a wrong implementation (evidence (evidence: `~/src/docs/evidence/DND-022-link-core.md`, outside the repo)):
 
 - **TestLinkFrameOverhead**: encode DATA for payloads of 26 B and 62 B (the sizes of EasyRobot's ManipulatorTarget and ManipulatorState above) and 127/128/16 383/16 384 B (varint boundaries), and assert:
   - overhead = 4 B below 128 B, 5 B up to 16 383 B, 6 B above (UDP/serial framing);

@@ -79,7 +79,7 @@ RC6 (DND-R5; the Leader's DND-R5 task listed it with the DND-008 items). Tests a
 | `TestLinker_ContextCancelDuringSends`: the linker context is cancelled, so the link and the interest close from two goroutines | panic + race 3/3 | — | ok ×30 `-race` |
 | `TestFanInInterest_CloseWhileForwarding`: fan-in closes while its runner forwards into its own channel | data race 3/3 (`-race` only) | same | ok |
 
-Evidence: [before](../evidence/dnd-r5/rc6-before.txt), [after](../evidence/dnd-r5/rc6-after.txt).
+Evidence: before (evidence: `~/src/docs/evidence/dnd-r5/rc6-before.txt`, outside the repo), after (evidence: `~/src/docs/evidence/dnd-r5/rc6-after.txt`, outside the repo).
 
 Fix (the closer of a channel now knows its senders have stopped):
 
@@ -96,7 +96,7 @@ Behaviour changes:
 ## Dated log
 
 - 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
-- 2026-11-08: DND-R2. Runtime finding RC6 belongs here: `LocalInterest`'s close callback closes `msgC` (`interest.go:66–69` at the pin) while a linked `LocalIntent.Send` that read `linkedC` earlier can still send on it (`intent.go:112–118`). Race reports in the baseline `-count=3` log and in the DND-R2 gate log ([evidence](../evidence/dnd-r2/README.md)). The closer of `msgC` is not its sender. Status unchanged.
+- 2026-11-08: DND-R2. Runtime finding RC6 belongs here: `LocalInterest`'s close callback closes `msgC` (`interest.go:66–69` at the pin) while a linked `LocalIntent.Send` that read `linkedC` earlier can still send on it (`intent.go:112–118`). Race reports in the baseline `-count=3` log and in the DND-R2 gate log (evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo)). The closer of `msgC` is not its sender. Status unchanged.
 - 2026-11-08: DND-R4. Two readiness/closure items fixed in the working tree, each with a failing-first test (`readiness_test.go`):
   - readiness loss: an `IntentRouter` notified before its first `Wrap()` lost the notification, so a second producer waited forever. The router now remembers it was notified and seeds new wrappers (`TestIntentRouter_WrapAfterNotifyGetsInterest`; fails at the pin);
   - use after close: `removeWrapper` set `w.router = nil`, which raced `Send`/`Route` and made `Send` on a closed wrapper panic. The router is kept, and `Send` on a closed wrapper returns `ErrClosed` (`TestRouterWrappers_UseAfterClose`; fails at the pin and panics in the DND-R3 tree).

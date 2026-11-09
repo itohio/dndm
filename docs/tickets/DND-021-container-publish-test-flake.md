@@ -43,9 +43,9 @@ Both trees fail the same two ways: `Interest()` never called, or `addIntent` not
 
 ## Acceptance
 
-- [x] 0 failures in 32,000 runs, 16-way in parallel with `-race` (`xargs -P 16`, more load than verify's 4-way method). The same run before the fix failed 19 times: 15 `TestContainer_Publish`, 4 `TestContainer_Subscribe` ([parallel run](../evidence/dnd-r8/dnd021-parallel.txt)).
+- [x] 0 failures in 32,000 runs, 16-way in parallel with `-race` (`xargs -P 16`, more load than verify's 4-way method). The same run before the fix failed 19 times: 15 `TestContainer_Publish`, 4 `TestContainer_Subscribe` (parallel run (evidence: `~/src/docs/evidence/dnd-r8/dnd021-parallel.txt`, outside the repo)).
 - [x] No `time.Sleep` left in the two tests. They wait on channels closed by the mocks' `.Run` (Interest()/C() read by the runner), under a 5 s deadline instead of 100 ms.
-- [x] The tests still fail if the fan-out stops reading `Interest()` or if `Publish` stops calling the endpoint: two mutations in a scratch copy, both fail ([mutation log](../evidence/dnd-r8/dnd021-mutation.txt)).
+- [x] The tests still fail if the fan-out stops reading `Interest()` or if `Publish` stops calling the endpoint: two mutations in a scratch copy, both fail (mutation log (evidence: `~/src/docs/evidence/dnd-r8/dnd021-mutation.txt`, outside the repo)).
 - [x] Second cause fixed: `testutil.CtxRecv` picked at random between an expired context and an already-closed channel, so `WaitCalled` could fail even after the callback ran. It now prefers a ready channel (`TestCtxRecvPrefersAReadyChannel`, failed 3/3 before).
 
 ## Dated log

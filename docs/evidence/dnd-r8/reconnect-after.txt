@@ -1,7 +1,0 @@
-# DND-008 close/reconnect tests AFTER the fix; 2026-11-09T00:57:17Z
-$ go test -race -count=30 -run "TestAddrbookEntry_LiveConnNotLostBehindDeadOne|TestMesh_" ./endpoint/mesh
-      1 ok  	github.com/itohio/dndm/endpoint/mesh	32.684s
-$ go test -race -count=5 ./endpoint/... ./x/bus
-      1 ok  	github.com/itohio/dndm/endpoint/mesh	9.670s
-      1 ok  	github.com/itohio/dndm/endpoint/remote	1.521s
-      1 ok  	github.com/itohio/dndm/x/bus	8.667s

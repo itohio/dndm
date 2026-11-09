@@ -1,7 +1,0 @@
-## mutation 1: FanOutIntent.notifyRunner no longer reads Interest()
-        	Messages:   	the fan-out never read the intent's Interest()
---- FAIL: TestContainer_Publish (5.00s)
-## mutation 2: Container.publish no longer calls ep.Publish
-        	Error:      	Should be true
-        	Messages:   	the fan-out never read the intent's Interest()
---- FAIL: TestContainer_Publish (5.00s)

@@ -116,7 +116,7 @@ Draw the timeline for publish → two subscribers → one retained message → p
 
 - [x] Decision records aliasing/lifetime invariants and rejected alternatives (memo above; contract section).
 - [x] Every timeline has a valid owner: sender until `Send`, then shared read-only; a modifying receiver must clone first.
-- [x] Compatibility: no API, wire or runtime change (godoc only). Verification: `x/bus/ownership_test.go` `TestLocalSubscribersShareTheSentMessage` shows two local subscribers receive the sender's object (`assert.Same`), ×20 with `-race` ([after](../evidence/dnd-r4/dnd003-after.txt)). A throwaway probe shows that modifying after Send is a data race the receiver can observe: `-race` reports it and the receiver saw the new value "v2" ([probe](../evidence/dnd-r4/dnd002-probe.txt)). No performance claim.
+- [x] Compatibility: no API, wire or runtime change (godoc only). Verification: `x/bus/ownership_test.go` `TestLocalSubscribersShareTheSentMessage` shows two local subscribers receive the sender's object (`assert.Same`), ×20 with `-race` (after (evidence: `~/src/docs/evidence/dnd-r4/dnd003-after.txt`, outside the repo)). A throwaway probe shows that modifying after Send is a data race the receiver can observe: `-race` reports it and the receiver saw the new value "v2" (probe (evidence: `~/src/docs/evidence/dnd-r4/dnd002-probe.txt`, outside the repo)). No performance claim.
 
 ## Verification procedure — future, not executed
 

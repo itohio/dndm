@@ -79,7 +79,7 @@ New findings (not in the canonical report):
 
 ## Addendum 2026-11-08: DND-R2 working tree
 
-Appended; earlier sections unchanged. Evidence: [DND-R2 evidence](../evidence/dnd-r2/README.md). Line numbers below are at the pin.
+Appended; earlier sections unchanged. Evidence: DND-R2 evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo). Line numbers below are at the pin.
 
 - **F14 RC1–RC4: fixed in the working tree** by [DND-018](../tickets/DND-018-race-clean-core-lifecycle.md). `go test -race -count=3 ./...` reports no race at an RC1–RC4 location. RC1 was worse than a race: `LocalIntent.Notify` panicked with `send on closed channel` without `-race` (dnd018-before.txt).
 - **F15: root package now deterministic in `-count=10`.** The test that logged after it returned now waits for the parent-cancel callback.
@@ -89,7 +89,7 @@ Appended; earlier sections unchanged. Evidence: [DND-R2 evidence](../evidence/dn
 
 ## Addendum 2026-11-08: DND-R3 working tree
 
-Appended; earlier sections unchanged. Evidence: [DND-R3 evidence](../evidence/dnd-r3/README.md).
+Appended; earlier sections unchanged. Evidence: DND-R3 evidence (evidence: `~/src/docs/evidence/dnd-r3/README.md`, outside the repo).
 
 - **New F18 (runtime): remote endpoint Close self-deadlock.** The message handler calls `Close` on a read error, and `Close` waits for the handler ([messages.go](../../endpoint/remote/messages.go) 40, [remote.go](../../endpoint/remote/remote.go) 113 at the pin). An external Close hangs the same way. Fixed in the working tree ([DND-019](../tickets/DND-019-remote-endpoint-close-self-deadlock.md)).
 - **RC5: fixed in the working tree** (DND-019; it became the common path once Close returned).
@@ -101,7 +101,7 @@ Appended; earlier sections unchanged. Evidence: [DND-R3 evidence](../evidence/dn
 
 ## Addendum 2026-11-08: DND-R4 working tree
 
-Appended; earlier sections unchanged except line 99, corrected at verify's request. Evidence: [DND-R4 evidence](../evidence/dnd-r4/README.md).
+Appended; earlier sections unchanged except line 99, corrected at verify's request. Evidence: DND-R4 evidence (evidence: `~/src/docs/evidence/dnd-r4/README.md`, outside the repo).
 
 - **F3 (competing readers): fixed** ([DND-003](../tickets/DND-003-single-owner-remote-forwarding.md)). `Router.addInterest` no longer builds a fan-in around remote interests. Before the fix, a paced 20-message test missed `tag-1` 3/3 at the pin.
 - **F20, second half: fixed.** A router wrapper created after interest was seen now starts with a notification; at the pin this test fails 3/3. This was the timeout mode of the two-Caller probe and the cause of second-producer hangs.
@@ -113,7 +113,7 @@ Appended; earlier sections unchanged except line 99, corrected at verify's reque
 
 ## Addendum 2026-11-08: DND-R5 working tree
 
-Appended; earlier sections unchanged. Evidence: [DND-R5 evidence](../evidence/dnd-r5/README.md).
+Appended; earlier sections unchanged. Evidence: DND-R5 evidence (evidence: `~/src/docs/evidence/dnd-r5/README.md`, outside the repo).
 
 - **F17 / RC6: fixed** ([DND-007](../tickets/DND-007-bounded-dispatch-and-closure.md#implementation-evidence)). At the pin a Send blocked on a full interest channel panics (`send on closed channel`) when the interest closes, 3/3. The same close-vs-send race exists in `FanInInterest` (race 3/3), and on linker context cancellation, where the link and the interest close concurrently (3/3).
 - **New F24 (runtime): DND-005 nonces were predictable** (verify's A3). The counter source is kept for small devices. Plain Go builds now default to crypto/rand per call. A4 (copying the nonce from the request) stays open until DND-009.
