@@ -182,7 +182,7 @@ flowchart LR
     class j1,j2 groupT
 ```
 
-Caption: the route id rides in the CAN identifier, so a frame spends only 2 B on protobuf. An authenticated command also needs a counter and a 3 B MAC, which leaves 1 B of data in classic CAN's 8 bytes. That is why authenticated commands need CAN FD in practice; the owner's rule applies once a target is chosen. Sizes measured with code generated from the draft schema.
+Caption: the route id rides in the CAN identifier, so a frame spends only 2 B on protobuf. An authenticated command also needs a counter and a 3 B MAC, which leaves 1 B of data in classic CAN's 8 bytes. That stays true for every frame, because only the counter's low 7 bits are sent. That is why authenticated commands need CAN FD in practice; the owner's rule applies once a target is chosen. Sizes measured with code generated from the draft schema.
 
 ## S8. Same app, three builds
 

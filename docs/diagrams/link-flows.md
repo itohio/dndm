@@ -168,15 +168,17 @@ sequenceDiagram
     M->>S: HELLO (new session)
     Note over S: old keys, counters and route ids are dropped
     M->>S: handshake (flow 4a), fresh keys
-    M->>S: BIND lidar/scan as route_id 40
+    M->>S: BIND lidar/scan as route_id 1 (ids restart per session)
     S-->>M: BIND-ACK ok
-    M->>S: DATA (route_id 40, counter 1)
+    M->>S: DATA (route_id 1, counter 1)
     alt attacker replays an old frame (route_id 3, counter 812)
-        Note over S: tag fails under the new keys, and id 3 is not bound: dropped
+        Note over S: tag fails under the new keys: dropped
+    else a late frame from before the reset reuses id 1
+        Note over S: tag fails under the new keys: dropped
     end
 ```
 
-Caption: fresh keys on every session make it safe to restart counters, and new route ids continue after the old ones, so a replayed or late frame from before the reset matches nothing.
+Caption: every session starts with fresh keys, counters and route ids, so route ids stay small (one byte) however often the MCU resets. A replayed or late frame from before the reset fails the new keys' tag, even when its route id is in use again.
 
 ## 6. Close and reconnect (target)
 
@@ -190,7 +192,7 @@ sequenceDiagram
     A->>B: HELLO (session 8)
     A->>B: handshake, then BIND every route again
     alt a delayed frame from session 7 arrives
-        Note over B: no key and no route id for it: dropped and counted
+        Note over B: session 7's keys are gone: the tag fails, dropped and counted
     else a delayed CLOSE for session 7 arrives
         Note over B: not the current session: ignored
     end

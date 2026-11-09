@@ -1,4 +1,4 @@
-# Mermaid render check, 2026-11-08T23:26:06Z (after UX-3 fixes, DND-R6-fix)
+# Mermaid render check, 2026-11-09T00:07:57Z (after DND-R7-design-fix: LF5/LF6 per-session route ids)
 # tool: @mermaid-js/mermaid-cli 12.2.0 (mmdc), mermaid 12.3.0, local npx cache, local headless Chrome; no network
 # negative control: a deliberately broken block makes mmdc exit 1 (checked in _scratch)
 # not tested: Obsidian's bundled Mermaid 11.x, GitHub
