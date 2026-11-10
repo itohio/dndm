@@ -98,6 +98,7 @@ type Link struct {
 	peerSession uint64   // 0 until the peer's Hello
 	peerRoutes  int      // the peer's max_routes
 	retired     []uint64 // the peer's previous sessions (last retiredKeep); their Hellos are dropped
+	suspect     []uint64 // retired sessions on probation after our Restart (see Restart)
 
 	ids       idTable
 	tx        map[routeKey]*txRoute
@@ -115,8 +116,11 @@ const DefaultMaxRoutes = 64
 
 // retiredKeep is how many of the peer's previous sessions are remembered, so a late
 // duplicate Hello from one of them (a reordering face) is dropped instead of resetting
-// the link.
-const retiredKeep = 4
+// the link. Every replaced session takes a slot, including spoofed ones and those
+// re-retired after a probation (Restart), so 4 was too few: with five reconnects or
+// spoofs, the oldest duplicates got through again. A late duplicate of a session older
+// than the last 32 replaced ones is still taken for a reconnect.
+const retiredKeep = 32
 
 // New returns an idle link. Call Start to send the Hello.
 func New(face Face, cfg Config, deliver DeliverFunc) *Link {
@@ -135,7 +139,7 @@ func New(face Face, cfg Config, deliver DeliverFunc) *Link {
 }
 
 // resetLocked forgets the session on both sides: our session, the peer's, and every id
-// table. The retired peer sessions are kept.
+// table. The retired peer sessions are kept here; Restart puts them on probation.
 func (l *Link) resetLocked() {
 	l.state = stateIdle
 	l.session, l.helloSent, l.sentHello, l.peerSession, l.peerRoutes = 0, false, false, 0, 0
@@ -193,16 +197,25 @@ func (l *Link) maybeOpenLocked() {
 // Start then begins a new session. The peer's session is not retired: a peer that sees our
 // new session keeps its own (helloLocked), so its next Hello still carries it.
 //
-// The retired list is cleared too. With random session ids, arrival order cannot tell a
-// peer's old session from its new one, so we may have retired the peer's live session
-// (reordered Hellos, or a spoofed one). Our new session makes every peer session
-// acceptable once; keeping the list would lock that peer out until it reconnected
-// (verify DND-022 recheck, follow-up 1).
+// The retired sessions go on probation. With random session ids, arrival order cannot tell
+// a peer's old session from its new one, so we may have retired the peer's live session
+// (reordered Hellos, or a spoofed one); keeping it retired would lock the peer out until
+// it reconnected (verify DND-022 recheck). Clearing the list instead let late duplicates
+// of genuinely old sessions reset the link after our reconnect (review R-DND-022-followups
+// D1). So the first peer Hello we accept after Restart, normally the answer to our new
+// Hello, fixes the peer's session; the other suspects are retired again. The peer's
+// session at the time of Restart is a suspect too: if the peer reconnected meanwhile, it
+// is old, and without this it would never be retired.
 func (l *Link) Restart() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.resetLocked()
+	for _, s := range append(l.retired, l.peerSession) {
+		if s != 0 && !slices.Contains(l.suspect, s) {
+			l.suspect = append(l.suspect, s)
+		}
+	}
 	l.retired = l.retired[:0]
+	l.resetLocked()
 }
 
 // Close sends a Close naming our session (or, before we have one, the peer's) and closes
@@ -424,11 +437,23 @@ func (l *Link) helloLocked(h *linktypes.Hello) error {
 	default:
 		l.peerSession, l.peerRoutes = s, helloRoutes(h)
 	}
+	l.endProbationLocked(s)
 	l.maybeOpenLocked()
 	if answer {
 		return l.sendHelloLocked()
 	}
 	return nil
+}
+
+// endProbationLocked ends the probation started by Restart: s, the peer session just
+// accepted, is the peer's; every other suspect is retired again.
+func (l *Link) endProbationLocked(s uint64) {
+	for _, x := range l.suspect {
+		if x != s {
+			l.retireLocked(x)
+		}
+	}
+	l.suspect = l.suspect[:0]
 }
 
 // retireLocked remembers one of the peer's sessions as finished.

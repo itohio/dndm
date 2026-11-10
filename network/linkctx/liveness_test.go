@@ -72,10 +72,46 @@ func TestSpoofThenPeerReconnectStaysLive(t *testing.T) {
 	p.settle("route.after")
 }
 
+// Review R-DND-022-followups D1: A reconnects three times, B reconnects, the pair settles
+// and binds a route, then the face delivers late duplicates of A's old Hellos. Clearing
+// the retired list on Restart let B take an old session for a reconnect and drop the
+// route, while A still believed it bound: Sends succeeded and were silently lost.
+func TestLateDuplicatesAfterReconnectKeepRoutes(t *testing.T) {
+	p := newPair(t, onboard())
+	p.open()
+	for range 3 {
+		p.a.Restart()
+		require.NoError(t, p.a.Start())
+		_, ok := p.pumpN(100)
+		require.True(t, ok)
+	}
+	old := slices.Clone(p.fa.hellos[:len(p.fa.hellos)-1]) // A's earlier sessions
+
+	p.b.Restart()
+	require.NoError(t, p.b.Start())
+	_, ok := p.pumpN(100)
+	require.True(t, ok)
+	require.True(t, p.a.Open() && p.b.Open())
+	p.bindAndDeliver("route.live", "first")
+
+	hellos := p.hellos()
+	for _, f := range old { // the late duplicates
+		require.NoError(t, p.b.Receive(f))
+	}
+	_, ok = p.pumpN(100)
+	require.True(t, ok)
+	assert.Equal(t, 1, p.b.Routes(), "B must keep A's route")
+	assert.Equal(t, hellos, p.hellos(), "late duplicates get no answer")
+	require.NoError(t, p.a.Send("route.live", "types.T", []byte("second")))
+	p.pumpN(20)
+	assert.Contains(t, p.gotB, delivered{"route.live", "types.T", "second"}, "B dropped it (unbound drops %d)", p.b.Stats().DroppedUnbound)
+}
+
 // Random schedules (as in verify's probe): Start retries, reconnects, late duplicate and
 // spoofed Hellos, and shuffled delivery. They end with one Start retry each, either
-// directly or after one side (chosen at random) reconnects. After that, both must be open,
-// a fresh route must deliver, and no Hello storm may occur at any point.
+// directly or after one side (chosen at random) reconnects. After that, both must be open
+// and a fresh route must deliver; then late duplicates of every earlier Hello arrive, and
+// the bound route must still deliver. No Hello storm may occur at any point.
 func TestRandomSchedulesStayLive(t *testing.T) {
 	const schedules = 1000
 	for _, reconnect := range []bool{false, true} {
@@ -176,5 +212,46 @@ func runSchedule(seed uint64, reconnect bool) string {
 	if !slices.Contains(p.gotB, delivered{"route.live", "types.T", "x"}) {
 		return "DATA not delivered"
 	}
+
+	// Review R-DND-022-followups D1: now every Hello of an earlier session arrives once
+	// more, late (a reordering face), at the side it was sent to. None may disturb the
+	// settled pair: the bound route must still deliver. (A repeat of the current session is
+	// a retry and gets one answer; it is not injected.)
+	hellosBefore := len(p.fa.hellos) + len(p.fb.hellos)
+	for _, f := range p.fa.hellos {
+		if helloSession(f) != p.a.session {
+			p.toB = append(p.toB, f)
+		}
+	}
+	for _, f := range p.fb.hellos {
+		if helloSession(f) != p.b.session {
+			p.toA = append(p.toA, f)
+		}
+	}
+	injected := len(p.toA) + len(p.toB)
+	if !pump(200) {
+		return "Hello storm after the late duplicates"
+	}
+	if err := p.a.Send("route.live", "types.T", []byte("y")); err != nil {
+		return "send after late duplicates: " + err.Error()
+	}
+	pump(50)
+	if !slices.Contains(p.gotB, delivered{"route.live", "types.T", "y"}) {
+		return fmt.Sprintf("late duplicates dropped the bound route (B routes %d, unbound drops %d)", p.b.Routes(), p.b.Stats().DroppedUnbound)
+	}
+	// Answers are not checked here: if a side's probation after its own Restart was ended
+	// by a late duplicate that overtook the peer's live answer, that side takes the old
+	// session for the peer's and answers its later duplicates (the residual in design §4;
+	// TestLateDuplicatesAfterReconnectKeepRoutes checks the plain case). The route still
+	// delivers, and there is at most one answer per injected Hello.
+	if n := len(p.fa.hellos) + len(p.fb.hellos) - hellosBefore; n > injected {
+		return fmt.Sprintf("%d late duplicates caused %d Hellos", injected, n)
+	}
 	return ""
+}
+
+func helloSession(frame []byte) uint64 {
+	var f linktypes.LinkFrame
+	_ = proto.Unmarshal(frame, &f)
+	return f.GetHello().GetSession()
 }
