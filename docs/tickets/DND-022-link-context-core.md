@@ -79,5 +79,13 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
   - L6: tests for profile mismatch and Unbind before BindAck.
   - Six new tests, the L1–L3 ones failing first by assertion. 14 tests ×20 `-race`; coverage 90.2 %.
   - Design §4 "Session rules" added (evidence (evidence: `~/src/docs/evidence/DND-022-link-core.md#r-dnd-022-fixes-l1l6-2026-11-09`, outside the repo)).
+- 2026-11-10: DND-022 follow-ups.
+  - Commits:
+    - d842e37 (liveness, superseded in part by the next);
+    - 74a8d15 and 1b426c1 (DND-008 remote fixes);
+    - ecf31ec (mesh test);
+    - e718a68: on Restart, retired peer sessions go on probation, and `retiredKeep` is 32 (review R-DND-022-followups D1).
+  - Verify accepted D1.
+  - **Correction to the e718a68 commit body:** its red counts came from a draft of `TestRandomSchedulesStayLive`. With the committed test, the code at ecf31ec fails 512 and 815 of 1000 (not 836 and 1000), and probation alone at `retiredKeep` 4 fails 210 and 388 (not 220 and 388). After the fix: 0 and 0. The evidence is re-run (`~/src/docs/evidence/dnd-022-followups/d1-before.txt`, outside the repo).
 
 [Ticket index](index.md) · [Design](../design/link-context-wire.md) · [Research-2](../research/ideation/2026-11-08-ndn-delivery-auth-2.md)
