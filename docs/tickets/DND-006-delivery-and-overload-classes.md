@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-006"
 status: "backlog"
-owner: "unassigned"
 priority: "P0"
 milestone: "M0 decisions"
 kind: "research / fundamental tradeoff"
@@ -17,18 +16,18 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **backlog**. Owner: **unassigned**. Kind: **research / fundamental tradeoff**.
+Status: **backlog**. Kind: **research / fundamental tradeoff**.
 Milestone: **M0 decisions**. Priority: **P0** — Perishable media and reliable commands cannot share an implicit Send guarantee.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: None (dependency-free; still not authorized to execute).
 
-## Owner decision (2026-11-08, verbatim from the roster)
+## Decision (2026-11-08)
 
-"latest by default, reliable needs more design. and it is needed actually - what if link is dropped or udp packet missing or network error - some processes need to maintain a buffer. also what if comms work in bursts only so can't really send right away - so a buffer is needed. perhaps configurable? Also, durable is needed too, so that if a service is processing stuff or producting it so the consumer would ask for something - the service wouldn't need to produce it anymore and this durable history could be stored anywhere really, even near the consumer(not whole, in parts maybe - this may or may not require DHT so that parts could be recovered if missing from certain peer local copy)."
+Requirement (2026-11-08): `latest` is the default; `reliable` needs more design and is required. Some processes must keep a buffer to survive a dropped link, a missing UDP packet or a network error. Links that only work in bursts cannot send immediately, so they also need a buffer, possibly configurable. Durable delivery is required too: when a consumer asks for data a service has already processed or produced, the service should not have to produce it again. That durable history may be stored anywhere, even near the consumer, possibly in parts rather than whole; recovering parts missing from one peer's local copy may or may not require a DHT.
 
-Status unchanged: the design waits for ideation's research (`docs/research/ideation/2026-11-08-ndn-delivery-auth.md`). No code until then. Design questions noted by dndm (DND-R4):
+Status unchanged: the design waits for the research note (`docs/research/ideation/2026-11-08-ndn-delivery-auth.md`). No code until then. Design questions noted by dndm (DND-R4):
 
 - `latest` default: per-subscriber queue of 1 with drop-oldest and a drop counter, replacing today's silent drop-newest in `InterestRouter.routeMsg`?
 - `reliable`: sender-side retransmit buffer with sequence numbers and receiver acks, sized per route (messages, bytes or age)? What happens when the buffer is full: block, drop oldest, or fail Send?
@@ -50,7 +49,7 @@ No durable store, queue-group implementation or promise of exactly-once external
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the canonical 2026-11-08 static report, sections 1–2, 4–5 and Limits; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [interest.go](../../interest.go) lines 169–191,279–292 — Close checks and wrapper drop behavior are inconsistent.
 - [intent.go](../../intent.go) lines 186–220 — Fan-out is not one-worker queue distribution.
@@ -64,7 +63,7 @@ Choose queue capacities/deadlines and whether each class blocks, rejects or drop
 
 Walk a fast and slow consumer through queue full, close, cancellation, disconnect and reconnect for each class. Write expected producer result, subscriber result, ordering scope and retained state for each transition.
 
-## Decision memo (2026-11-08, for the owner)
+## Decision memo (2026-11-08)
 
 **Question.** For each kind of traffic, what does dndm do when a queue is full, a consumer is slow or a side closes, and which guarantees does it refuse outright?
 
@@ -144,8 +143,8 @@ Small–medium research: one class/transition matrix; implementation depends on 
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
-- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and scope amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending; status unchanged.
 - 2026-11-09: DND-R8 note for the delivery-class design. **Until DND-022's session ids land, the v1 transport is at-least-once across a reconnect.**
   - When two nodes dial each other at the same moment, both connections can be ready briefly before the tie-break settles it ([close-reconnect.md §3.1](../design/close-reconnect.md#31-tie-break-for-simultaneous-connections-decided), DND-008).
   - A message sent in that window can arrive twice.

@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-007"
 status: "backlog"
-owner: "unassigned"
 priority: "P0"
 milestone: "M1 remote correctness"
 kind: "implementation / fixable static defect"
@@ -17,10 +16,10 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **backlog**. Owner: **unassigned**. Kind: **implementation / fixable static defect**.
+Status: **backlog**. Kind: **implementation / fixable static defect**.
 Milestone: **M1 remote correctness**. Priority: **P0** — Silent drops, closed-channel reads and dispatcher head-of-line blocking undermine correctness.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-005](DND-005-caller-scoped-correlation.md), [DND-006](DND-006-delivery-and-overload-classes.md)
 
@@ -38,7 +37,7 @@ No global unbounded goroutine workaround, durable replay or unsolicited telemetr
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the canonical 2026-11-08 static report, sections 1–2, 4–5 and Limits; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [interest.go](../../interest.go) lines 169–191 — Underlying receive lacks ok check.
 - [interest.go](../../interest.go) lines 279–292 — Full wrapper buffers drop messages.
@@ -70,7 +69,7 @@ Medium: interest routers and caller dispatcher; no external queue dependency ass
 
 ## Implementation evidence
 
-RC6 (DND-R5; the Leader's DND-R5 task listed it with the DND-008 items). Tests are in `closure_test.go`, written first:
+RC6 (DND-R5; the DND-R5 task listed it with the DND-008 items). Tests are in `closure_test.go`, written first:
 
 | Test | At the pin | Working tree before the fix | After |
 |---|---|---|---|
@@ -78,8 +77,6 @@ RC6 (DND-R5; the Leader's DND-R5 task listed it with the DND-008 items). Tests a
 | `TestLinker_InterestCloseDuringSends`: 4 senders race an interest close, 50 rounds | panic 3/3 | panic 3/3 | ok |
 | `TestLinker_ContextCancelDuringSends`: the linker context is cancelled, so the link and the interest close from two goroutines | panic + race 3/3 | — | ok ×30 `-race` |
 | `TestFanInInterest_CloseWhileForwarding`: fan-in closes while its runner forwards into its own channel | data race 3/3 (`-race` only) | same | ok |
-
-Evidence: before (evidence: `~/src/docs/evidence/dnd-r5/rc6-before.txt`, outside the repo), after (evidence: `~/src/docs/evidence/dnd-r5/rc6-after.txt`, outside the repo).
 
 Fix (the closer of a channel now knows its senders have stopped):
 
@@ -95,13 +92,13 @@ Behaviour changes:
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
-- 2026-11-08: DND-R2. Runtime finding RC6 belongs here: `LocalInterest`'s close callback closes `msgC` (`interest.go:66–69` at the pin) while a linked `LocalIntent.Send` that read `linkedC` earlier can still send on it (`intent.go:112–118`). Race reports in the baseline `-count=3` log and in the DND-R2 gate log (evidence (evidence: `~/src/docs/evidence/dnd-r2/README.md`, outside the repo)). The closer of `msgC` is not its sender. Status unchanged.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and scope amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08: DND-R2. Runtime finding RC6 belongs here: `LocalInterest`'s close callback closes `msgC` (`interest.go:66–69` at the pin) while a linked `LocalIntent.Send` that read `linkedC` earlier can still send on it (`intent.go:112–118`). Race reports appeared in the baseline `-count=3` log and in the DND-R2 gate log. The closer of `msgC` is not its sender. Status unchanged.
 - 2026-11-08: DND-R4. Two readiness/closure items fixed in the working tree, each with a failing-first test (`readiness_test.go`):
   - readiness loss: an `IntentRouter` notified before its first `Wrap()` lost the notification, so a second producer waited forever. The router now remembers it was notified and seeds new wrappers (`TestIntentRouter_WrapAfterNotifyGetsInterest`; fails at the pin);
   - use after close: `removeWrapper` set `w.router = nil`, which raced `Send`/`Route` and made `Send` on a closed wrapper panic. The router is kept, and `Send` on a closed wrapper returns `ErrClosed` (`TestRouterWrappers_UseAfterClose`; fails at the pin and panics in the DND-R3 tree).
   RC6 (interest close vs in-flight Send) is still open; it did not appear in the DND-R4 gate runs. Bounded dispatch and the other closure items wait for the DND-006 design. Status unchanged.
 - 2026-11-08: DND-R5. RC6 fixed failing-test-first (see Implementation evidence), together with the same close-vs-send race in `FanInInterest`. Bounded dispatch, nil-message loops and visible overload still wait for the DND-006 design. Status unchanged (backlog): RC6 was one item, not the ticket's outcome.
-- 2026-11-09: DND-R5-fix (review F3). A closed router wrapper returns the core `errors.ErrClosed`; x/bus now reports it as `bus.ErrClosed`, which wraps the core sentinel, so `errors.Is` matches either one. The forwarder test helper again checks one sentinel. `TestProducerSendOnClosedRouteIsBusErrClosed` failed before the fix and passed ×30 with `-race` after. Review follow-ups recorded here: F7 (a Close that always waits for callbacks, a `done` channel in Base's lifecycle) and F16 (`Container.reconcile` holds its lock while writing to a peer).
+- 2026-11-09: DND-R5-fix (finding F3). A closed router wrapper returns the core `errors.ErrClosed`; x/bus now reports it as `bus.ErrClosed`, which wraps the core sentinel, so `errors.Is` matches either one. The forwarder test helper again checks one sentinel. `TestProducerSendOnClosedRouteIsBusErrClosed` failed before the fix and passed ×30 with `-race` after. Follow-ups recorded here: F7 (a Close that always waits for callbacks, a `done` channel in Base's lifecycle) and F16 (`Container.reconcile` holds its lock while writing to a peer).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

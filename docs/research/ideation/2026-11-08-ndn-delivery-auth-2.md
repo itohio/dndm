@@ -3,39 +3,38 @@ title: "dndm layers, zones and links under embedded overhead limits (research 2)
 date: "2026-11-08"
 scope: "local-only research and ideation; no code"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec (+ DND-R2..R4 working tree)"
-task: "DND-R4-research-2 (roster)"
-owner: "ideation"
+task: "DND-R4-research-2"
 status: "draft for owner accept/park"
 supersedes_parts_of: "2026-11-08-ndn-delivery-auth.md cards A and D"
 ---
 
 # dndm layers, zones and links under embedded overhead limits
 
-Follow-up to [the first research note](2026-11-08-ndn-delivery-auth.md). It answers the owner's five later statements, quoted verbatim in `docs/decisions.md` ("Owner decisions on dndm"): crypto/DH/ZKP/signatures/replay and data-layer-sdk; zone-aware protocol with no unpermitted crossing; memory/compute/call-stack overhead with no zone bytes on every message; a C++ reference core later; adversarial probing. It also covers the later decision on a compile-time nonce generator.
+Follow-up to [the first research note](2026-11-08-ndn-delivery-auth.md). It answers five later owner requirements (2026-11-08): crypto/DH/ZKP/signatures/replay and data-layer-sdk; zone-aware protocol with no unpermitted crossing; memory/compute/call-stack overhead with no zone bytes on every message; a C++ reference core later; adversarial probing. It also covers the later decision on a compile-time nonce generator.
 
 **These are options and recommendations, not decisions.** No code, build, test or measurement ran. Evidence labels: **observed** (I read the code or page this session), **reported** (a spec, paper or vendor says so), **inferred** (my reasoning, gap named), `#verify` (an unmeasured number or guess).
 
-> **Revised 2026-11-09 (DND-research-fix)** after verify's review (`docs/verification/DND-research.md`) and the owner's protobuf decision (`docs/decisions.md`: "The protobuf schemas are the language-neutral wire contract. No hand-written binary spec."):
+> **Revised 2026-11-09 (DND-research-fix)** after independent verification of this note and the owner's protobuf decision (2026-11-09: the protobuf schemas are the language-neutral wire contract; no hand-written binary spec):
 > - §4.2, §4.4, §6, card F and decision 6 now express the link-context model in protobuf. The schema of record is dndm's design [`docs/design/link-context-wire.md`](../../design/link-context-wire.md) (DND-R7) §2: message `types.link.LinkFrame`.
-> - Today's overhead is verify's measurement, 86–94 B, not the earlier ~70 B estimate.
-> - §8.1 adds verify's residual risks A1–A8, each with an owner ticket.
+> - Today's overhead is the independently measured 86–94 B, not the earlier ~70 B estimate.
+> - §8.1 adds residual risks A1–A8 found by the verification attack, each with an owning ticket.
 > - S2's failsafe watchdog location is corrected.
 >
 > The earlier hand-written binary layout is withdrawn, not kept as an alternative.
 
 ## 1. Frame
 
-**Owner requirements (mandatory, verbatim source in decisions.md):**
+**Requirements (2026-11-08, mandatory):**
 
 | ID | Requirement |
 |---|---|
-| Z1 | "the whole dndm protocol should be zone aware and should not allow unpermitted zone crossing just because" |
-| Z2 | No zone bytes "in every message or sync or link", nor stored with every name. "64 bit added to every name and every message … on esp32 or rp2040 memory and i2c/spi/can/elrs bandwidth is at premium" |
-| Z3 | "abstract away the whole dndm and find another way to make it bullet/idiot/embedded proof without compromising apps where 1gb for a hellow world is acceptable" |
-| Z4 | Layers the developer adds (reliability, durability, encryption …); "as little boilerplate and as little mental load"; HTTP middleware / Python decorator as inspiration. Be aware of compute, memory and call-stack overhead per layer |
-| Z5 | "cryptographic channels, signatures, replay attack mitigations … DH cryptography is a big deal". The data-layer-sdk model: the producer's public key is known out of band, and a common symmetric key is derived |
+| Z1 | The whole dndm protocol is zone aware and does not allow unpermitted zone crossing |
+| Z2 | No zone bytes in every message, sync or link, nor stored with every name: 64 bits added to every name and message is too much where memory and I²C/SPI/CAN/ELRS bandwidth are at a premium (ESP32, RP2040) |
+| Z3 | Abstract dndm so it is bullet-, idiot- and embedded-proof, without compromising apps where 1 GB for a hello world is acceptable |
+| Z4 | Layers the developer adds (reliability, durability, encryption …), with as little boilerplate and mental load as possible; HTTP middleware / Python decorator as inspiration. Be aware of compute, memory and call-stack overhead per layer |
+| Z5 | Cryptographic channels, signatures and replay-attack mitigations; DH cryptography is important. The data-layer-sdk model: the producer's public key is known out of band, and a common symmetric key is derived |
 | Z6 | A C++ reference core later (very small devices, nncase), so the core and wire format must be language-neutral |
-| Z7 | Probe each option for attacks: link guessing, header spoofing, "like tcp allows" |
+| Z7 | Probe each option for attacks: link guessing, header spoofing, TCP-style injection |
 | Z8 | Compile-time pluggable nonce generator: counter from a random start / random / crypto-random |
 
 **Decision served:** what dndm's wire core, layer API, zone mechanism and security profiles look like before dndm turns DND-006/009/010 into designs.
@@ -44,7 +43,7 @@ Follow-up to [the first research note](2026-11-08-ndn-delivery-auth.md). It answ
 
 - A stream frame = 16-byte preamble (4 B magic, 4 B body length, 4 B header length, 4 B message length) + a protobuf `Header` + the protobuf message (`codec/codec.go:3-5,37-40,126-140`).
 - The `Header` carries `receive_timestamp` (local-only, not sent), `timestamp`, `type`, `want_result`, an unused `bytes signature`, and `string route` (`proto/types/core/header.proto:24-31`). So **every message repeats the full route string** (`Type@path`).
-- **Measured by verify** (`docs/verification/DND-research.md`, "The ~70 bytes-per-frame estimate: measured"; scratch encoder over the dndm working tree, offline). This replaces my earlier ~70 B estimate, which was low:
+- **Measured during independent verification** (scratch encoder over the dndm working tree, offline). This replaces my earlier ~70 B estimate, which was low:
 
   | EasyRobot route | Route id | Payload | Frame | Overhead |
   |---|---|---|---|---|
@@ -124,11 +123,11 @@ There, the cost moves to an **end-to-end layer** (per-producer signatures or AEA
   - The data path uses fields 1–15 (1-byte tags): `route_id = 1` (0 = control frame), `payload = 2` (the application's serialized protobuf message), `seq = 3`, `frag = 4`, `ctr = 5`, and `sealed = 6` (ciphertext ‖ tag, which replaces `payload` on secured links).
   - Control messages use fields 16+: `Hello` (version, profile, nonce, max frame, max routes), `Handshake` (opaque per profile), `Announce` (replaces today's Intent/Interest), `Bind`, `BindAck`, `Unbind`, `UnbindAck`, `Close`.
 - **Bind messages carry the names and permissions**, once per route per link.
-  - `Bind{route_id, path, type, stages, policy}` names the zone-local path and the **full** protobuf type name. A short hash would be forgeable (verify A6d), and names cost nothing here because they are sent once.
+  - `Bind{route_id, path, type, stages, policy}` names the zone-local path and the **full** protobuf type name. A short hash would be forgeable (finding A6d), and names cost nothing here because they are sent once.
   - `BindAck{route_id, status}` returns ok / denied (no grant or not permitted in this zone) / unknown type / bad policy / table full.
   - The zone is **not** in the bind: the link already fixes it.
-- **Data frames carry a small `route_id`:** a varint, 1 B below 128. Ids belong to a session: each new session starts with an empty table, and the data sender takes the **lowest free id** from 1. A freed id is reused after `UnbindAck`, plus a quarantine of 2 × the retry timeout on reordering faces. The address book keeps no route-id state. So an id reaches 128 (5 B instead of 4 B) only with more than 127 routes bound at once on one link (design §4 "Id rules", revised after verify DND-R7 F1).
-- **Faces delimit frames themselves:** UDP datagram, COBS on serial, CAN frame, or a varint length prefix on TCP. On CAN links the route id moves into the CAN identifier, so the frame is `payload` only. This is decided (decisions.md, link-context design) and still protobuf.
+- **Data frames carry a small `route_id`:** a varint, 1 B below 128. Ids belong to a session: each new session starts with an empty table, and the data sender takes the **lowest free id** from 1. A freed id is reused after `UnbindAck`, plus a quarantine of 2 × the retry timeout on reordering faces. The address book keeps no route-id state. So an id reaches 128 (5 B instead of 4 B) only with more than 127 routes bound at once on one link (design §4 "Id rules", revised after DND-R7 verification finding F1).
+- **Faces delimit frames themselves:** UDP datagram, COBS on serial, CAN frame, or a varint length prefix on TCP. On CAN links the route id moves into the CAN identifier, so the frame is `payload` only. This is decided (owner decision, link-context design) and still protobuf.
 - **Generated code everywhere:**
   - Go: protoc-gen-go, with the hot path parsed by `protowire` (the same wire, no copy);
   - TinyGo: protobuf-go-lite;
@@ -258,7 +257,7 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 
 | Item | Wire per message | Wire per link setup | RAM per link | RAM per route | Flash | CPU | Call depth | Copies |
 |---|---|---|---|---|---|---|---|---|
-| Current dndm frame | **86–94 B** measured for EasyRobot's plain routes; 57 B hashed (verify, §1) | handshake strings | buffers per conn | route strings | Go runtime + protobuf | protobuf marshal of header | many (channels, goroutines) | encode per remote |
+| Current dndm frame | **86–94 B** measured for EasyRobot's plain routes; 57 B hashed (§1) | handshake strings | buffers per conn | route strings | Go runtime + protobuf | protobuf marshal of header | many (channels, goroutines) | encode per remote |
 | Core DATA (`LinkFrame`) | **4 B** (5 B for payloads ≥ 128 B; 2 B on CAN) | 0 | table header ~16 B + ids | entry ~16 B (id, type ref, flags/ptr) `#verify` | generated code + core ~2–4 KB C++ `#verify` (nanopb size per design §6) | id lookup (array index); `protowire` parse, no copy | +1 (dispatcher) | 0 (encode the payload into the frame buffer) |
 | `Bind` | — | ~10 B + path + full type name per route per link (once) | — | — | generated | full-name compare | — | — |
 | Face serial (COBS + CRC16) | +~3 B (delimiter, COBS 1 per 254, CRC 2) | 0 | 1 rx frame buffer | — | ~0.5 KB `#verify` | ~1 pass | +1 | 1 (COBS) |
@@ -275,11 +274,11 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 
 | Link | Usable payload per frame | Recommended profile | Per-message overhead (core + security) | Notes |
 |---|---|---|---|---|
-| **Classic CAN** (8 B data) | 8 B | Z-b inside one robot; authenticated **commands need CAN FD** (decided: decisions.md, DND-R6-fix measurement) | 2 B (route id in the CAN identifier, `payload` tag + length) → 6 B data. Authenticated command: `ctr` 0–2 (7 low bits) + `sealed` 2 + 3 B MAC ≤ 7 B → **1 B data** (design §3) | SecOC-like truncation trades forgery resistance for space (AUTOSAR PRS, reported). With a 3 B MAC, forgery needs lockout (§8.1 A2) |
+| **Classic CAN** (8 B data) | 8 B | Z-b inside one robot; authenticated **commands need CAN FD** (decided after the DND-R6-fix measurement) | 2 B (route id in the CAN identifier, `payload` tag + length) → 6 B data. Authenticated command: `ctr` 0–2 (7 low bits) + `sealed` 2 + 3 B MAC ≤ 7 B → **1 B data** (design §3) | SecOC-like truncation trades forgery resistance for space (AUTOSAR PRS, reported). With a 3 B MAC, forgery needs lockout (§8.1 A2) |
 | **CAN FD** (64 B) | 64 B | Z-c PSK + 8 B tag | route id in the CAN identifier: `ctr` 0–3 (14 low bits) + `sealed` 2 + 8 B tag = 10–13 B → about 51 B data (design §3) | |
 | **I²C** | transaction-sized | Z-b only (on-board) | 4 B `LinkFrame`; whether to lift the route id into the register/command byte, as on CAN, is open `#verify` (DND-015) | Master-polled; crypto on a probe-able on-board bus buys little (inferred) |
 | **SPI** | transaction-sized | Z-b only | as I²C | Same as I²C |
-| **ELRS/CRSF** | 60 B payload, 64 B frame (observed `fpv-arena/rig/backend/internal/crsf/crsf.go:14-24`) | Z-c PSK, tag 4 B; `latest` only | `route_id` 2 + `ctr` 0–2 (7 low bits) + `sealed` 2 + 4 B tag = 8–10 B → 50–52 B app data | **RC channels stay native CRSF under the rig's failsafe watchdog (fpv-arena ADR 0022);** dndm carries telemetry/aux only. ELRS's own link protection is outside dndm (`#verify` what ELRS provides) |
+| **ELRS/CRSF** | 60 B payload, 64 B frame (observed in fpv-arena's CRSF codec) | Z-c PSK, tag 4 B; `latest` only | `route_id` 2 + `ctr` 0–2 (7 low bits) + `sealed` 2 + 4 B tag = 8–10 B → 50–52 B app data | **RC channels stay native CRSF under the rig's failsafe watchdog (fpv-arena ADR 0022);** dndm carries telemetry/aux only. ELRS's own link protection is outside dndm (`#verify` what ELRS provides) |
 | **UART/USB serial** | any | Z-b on-board, else Z-c | 4 B + ~3 B COBS/CRC (or the AEAD tag instead of the CRC) | Today's EasyRobot serial drivers |
 | **UDP/Wi-Fi** (ESP32-C5) | ~1400 B `#verify` | Z-d (+ Z-f for broadcast) | 4–7 B + 8–16 B tag (14 B typical with 8 B) | ESP32-C5 has AES, SHA, HMAC, ECC and ECDSA accelerators (datasheet/TRM search excerpts, reported). Which curves the ECC unit supports is `#verify`; P-256 may be the HW-friendly choice there |
 | **TCP (host)** | stream | Z-d; optionally E2E | 4–7 B + length prefix (1–2 B) + 16 B tag | Hosts can enable every layer: Z3's "1 GB hello world" side |
@@ -290,7 +289,7 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 
 ## 7. data-layer-sdk channel notes
 
-**Observed** in `github.com/Synternet/data-layer-sdk`, MIT, at `main` and tag `v0.2.0` (the version babyai pinned):
+**Observed** in `github.com/Synternet/data-layer-sdk`, MIT, at `main` and tag `v0.2.0` (the version pinned by a downstream consumer):
 
 | Fact | Source |
 |---|---|
@@ -298,7 +297,7 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 | `makeMsg` signs **only the payload**; adds NATS headers `identity`, `signature` (base64), `timestamp` (decimal ns) | `service.go` makeMsg, both versions |
 | `Verify` with an empty `KnownPublicKeys` and missing identity/signature **returns nil (accepts unsigned)**; with no known keys it trusts the self-asserted identity | `service.go` Verify (main) |
 | `KnownPublicKeys` = allowlist of producer keys | `pkg/options/options.go` |
-| **No DH key agreement or payload encryption** found in `main` or `v0.2.0` service/options code | the files read; repo file list. The owner's recalled "cryptographic channel … common symmetric key" is not in this public code (it may live elsewhere `#verify` with the owner) |
+| **No DH key agreement or payload encryption** found in `main` or `v0.2.0` service/options code | the files read; repo file list. The derived common symmetric key described in requirement Z5 is not in this public code (it may live elsewhere; `#verify` with the owner) |
 
 **Lessons for dndm:**
 
@@ -328,9 +327,9 @@ Options: **O1** trusted wire (Z-b, no crypto) · **O2** zone PSK + link AEAD (Z-
 | **Compromised member** | Total | Can impersonate any zone member (shared PSK) → rotate the zone key | Contained to its own identity; revoke its static key | Can forge any member's broadcast | Contained to its producer key |
 | **DoS / resource exhaustion** | Bounded by DND-001/007 caps | + failed-tag counters, close the link after N | + handshake rate-limit (X25519 cost on MCUs) | + per-sender replay-state caps | Signature verify cost per frame → only on routes that need it |
 
-### 8.1 Residual risks added after verify's attack (A1–A8)
+### 8.1 Residual risks added after the verification attack (A1–A8)
 
-These come from verify's "Attack on the link-context model" (`docs/verification/DND-research.md`). dndm's link-context design (DND-R7) already adopts several of the mitigations; the ticket column names who owns the rest.
+These come from the independent verification attack on the link-context model. dndm's link-context design (DND-R7) already adopts several of the mitigations; the ticket column names who owns the rest.
 
 | # | Attack | Residual and mitigation | Owner ticket |
 |---|---|---|---|
@@ -338,12 +337,12 @@ These come from verify's "Attack on the link-context model" (`docs/verification/
 | A2 | **Route-id guessing after bind** on classic CAN | A 3 B MAC gives 2^-24 per try: at ~2,000 frames/s, about 2.3 h expected per forged command (inferred). **Failed-MAC counters with lockout and an alarm are mandatory on CAN**, not optional; authenticated commands need CAN FD (decided) | CAN face ticket (after DND-015 names targets); DND-016 measurement |
 | A3 | **Rebind hijack and id aliasing**: re-bind an id to another route, or reuse an id so late frames land on the new route | O1: anyone on the wire can rebind. O4 broadcast: route tables must be **per sender slot**, or one member's BIND silently retargets other members' subscribers. All profiles (design §4 "Id rules", revised): ids belong to a session and start from 1 (lowest free id); a freed id is reused only after `UnbindAck`, plus a quarantine of 2 × the retry timeout on reordering faces; no route-id state across sessions. Late frames from an old session fail the new keys on secured links, can't arrive on stream faces, and are lost on OnBoard resets. **Residual:** an `INSECURE` datagram link can mis-decode a delayed frame onto a reused id, which adds nothing to what that link already accepts. `Bind`/`Unbind` are retried until acknowledged and are idempotent | link-context core ticket (to be filed, N5); DND-008 (lifecycle, close-reconnect design); DND-010 → DND-011 (per-slot tables for broadcast) |
 | A4 | **Replay across link resets** | O2/O3 are safe when both sides contribute fresh nonces to the key derivation. **Z-c (zone PSK) has no forward secrecy:** a leaked zone PSK decrypts every recorded past frame of every link in that zone. Z-d has forward secrecy. Choose Z-d wherever the target can afford X25519 | DND-009 (profile choice per target); DND-015 (X25519 cost) |
-| A5 | **Downgrade to the trusted-wire profile (O1); a zone is only as strong as its weakest link** | A zone's route table is shared by all its links, so frames injected on one O1 link (a UART declared `OnBoard()` but really exposed: a debug header, USB-serial, a transparent telemetry radio) are forwarded over O2/O3 links. The core can't detect physical exposure. Mitigations: (a) a per-route **"trusted origin" flag**, so command routes refuse frames that entered via ONBOARD/INSECURE links; or (b) separate zones for O1 wires, joined through a bridge with a grant. The **legacy v1 protobuf face** falls under the same rule. Staying v1 on a secure link needs `Insecure("legacy v1 peer")` (decided: decisions.md, design decision 3). v1 stays host-only during migration (design §5 text, not an owner decision) | DND-009 (trusted-origin flag); DND-017 (profile gateway boundary); migration in the link-context core ticket (to be filed, N5) |
+| A5 | **Downgrade to the trusted-wire profile (O1); a zone is only as strong as its weakest link** | A zone's route table is shared by all its links, so frames injected on one O1 link (a UART declared `OnBoard()` but really exposed: a debug header, USB-serial, a transparent telemetry radio) are forwarded over O2/O3 links. The core can't detect physical exposure. Mitigations: (a) a per-route **"trusted origin" flag**, so command routes refuse frames that entered via ONBOARD/INSECURE links; or (b) separate zones for O1 wires, joined through a bridge with a grant. The **legacy v1 protobuf face** falls under the same rule. Staying v1 on a secure link needs `Insecure("legacy v1 peer")` (decided: owner decision, design decision 3). v1 stays host-only during migration (design §5 text, not an owner decision) | DND-009 (trusted-origin flag); DND-017 (profile gateway boundary); migration in the link-context core ticket (to be filed, N5) |
 | A6 | **Zone confusion at a bridge** | (a) A bridge re-encodes, so an `e2e-sign` route must pass the producer's signature through untouched, or B's consumers trust the bridge instead of the producer. (b) Request/reply needs grants in both directions, and repair/fetch control messages must be checked against the grant, or a history fetch through the bridge reaches beyond the granted route. (c) The bridge holds handles in both zones (a confused deputy): it needs the §5.2 malicious-layer test. (d) Grants are on **path + full type name** (`Bind.type` is the full name, not a 4-byte hash) | DND-014 (scoped NATS bridge and bridges in general); DND-017 fixtures; DND-006 (repair/fetch) |
 | A7 | **Sender-slot collision in group mode (O4)** | Two devices on one slot (misprovisioned, or a malicious member copying another's slot and counter) reuse an **AEAD nonce under the shared group key**. With GCM or ChaCha20-Poly1305 that leaks keystream and allows universal forgery by anyone who sees both frames, outsiders included. Mitigate with slot assignment bound to provisioning **and a nonce-misuse-resistant AEAD for group mode** (AES-GCM-SIV or a SIV-style construction) | DND-010 → DND-011 (broadcast); DND-015 (AEAD per target) |
 | A8 | **Table and handle exhaustion** (BIND flood) | On O1 and O4, anyone (or any member) can fill the route table. Per-link route-table cap advertised in `Hello.max_routes`, a BIND rate limit, and `BIND_STATUS_TABLE_FULL` (design §2, §4) | link-context core ticket; DND-001/DND-007 (bounds) |
 
-**For verify** (adversarial probes; the owner asked for them):
+**Adversarial probes for verification** (requested by the owner):
 - link-id sweep on O1 and O2;
 - header bit-flip fuzzing;
 - replay of captured frames after reboot (O2/O4);
@@ -351,7 +350,7 @@ These come from verify's "Attack on the link-context model" (`docs/verification/
 - malicious-layer RouteId rewrite (§5.2);
 - correlation-nonce prediction on a counter build.
 
-Added after verify's review:
+Added after the verification review:
 - **A1:** DATA/BIND sent before the handshake completes → dropped and counted;
 - **A3:** rebind of a live id, a late frame after unbind and rebind, and a BIND from one broadcast sender slot targeting another's table → no retargeting;
 - **A5:** a frame injected on an ONBOARD link reaching a command route that requires trusted origin → refused, and a legacy v1 peer on a secure-configured link without `Insecure` → refused;
@@ -359,12 +358,12 @@ Added after verify's review:
 
 ---
 
-## 9. Robotics scenarios for Mermaid diagrams (dndm draws, ux reviews)
+## 9. Robotics scenarios for Mermaid diagrams (dndm draws, diagram review follows)
 
 | # | Scenario | Diagram type | What it must show |
 |---|---|---|---|
 | S1 | **Lidar → SLAM → planner → motor controller** across RP2040 (lidar, serial), SBC (SLAM/planner), host (map viewer over Wi-Fi) | flowchart LR with subgraphs per device | Links and faces (UART on-board Z-b; Wi-Fi Z-d); one zone `robot1`; route layers per arrow (scan: latest; pose: history; target: buffered); the local motor failsafe outside dndm; per-hop overhead labels (UART 4 B + COBS/CRC; Wi-Fi 12–15 B, 14 B typical, with an 8 B tag) |
-| S2 | **Teleop over ELRS with failsafe** | flowchart + small timing note | Pilot → gateway → rig → ELRS TX module → RX → drive controller as native CRSF RC (not dndm); dndm carrying telemetry/aux in CRSF frames (60 B payload, Z-c, latest). **The failsafe watchdog sits on the rig, before the ELRS TX module** (150 ms stale + 100 ms hold, then neutral frames with drive-enable low, or no RC frames in `stop` mode; fpv-arena `docs/api/rig-drive-http.md`, ADR 0022), **not on the robot**. The robot's receiver has its own failsafe, which applies when RC frames stop (`stop` mode, rig panic, radio loss). What happens when dndm telemetry stops: nothing unsafe |
+| S2 | **Teleop over ELRS with failsafe** | flowchart + small timing note | Pilot → gateway → rig → ELRS TX module → RX → drive controller as native CRSF RC (not dndm); dndm carrying telemetry/aux in CRSF frames (60 B payload, Z-c, latest). **The failsafe watchdog sits on the rig, before the ELRS TX module** (150 ms stale + 100 ms hold, then neutral frames with drive-enable low, or no RC frames in `stop` mode; fpv-arena rig drive API docs, ADR 0022), **not on the robot**. The robot's receiver has its own failsafe, which applies when RC frames stop (`stop` mode, rig panic, radio loss). What happens when dndm telemetry stops: nothing unsafe |
 | S3 | **Multi-robot zones with a bridge** | flowchart with three zone subgraphs | Zones `r1`, `r2`, `base`; a bridge node with explicit grants (`r1:pose → base:robots/r1/pose`); a denied crossing attempt (`r2:arm/target` from `base` without a grant) drawn as a blocked edge; the NATS gateway at `base` |
 | S4 | **Sensor history replay** | sequenceDiagram | Producer ring on the MCU, near-consumer history store on the SBC, consumer joining late: fetch range → partial hit → missing part from another holder → producer fallback; E2E signature check on copies served by non-producers |
 | S5 | **Link bring-up** | sequenceDiagram | `Hello` → `Handshake` (PSK or static-DH) → keys → `Bind` for each route (path + full type name → id, grant check) → DATA as `LinkFrame{route_id, payload}`; frames other than hello/handshake before the handshake completes are dropped (§8.1 A1); failure branches: wrong zone (handshake proof fails, link closes before any Bind), unknown route (`BindAck` denied), profile mismatch (`Close`) |
@@ -391,7 +390,7 @@ Mechanism: §4.2; schema of record dndm docs/design/link-context-wire.md §2 (Li
   protobuf-es).
 Reuse/prior art: MAVLink 2 link IDs, SecOC, EDHOC connection identifiers, HPACK-like
   indexing (inferred analogy).
-Evidence: verify measured 86–94 B overhead per frame for EasyRobot's plain routes (57 B
+Evidence: independently measured 86–94 B overhead per frame for EasyRobot's plain routes (57 B
   hashed), because the route id includes the fully qualified proto type name; protobuf
   wire arithmetic gives 4 B for LinkFrame DATA (design §3).
 Must be true: every face can carry link control (route_id 0); reconnect rebinds (ids
@@ -477,9 +476,9 @@ Decision: pending (owner).
 | Fact | Evidence |
 |---|---|
 | Today's frame: 16 B preamble + protobuf header with the route string per message | observed `codec/codec.go:3-5,37-40`; `header.proto:24-31` |
-| Today's overhead for EasyRobot's routes: 86–94 B plain, 57 B hashed (route id includes the fully qualified proto type name) | measured by verify, `docs/verification/DND-research.md` |
+| Today's overhead for EasyRobot's routes: 86–94 B plain, 57 B hashed (route id includes the fully qualified proto type name) | measured during independent verification |
 | LinkFrame DATA = 4 B + payload in protobuf | protobuf wire arithmetic; dndm `docs/design/link-context-wire.md` §3 |
-| CRSF frame ≤ 64 B, payload ≤ 60 B | observed `fpv-arena/rig/backend/internal/crsf/crsf.go:14-24` |
+| CRSF frame ≤ 64 B, payload ≤ 60 B | observed in fpv-arena's CRSF codec |
 | MAVLink 2 signing: 13 B (link id 1, timestamp 6, truncated SHA-256 6), persistent timestamp rules, explicit unsigned-acceptance rules | mavlink.io, read 2026-11-08 |
 | EDHOC static-DH kid handshake = 37 + 45 + 19 = 101 B | RFC 9528 §1.2 Table 1 |
 | X25519 on Cortex-M0: 3,589,850 cycles per scalar mult | Düll et al. 2015 |
@@ -508,7 +507,7 @@ Decision: pending (owner).
 - **"Zones must be cryptographic to be enforced."** No: on on-board wires, enforcement is the core's table/handle structure (Z-b). Crypto defends against devices on the wire, which on I²C/SPI means someone with a probe on the board. → DND-009.
 - **"Route ids could be secret capabilities."** They are 1-byte public handles; capability comes from link keys and grants. The old hashed-route capability claim is withdrawn (unkeyed hash, first note). → DND-009.
 - **"One nonce generator for everything."** Correlation nonces and AEAD nonces have opposite needs (unpredictable vs unique). → DND-005, DND-009.
-- **fpv-arena already has a 64-byte-frame codec with zero allocations** (CRSF) and **EasyRobot has its own CRSF library** (portfolio note). A dndm CRSF face should reuse one of them, not a third. → new face ticket.
+- **fpv-arena already has a 64-byte-frame codec with zero allocations** (CRSF) and **EasyRobot has its own CRSF library**. A dndm CRSF face should reuse one of them, not a third. → new face ticket.
 - **MAVLink and SecOC are robotics/automotive-proven patterns** for exactly this link-context security. Use their rules (persistent freshness, explicit unsigned policy) rather than inventing. → DND-009/010.
 
 ### Unknown unknowns (probes, proposed)
@@ -522,9 +521,9 @@ Decision: pending (owner).
 
 ## 12. Decisions for the owner
 
-| # | Decision | Recommendation | Owner (decisions.md) |
+| # | Decision | Recommendation | Owner decision |
 |---|---|---|---|
-| 1 | Adopt the link-context model: no zone/name bytes in data frames; per-link route ids bound once (card F) | Yes | **adopted** ("yes now, explore more for future hardening") |
+| 1 | Adopt the link-context model: no zone/name bytes in data frames; per-link route ids bound once (card F) | Yes | **adopted** (now; further hardening to be explored later) |
 | 2 | Zone binding per face: build-time (on-board), PSK (small radios/CAN FD/CRSF), static-DH (IP), group key (broadcast); crossing only through grant-bound bridges (card G) | Yes; Step 0 without crypto first | yes |
 | 3 | Compile-time layers via a decorator API with flat execution; network faces refuse to run insecure without a loud opt-out (card H) | Yes | yes |
 | 4 | Security profiles O1–O5, never negotiated down; AEAD nonces are counters, never the pluggable generator (card I); group mode uses a nonce-misuse-resistant AEAD (§8.1 A7) | Yes | yes (A7 addition new) |
@@ -551,10 +550,9 @@ Web (read-only, 2026-11-08):
 
 Local:
 
-- `docs/decisions.md`
-- `dndm/codec/codec.go`, `dndm/proto/types/core/{header,intents}.proto`, `dndm/docs/tickets/index.md`
-- `dndm/docs/design/link-context-wire.md` (DND-R7: protobuf schema of record, costs, binding rules)
-- `docs/verification/DND-research.md` (verify: measured frame sizes, attack table A1–A8)
-- `fpv-arena/docs/api/rig-drive-http.md`, `fpv-arena/docs/decisions/0022-drive-input-and-failsafe-watchdog.md` (failsafe watchdog on the rig)
-- `fpv-arena/rig/backend/internal/crsf/crsf.go`
+- the owner decisions of 2026-11-08 and 2026-11-09 (restated in §1, §12)
+- `codec/codec.go`, `proto/types/core/{header,intents}.proto`, [ticket index](../../tickets/index.md)
+- [`docs/design/link-context-wire.md`](../../design/link-context-wire.md) (DND-R7: protobuf schema of record, costs, binding rules)
+- the independent verification of this note (measured frame sizes, attack table A1–A8)
+- fpv-arena: rig drive API docs and ADR 0022 (failsafe watchdog on the rig); CRSF codec
 - [first research note](2026-11-08-ndn-delivery-auth.md)

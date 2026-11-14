@@ -437,7 +437,6 @@ router, _ := dndm.New(
 - [DESIGN.md](DESIGN.md) - Overall design and architecture
 - [SPEC.md](SPEC.md) - Core package specification
 - [COMMUNICATION_AND_USAGE_SPEC.md](COMMUNICATION_AND_USAGE_SPEC.md) - Protocol and usage patterns
-- [ISSUES_AND_IMPROVEMENTS.md](ISSUES_AND_IMPROVEMENTS.md) - Known issues and improvements
 
 ### Package Specifications
 

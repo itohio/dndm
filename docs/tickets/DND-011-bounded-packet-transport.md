@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-011"
 status: "blocked"
-owner: "unassigned"
 priority: "P2"
 milestone: "M2 packet implementation"
 kind: "implementation / missing feature"
@@ -17,18 +16,18 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **blocked**. Owner: **unassigned**. Kind: **implementation / missing feature**.
+Status: **blocked**. Kind: **implementation / missing feature**.
 Milestone: **M2 packet implementation**. Priority: **P2** — Optional engineering follows a positive packet decision; not prerequisite to a safe TCP-only handoff.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: [DND-001](DND-001-bounded-stream-framing.md), [DND-002](DND-002-local-buffer-ownership-contract.md), [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-010](DND-010-packet-broadcast-decision.md)
 
-## Owner decision (2026-11-08, verbatim from the roster)
+## Decision (2026-11-08)
 
-"DND-010: **Build it** (packet broadcast)."
+DND-010 decision: build packet broadcast.
 
-This removes the go/no-go block. DND-011 stays **blocked** on its other dependencies and on the design: DND-001 (in review), DND-002 (decided), DND-008 (open), DND-010's design (waits for ideation's research), plus the delivery (DND-006) and auth (DND-009) designs. No code until then.
+This removes the go/no-go block. DND-011 stays **blocked** on its other dependencies and on the design: DND-001 (in review), DND-002 (decided), DND-008 (open), DND-010's design (waits on the packet-broadcast research), plus the delivery (DND-006) and auth (DND-009) designs. No code until then.
 
 ## Outcome
 
@@ -44,7 +43,7 @@ No general reliable multicast, all-platform compatibility, hidden TCP fallback o
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the 2026-11-08 canonical static report, sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [network/net/net.go](../../network/net/net.go) lines 31–82 — No usable UDP listener/datagram path found.
 - [codec/codec.go](../../codec/codec.go) lines 85–132 — Stream framing cannot substitute for packet framing.
@@ -78,6 +77,6 @@ Unknown implementation size; estimate only after DND-010 selects fragmentation, 
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and its 2026-11-08 amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

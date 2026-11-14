@@ -3,34 +3,33 @@ title: "NDN prior art for dndm delivery classes, zones and authentication"
 date: "2026-11-08"
 scope: "local-only research and ideation; no code"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
-task: "DND-R4-research (roster)"
-owner: "ideation"
+task: "DND-R4-research"
 status: "draft for owner accept/park"
 ---
 
 # NDN prior art for dndm: delivery classes, zones and authentication
 
-Roster task DND-R4-research. These are **options and recommendations, not decisions**. Only the owner accepts or parks them; dndm turns accepted ones into designs and tickets. No code, build, test or experiment ran for this note.
+Research task DND-R4-research. These are **options and recommendations, not decisions**. Only the owner accepts or parks them; accepted ones become designs and tickets. No code, build, test or experiment ran for this note.
 
 Evidence labels used below: **observed** (I read the file or page this session), **reported** (a paper, spec or vendor says it; not reproduced), **inferred** (my reasoning from named facts), **hypothesis** (not established). Budgets and sizes not taken from a source carry `#verify`.
 
 ## 1. Frame
 
-**Decision served:** turn the owner's 2026-11-08 decisions on DND-006, DND-009 and DND-010 (verbatim in `docs/roster.md`, "Owner decisions on dndm") into design inputs before any code.
+**Decision served:** turn the owner's 2026-11-08 decisions on DND-006, DND-009 and DND-010 into design inputs before any code.
 
-**Owner requirements (mandatory, from those words):**
+**Requirements (2026-11-08, mandatory):**
 
 - R1 `latest` is the default class.
 - R2 A buffered/reliable class exists, for dropped links, lost UDP packets, network errors and bursty links that can't send right away. Buffers are probably configurable.
 - R3 Durable history exists: a consumer can ask for already-produced data, so the producer doesn't have to produce it again. History can live anywhere, including partial copies near consumers. Recovering missing parts may or may not need a DHT.
-- R4 Zones exist, closer to NATS accounts. NDN permissions are the reference ("the inspiration for dndm").
-- R5 Authentication is needed. Take the first steps now; full auth comes "when we are ready".
+- R4 Zones exist, closer to NATS accounts. NDN permissions are the reference, as NDN is the inspiration for dndm.
+- R5 Authentication is needed. Take the first steps now; full auth comes later, once the project is ready for it.
 - R6 When a device doesn't need every part, the implementation must fit embedded devices: super light, modular, expandable.
 - R7 Packet broadcast gets built (DND-010).
 
 **Non-goals here:** code, ticket IDs, roadmap edits, picking a board.
 
-**Conflicts with the existing DND-R2 memos, which the owner's words override:**
+**Conflicts with the existing DND-R2 memos, which the 2026-11-08 decisions override:**
 
 | Memo recommendation | Owner decision | Consequence |
 |---|---|---|
@@ -190,7 +189,7 @@ Next test (proposed, needs dndm code permission): add fields behind a version
   flag; round-trip old<->new peers over the existing TCP remote endpoint in an
   in-memory test; measure encoded size delta. ~0.5 day #verify. Pass: old peer
   decodes, new peer detects an injected gap.
-Unknowns: does any EasyRobot importer depend on Header layout? (dndm checks the
+Unknowns: does any EasyRobot importer depend on Header layout? (check the
   importers); route-scoped vs producer-scoped seq when one producer has many routes.
 Recommendation: do this first; it unblocks B, C, D-step-2 and DND-010.
 Decision: pending (owner).
@@ -207,7 +206,7 @@ Idea and purpose: DND-006 as a per-route policy object with DDS-style fields and
                flush mode {immediate | batch window | on link-up}, lifespan
                expiry, overflow {drop-oldest | block-with-deadline | reject} (R2)
     history  = buffered + a history store (card C) answering fetch-by-name/range (R3)
-Serves: R1-R3; owner's "perhaps configurable".
+Serves: R1-R3; buffers configurable per R2.
 Mechanism: the producer offers a policy, the subscriber requests a minimum; link
   only if compatible, else an explicit "incompatible policy" event (DDS rule;
   advertised through DND-013). Queues stay bounded in messages AND bytes.
@@ -259,7 +258,7 @@ Evidence: reported: NDN/Zenoh run this model. Hypothesis: zone sizes are tens of
   nodes #verify with the owner.
 Must be true: durable history is DATA, not COMMANDS. Commands keep DND-012's
   NATS/application authority; replaying history never re-executes an effect.
-Falsifier: the owner's "consumer asks, service needn't produce" turns out to mean
+Falsifier: R3's "a consumer asks, the producer needn't produce again" turns out to mean
   parameterised computations whose inputs can't be named deterministically; then a
   queryable/memoisation design (result named by input digest) is needed instead.
 Next test (proposed): owner names 2-3 concrete history use cases (e.g. lidar scan
@@ -268,7 +267,7 @@ Next test (proposed): owner names 2-3 concrete history use cases (e.g. lidar sca
 Unknowns: retention and eviction per store; flash endurance on devices;
   erasure/revocation for copies held elsewhere (NAC: cached data stays readable).
 Recommendation: build the store interface + producer-local ring + one host store;
-  defer DHT. Needs a new ticket (dndm/product allocates the ID); keep DND-012 for
+  defer DHT. Needs a new ticket ID; keep DND-012 for
   commands.
 Decision: pending (owner).
 ```
@@ -300,8 +299,8 @@ Mechanism, staged:
     as DeftT) so history held anywhere stays confidential.
 Reuse/prior art: NATS accounts, nonce proof, scoped signing keys, revocation;
   NDN signature/KeyLocator; LVS compiled binary model; DeftT domain id =
-  schema-cert thumbprint, subscriber-side validation; fpv-arena's key-fingerprint
-  ids (ideation portfolio note, reported).
+  schema-cert thumbprint, subscriber-side validation; key-fingerprint peer ids
+  as used in fpv-arena (reported).
 Evidence: observed: public_key and signature fields exist unused
   (peering.proto:22, header.proto:29); handshake trusts `me` (DND-009 memo).
   Reported: Ed25519 sig 64 B, P-256 <=72 B, HMAC 32 B (NDN spec); DeftT ~300 B per
@@ -412,7 +411,7 @@ Suggested order: A → (B, D step 0) → DND-010 broadcast face (trusted segment
 - **Hidden assumption: reliable = acks.** Receiver-driven repair (SVS/syncps) avoids producer ack state on MCUs. → DND-006.
 - **Hidden assumption: the producer id is `me`.** Until step 1, `me` is self-declared; history and dedup keyed on it can be poisoned in a mixed-trust zone. → DND-009.
 - **Hidden assumption: clocks agree.** Lifespan, replay windows and epoch need a time source; MCUs without RTC need boot counters. → DND-006 / DND-015.
-- **Existing knowledge in the portfolio:** fpv-arena already uses P-256 device keys with SPKI-fingerprint ids and pinned links (`docs/notes/2026-11-07-roster-and-fpv-arena.md`). Abugaga uses NATS accounts per roster (ABU-050). One identity convention could serve all three. → DND-009 (cross-project note to Leader).
+- **Existing knowledge in related projects:** fpv-arena already uses P-256 device keys with SPKI-fingerprint ids and pinned links. Abugaga uses NATS accounts (ABU-050). One identity convention could serve all three. → DND-009 (cross-project note).
 
 ### Unknown unknowns (probes)
 
@@ -429,8 +428,7 @@ Coverage limit: I read the specs, docs and papers listed in section 3. I didn't 
 ## 10. Handoff
 
 - **Owner:** accept or park cards A–E, and confirm the durable split (history data vs commands) and the auth staging (step 0 now, step 1 when ready).
-- **dndm peer:** turn accepted cards into designs in DND-006/009/010 and a new history ticket. Check whether the EasyRobot importers depend on the Header layout. Fix the segment separator.
-- **product:** allocate the new ticket ID, if dndm's convention needs product.
+- **dndm:** turn accepted cards into designs in DND-006/009/010 and a new history ticket (allocate its ID). Check whether the EasyRobot importers depend on the Header layout. Fix the segment separator.
 - **Nothing here authorises code, network tests or board work.**
 
 ## Sources
@@ -457,4 +455,4 @@ All accessed 2026-11-08, read-only:
 - Kademlia (2002): <https://link.springer.com/chapter/10.1007/3-540-45748-8_5> (search result)
 - repo-ng protocol: <https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification> (search result)
 
-Local: `docs/roster.md` (owner decisions), `dndm/docs/roadmap.md`, tickets DND-006/009/010/011/012/013/015, `dndm/docs/research/known-unknowns.md`, `dndm/route.go`, `dndm/proto/types/core/{header,intents}.proto`, `dndm/proto/types/p2p/peering.proto`, `dndm/{README,DESIGN}.md`, `dndm/x/SPEC.md`.
+Local (in this repo): [roadmap](../../roadmap.md), tickets DND-006/009/010/011/012/013/015, [known-unknowns](../known-unknowns.md), `route.go`, `proto/types/core/{header,intents}.proto`, `proto/types/p2p/peering.proto`, `README.md`, `DESIGN.md`, `x/SPEC.md`; the owner decisions of 2026-11-08.

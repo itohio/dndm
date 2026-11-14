@@ -19,7 +19,7 @@ Mermaid diagrams of how dndm works today ("as is") and how the owner-approved de
 | [core.md](core.md) | The core idea: intents, interests, routes and endpoints as is, then the target link context with zones, bridges and stages |
 | [link-flows.md](link-flows.md) | One link over time: bring-up, handshake per link profile, bind, rebind after a reset, close and reconnect (sequence diagrams) |
 | [message-paths.md](message-paths.md) | How one message travels: inside a process, to another node, request and reply, through a bridge between zones, over broadcast |
-| [robotics.md](robotics.md) | Robot scenarios from ideation's research-2 §9: lidar to planner across three devices, ELRS teleop, zones with a bridge, history replay, broadcast repair, CAN bus, build-time composition, attack paths |
+| [robotics.md](robotics.md) | Robot scenarios from research-2 §9: lidar to planner across three devices, ELRS teleop, zones with a bridge, history replay, broadcast repair, CAN bus, build-time composition, attack paths |
 
 ## As is or target
 

@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-016"
 status: "backlog"
-owner: "unassigned"
 priority: "P2"
 milestone: "M4 measurement"
 kind: "research / empirical measurement"
@@ -17,10 +16,10 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **backlog**. Owner: **unassigned**. Kind: **research / empirical measurement**.
+Status: **backlog**. Kind: **research / empirical measurement**.
 Milestone: **M4 measurement**. Priority: **P2** — No throughput, latency, loss, allocation or footprint ranking exists; decisions need reproducible matched workloads.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: [DND-001](DND-001-bounded-stream-framing.md), [DND-003](DND-003-single-owner-remote-forwarding.md), [DND-004](DND-004-handshake-registration-replay.md), [DND-005](DND-005-caller-scoped-correlation.md), [DND-007](DND-007-bounded-dispatch-and-closure.md), [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-015](DND-015-embedded-target-feasibility.md)
 
@@ -38,7 +37,7 @@ No NATS disadvantage assumed, no comparing pointer handoff to authenticated netw
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the 2026-11-08 canonical static report, sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [endpoint/remote/wrappers.go](../../endpoint/remote/wrappers.go) lines 60–92,168–223 — Remote serialization differs from local pointer delivery.
 - [intent.go](../../intent.go) lines 99–117,192–210 — Local pointer path has different costs and semantics.
@@ -72,6 +71,6 @@ Medium study after prerequisites; one target, representative payload classes and
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and its 2026-11-08 amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

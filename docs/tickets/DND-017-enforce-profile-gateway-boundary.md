@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-017"
 status: "blocked"
-owner: "unassigned"
 priority: "P0"
 milestone: "M1 isolation enforcement"
 kind: "implementation / missing feature"
@@ -17,10 +16,10 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **blocked**. Owner: **unassigned**. Kind: **implementation / missing feature**.
+Status: **blocked**. Kind: **implementation / missing feature**.
 Milestone: **M1 isolation enforcement**. Priority: **P0** — A reviewed threat model is not enforcement; the bridge must wait for an actual denying boundary.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: [DND-008](DND-008-stream-and-peer-lifecycle-races.md), [DND-009](DND-009-identity-auth-and-profile-boundary.md)
 
@@ -38,7 +37,7 @@ No custom cryptography, credential retrieval, all-hostile-code sandbox guarantee
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the 2026-11-08 canonical static report, sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [route.go](../../route.go) lines 100–119 — Route hash does not prove authority.
 - [peer.go](../../peer.go) lines 76–77 — Lexical prefix overlap allows profile-like name confusion.
@@ -72,6 +71,6 @@ Unknown until threat model/primitive chosen; size the selected gateway or authen
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and its 2026-11-08 amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

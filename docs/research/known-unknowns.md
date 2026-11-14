@@ -7,7 +7,7 @@ source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 
 # Knowledge and unknown map
 
-Evidence basis: [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), final two-review static state, revision `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. No new source audit or runtime execution. See [pinned findings](pinned-findings.md) for line evidence.
+Evidence basis: the canonical 2026-11-08 dndm reuse report, final two-review static state, revision `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. No new source audit or runtime execution. See [pinned findings](pinned-findings.md) for line evidence.
 
 ## Known knowns — inherited static facts
 

@@ -5,7 +5,6 @@ scope: "local-only planning"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-009"
 status: "backlog"
-owner: "unassigned"
 priority: "P0"
 milestone: "M0 decisions"
 kind: "research / missing feature"
@@ -17,35 +16,35 @@ implementation_evidence: []
 
 ## State and permission
 
-Status: **backlog**. Owner: **unassigned**. Kind: **research / missing feature**.
+Status: **backlog**. Kind: **research / missing feature**.
 Milestone: **M0 decisions**. Priority: **P0** — URI claims, route hashes and lexical prefixes do not authorize access; a bridge must not expose untrusted profiles.
 
-Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Obtain explicit owner permission for the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
+Planning only. This ticket is not permission to implement, install dependencies, run tests/models, connect services, acquire credentials or use hardware. Requires explicit approval before the concrete later work. P0 means prerequisite safety/correctness, not an observed production incident. No ticket is accepted or completed by this handoff.
 
 Dependencies: None (dependency-free; still not authorized to execute).
 
-## Owner decision (2026-11-08, verbatim from the roster)
+## Decision (2026-11-08)
 
-"zones are needed, but should be closer to nats accounts perhaps. look how permissions are handled in named data networks - it was the inspiration for dndm really. authentication needed, implement first steps towards it, we'll add auth when we are ready. implementation should be such so that when not all parts are needed it would fit embedded device (super light, modular, expandable)"
+Requirement (2026-11-08): zones are needed, modelled more like NATS accounts. Permissions should follow how named data networking (NDN), dndm's original inspiration, handles them. Authentication is needed: implement first steps towards it now and add full auth later. The implementation must fit an embedded device when not all parts are needed (very light, modular, expandable).
 
-Status unchanged: the design waits for ideation's research (`docs/research/ideation/2026-11-08-ndn-delivery-auth.md`). No code until then. Design questions noted by dndm (DND-R4):
+Status unchanged: the design waits for the research note (`docs/research/ideation/2026-11-08-ndn-delivery-auth.md`). No code until then. Design questions noted by dndm (DND-R4):
 
 - Zones as NATS-account-like namespaces: a zone owns a name prefix, with explicit imports/exports between zones?
 - NDN trust schemas: name-based rules for which key may sign which names. Where is the schema kept and distributed, and who issues keys?
 - "First steps toward auth" without enforcing it yet: carry identity and signature fields end to end (the protos already have unused `public_key`/`signature` fields), verify when a key is known, log or count unsigned data, keep a policy switch off by default?
 - Modular and embedded: auth as an optional layer (build tag or interface) so a minimal build has no crypto dependency. Which primitive fits small MCUs (Ed25519 vs HMAC per link)?
 - Exact path-segment matching to replace the lexical `HasPrefix` (`profile.a` must not match `profile.ab`): independent of auth, so can it land earlier?
-- **Inherited residual risk from DND-005 (verify DND-R4, probes A3/A4):** reply nonces are correlation, not authentication. With the counter source, one observed reply reveals that Caller's next nonce (`n+1`), so anyone who sees the response path can forge an accepted reply. With any source, anyone on the request path can copy the nonce and answer first. The per-call random sources (DND-R5) close only A3. A4 needs what this ticket designs: source authentication of the replier (for example, replies signed or carried in a channel keyed to the service's identity) or per-route permissions. The design must not assume nonces stop injection; its threat model should test reply injection on the request and response paths.
+- **Inherited residual risk from DND-005 (DND-R4 verification, probes A3/A4):** reply nonces are correlation, not authentication. With the counter source, one observed reply reveals that Caller's next nonce (`n+1`), so anyone who sees the response path can forge an accepted reply. With any source, anyone on the request path can copy the nonce and answer first. The per-call random sources (DND-R5) close only A3. A4 needs what this ticket designs: source authentication of the replier (for example, replies signed or carried in a channel keyed to the service's identity) or per-route permissions. The design must not assume nonces stop injection; its threat model should test reply injection on the request and response paths.
 
-### Later owner statements (2026-11-08, verbatim from `docs/decisions.md`)
+### Further requirements (2026-11-08)
 
-- Auth, zones and API shape: "about auth and zones. i am big proponent of zero knowledge proofs, cryptographic channels, signatures, replay attack mitigations, and so on. DH cryptography is a big deal for me. e.g. babyai depends on a package that implements NATS data layer with this in mind. it could setup a cryptographic channel between publisher and subscriber and they assume the public key is shared out of band(subscriber needs to know producer public key before they subscribe since data layer or later synternet would export and import subjects between nats accounts, so the public keys are known, thus common symmetric key could be derived. here it could be the same. but keep in mind modularity and layering for dndm - developer adds layers for whatever they need - e.g. layer for reliability, layer for durability, layer for encryption, etc. - ideation just needs to figure out convenient api - as little boilerplate and as little mental load - e.g. http middleware pattern or python decorator pattern is something to be inspired by)"
-- Zone enforcement: "but the whole dndm protocol should be zone aware and should not allow unpermitted zone crossing just because. how to do it in middleware pattern - no idea at the moment."
-- Overhead and embedded: "ideation should be memory and performance aware. with each layer overhead is introduced - this overhead is important to understand for embedded work. compute and memory and callstack overhead. same for names carrying zones - some other idea might win since we don't want to send zones in every message or sync or link and don't want to always keep zone with every name - this just bloats the messages and memory storage requirements. if zones function cryptographically, then they'd hold at least 64 bits of public key. 64 bite added to every name and every message might not sound as much in this day of age with 1gb helloworld apps, but on esp32 or rp2040 memory and i2c/spi/can/elrs bandwidth is at premium! so, ideation should abstract away the whole dndm and find another way to make it bullet/idiot/embedded proof without compromising apps where 1gb for a hellow world is acceptable."
-- C++: "we'd need dndm C++ version at some point to put the very basic reference implementation on very small devices or when we must use c++ - e.g. when we must use nncase"
-- Adversarial probing: "\"Zero-knowledge proofs and signatures only where they're paid for\" - must also try to probe for potential vilnerabilities. e.g. is it possible to guess a link and send messages without authorization? like tcp allows and some of the most famous hacks were done spoofing mac/ip fields in the tcp and ip envelopes(pass this to ideation and verification)"
+- Auth, zones and API shape: zero-knowledge proofs, cryptographic channels, signatures, replay-attack mitigation and Diffie–Hellman cryptography are priorities. An existing NATS data-layer package sets up a cryptographic channel between publisher and subscriber, assuming the producer's public key is shared out of band (exporting/importing subjects between NATS accounts makes the keys known, so a common symmetric key can be derived); dndm could do the same. dndm must stay modular and layered: developers add layers as needed (reliability, durability, encryption, etc.). The API should need as little boilerplate and mental load as possible, inspired by the HTTP middleware or Python decorator patterns.
+- Zone enforcement: the whole dndm protocol must be zone-aware and must not allow unpermitted zone crossing. How to do that in a middleware pattern is an open question.
+- Overhead and embedded: the design must be memory- and performance-aware. Each layer adds compute, memory and call-stack overhead, which matters for embedded work. Zones should not be sent in every message, sync or link, nor stored with every name: that bloats messages and memory. A cryptographic zone would hold at least 64 bits of public key, which is costly on ESP32/RP2040 memory and I2C/SPI/CAN/ELRS bandwidth. Find a design that is robust and embedded-proof without compromising apps where large footprints are acceptable.
+- C++: a dndm C++ version will be needed at some point, as a minimal reference implementation for very small devices or where C++ is required (e.g. nncase).
+- Adversarial probing: zero-knowledge proofs and signatures only where they pay for themselves, and the design must be probed for vulnerabilities, e.g. whether a link can be guessed and messages sent without authorization, as with classic TCP/IP and MAC spoofing attacks. This applies to both the research and the verification work.
 
-Roster note (Leader, not owner words): the earlier zone-prefix-on-every-name framing is superseded by the overhead requirement. Only its invariant remains, as a constraint to test against: no unpermitted zone crossing, enforced where no layer can bypass it.
+Note: the earlier zone-prefix-on-every-name framing is superseded by the overhead requirement. Only its invariant remains, as a constraint to test against: no unpermitted zone crossing, enforced where no layer can bypass it.
 
 ## Outcome
 
@@ -61,7 +60,7 @@ No credentials, crypto implementation, live penetration tests, broad work connec
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the canonical 2026-11-08 static report, sections 1–2, 4–5 and Limits; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [route.go](../../route.go) lines 100–119 — Unkeyed route hash is an opaque identifier, not authority.
 - [peer.go](../../peer.go) lines 76–77 — HasPrefix matches lexical prefixes, not isolated namespaces.
@@ -75,7 +74,7 @@ Which adversaries are in scope: untrusted LAN nodes, compromised local processes
 
 Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route hash, revoked activation, reply-path escalation and sandbox wildcard subscriptions. Trace authentication and authorization at each hop without acquiring secrets.
 
-## Decision memo (2026-11-08, for the owner)
+## Decision memo (2026-11-08)
 
 **Question.** Which trust boundary does dndm enforce: none beyond a trusted host or LAN, authenticated peer links, or a terminating gateway? And who issues and revokes identities?
 
@@ -112,13 +111,13 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 | Cross-zone traffic | outside dndm | direct | through the gateway |
 | Size | small | large | medium |
 
-**Recommendation: C.** NATS is already the first orchestration transport, and its account/JWT model provides authenticated, revocable isolation without dndm carrying keys or crypto. C keeps the wire format and EasyRobot's serial setup unchanged and makes DND-017 a small, testable set of allow/deny rules. Exact-segment matching and the default-deny allowlist fix real routing gaps whatever the owner picks. Defer B until something must link dndm peers directly across an untrusted network; until then leave `public_key` and `signature` reserved and unused rather than half-implemented.
+**Recommendation: C.** NATS is already the first orchestration transport, and its account/JWT model provides authenticated, revocable isolation without dndm carrying keys or crypto. C keeps the wire format and EasyRobot's serial setup unchanged and makes DND-017 a small, testable set of allow/deny rules. Exact-segment matching and the default-deny allowlist fix real routing gaps whichever option is chosen. Defer B until something must link dndm peers directly across an untrusted network; until then leave `public_key` and `signature` reserved and unused rather than half-implemented.
 
 **What it unblocks.** These tickets list DND-009 in their frontmatter `dependencies:`: [DND-010](DND-010-packet-broadcast-decision.md), [DND-012](DND-012-durability-and-command-boundary.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-017](DND-017-enforce-profile-gateway-boundary.md). Transitively: DND-011, DND-014 and DND-015.
 
 **Residual unknowns.**
 
-- The adversary set the owner accepts: untrusted LAN hosts, hostile profiles, compromised local processes.
+- The accepted adversary set: untrusted LAN hosts, hostile profiles, compromised local processes.
 - Whether serial/USB links count as trusted.
 - The segment separator (`.` or `/`) and the migration of existing paths.
 - Whether Abugaga needs dndm directly across hosts. That would force B.
@@ -130,7 +129,7 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 - [ ] Every case names the trusted decision point and deny behavior.
 - [ ] Profile/zone isolation survives reconnect, revocation and reply forwarding; lexical matching never grants authority.
 - [ ] Decision records trusted-local-only limitations or the chosen authenticated remote design plus key lifecycle.
-- [ ] On secured link-context profiles (ZONE_PSK, STATIC_DH, GROUP_KEY), an unauthenticated `Close` that arrives before the handshake completes is not accepted: the link stays as it was and the frame is dropped and counted, like every other frame before the handshake (design link-context-wire §4). Test failing first: a forged `Close` before the handshake must not tear down a link that is mid-handshake. Background: `network/linkctx` today honours `Close` in any state, which is harmless on ONBOARD (no authentication exists there) but would let anyone on a secured face reset links (verify DND-022, optional 2).
+- [ ] On secured link-context profiles (ZONE_PSK, STATIC_DH, GROUP_KEY), an unauthenticated `Close` that arrives before the handshake completes is not accepted: the link stays as it was and the frame is dropped and counted, like every other frame before the handshake (design link-context-wire §4). Test failing first: a forged `Close` before the handshake must not tear down a link that is mid-handshake. Background: `network/linkctx` today honours `Close` in any state, which is harmless on ONBOARD (no authentication exists there) but would let anyone on a secured face reset links (DND-022 verification, optional item 2).
 
 ## Verification procedure — future, not executed
 
@@ -146,8 +145,8 @@ Medium research decision: one threat model and gateway/direct alternative compar
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
-- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
-- 2026-11-09: acceptance item added from verify DND-022 (optional 2). On secured profiles, an unauthenticated pre-handshake `Close` must not be accepted. Today `linkctx.Link.Receive` accepts `Close` in any state; ONBOARD-only, so no change there until secured profiles land with this ticket.
+- 2026-11-08 — Created local planning ticket from the final canonical static report and scope amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending; status unchanged.
+- 2026-11-09: acceptance item added from the DND-022 verification (optional item 2). On secured profiles, an unauthenticated pre-handshake `Close` must not be accepted. Today `linkctx.Link.Receive` accepts `Close` in any state; ONBOARD-only, so no change there until secured profiles land with this ticket.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

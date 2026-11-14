@@ -1,8 +1,8 @@
 # DND-008 close and reconnect (design, DND-R7)
 
-Status: **design draft, no code**. DND-008's open acceptance item: "close/reconnect tests terminate within configured deadlines and do not resurrect stale connections". The owner asked for a short design before code ([decisions](../../../docs/decisions.md)). It builds on the [link-context wire design](link-context-wire.md). Diagrams: [link flows 3 and 6](../diagrams/link-flows.md).
+Status: **design draft, no code**. DND-008's open acceptance item: "close/reconnect tests terminate within configured deadlines and do not resurrect stale connections". The owner asked for a short design before code. It builds on the [link-context wire design](link-context-wire.md). Diagrams: [link flows 3 and 6](../diagrams/link-flows.md).
 
-**Decision** (Leader, 2026-11-09, under the owner's autonomy instruction; `docs/tasks/DND-R6-fix.md`): simultaneous connections keep the one dialled by the lower identity (§3.1), **yes**. Words follow the [diagram glossary](../diagrams/README.md#glossary): a *link* is a connection, and today's in-process `Link` object is called a *match*.
+**Decision** (2026-11-09, DND-R6-fix, under the owner's autonomy instruction): simultaneous connections keep the one dialled by the lower identity (§3.1), **yes**. Words follow the [diagram glossary](../diagrams/README.md#glossary): a *link* is a connection, and today's in-process `Link` object is called a *match*.
 
 ## 1. How it works today (as is, read from the code)
 
@@ -22,7 +22,7 @@ These are read from the code; none is reproduced yet, and the failing tests in �
 | R2 | The entry refuses a second connection, and its close callback clears the entry unconditionally (`SetConn(nil)`) | `addrbook.go` `SetConn` | A connection that is already dead can be recorded: its close callback was added after it closed, so the callback runs later on its own goroutine (`lifecycle.add`). Until that callback runs, a live connection arriving in the window is refused (`ErrDuplicate`, ignored, R1) and never recorded. When the callback clears the entry, the live connection is untracked, `monitor` dials again, and a duplicate appears. The unconditional clear also rules out "replace the current connection" (§3.1) unless the clear becomes compare-and-clear. |
 | R3 | The duplicate connection from R1 is never recorded | same | When the recorded connection closes, the entry is cleared, although the unrecorded one is still alive. Again a redial, and duplicates. |
 | R4 | The acceptor keys the entry by the peer's self-declared `Me` | `handshake.go` `handshakeMsg` | Anyone can claim to be B. Today that only produces an `ErrDuplicate` that is ignored (R1). It is an identity question for DND-009, noted here so the generation design does not trust `Me`. |
-| R5 | No session identity | wire | Nothing in a frame says which connection it belongs to. On TCP the old socket is closed, so late frames die with it. On future datagram faces, a late frame from an old session could be decoded by a new one (verify A3). |
+| R5 | No session identity | wire | Nothing in a frame says which connection it belongs to. On TCP the old socket is closed, so late frames die with it. On future datagram faces, a late frame from an old session could be decoded by a new one (verification finding A3). |
 
 ## 3. Connection generations
 
@@ -46,7 +46,7 @@ AddrbookEntry
 
 Both sides see both connections, and both must keep the **same** one:
 
-- Keep the connection **dialled by the peer whose identity sorts lower**: byte compare of the verified key id, or, on v1/PSK links, of the identity string each peer declares in the handshake (`Peer.String()`, its `Me`). Not the address a dialer was configured with: two nodes can know each other by different names (`localhost:4000` vs `127.0.0.1:4000`), and then they would disagree (review R-DND-R8 N2).
+- Keep the connection **dialled by the peer whose identity sorts lower**: byte compare of the verified key id, or, on v1/PSK links, of the identity string each peer declares in the handshake (`Peer.String()`, its `Me`). Not the address a dialer was configured with: two nodes can know each other by different names (`localhost:4000` vs `127.0.0.1:4000`), and then they would disagree (finding R-DND-R8 N2).
 - Each side applies the rule once its handshake completes: the acceptor when INITIAL arrives, the dialer when FINAL arrives. Before that, a dial is only noted (`Addrbook.NoteDial`) and never displaces or refuses a connection. If the new connection loses, it closes itself (with `CLOSE_REASON_DUPLICATE` on v2). If it wins, the old one gets closed: `SetConn` replaces it, bumps `gen`, then closes the old connection.
 - Residual (v1, implemented in DND-R8): both connections can be ready for a moment before the dialers' FINALs settle it, so a message sent in that window may arrive twice. The reverse can also happen: when the losing connection closes, its remote interest goes with it, and until the survivor's interest is linked, `Send` returns `ErrNoInterest` and sends nothing (DND-008 G1, seen in 16 of 120 stressed runs). DND-022's session ids remove both.
 
@@ -59,7 +59,7 @@ Because the rule is symmetric, both sides end with the same connection and never
 | State | On close | On reconnect |
 |---|---|---|
 | Keys, counters, replay windows (v2) | dropped | new handshake → new keys; counters restart safely because the keys are new |
-| Route ids (v2) | the table is dropped | new `Bind`s in a fresh, per-session id space: the lowest free id from 1, so ids stay small however often the link reconnects ([wire §4](link-context-wire.md#4-binding-rules-zone-security-ids)). Late frames from the old session do not land on a new id: on secured links they fail the new keys' tag, and on stream faces the old connection is gone. That fixes R5. The residual is only on `INSECURE` datagram links, which accept anyone's frames anyway. *(Revised after verify DND-R7 F1: the earlier rule carried `nextRoute` across sessions, so ids grew past 127 after about 13 reconnects and DATA frames grew to 5 B.)* |
+| Route ids (v2) | the table is dropped | new `Bind`s in a fresh, per-session id space: the lowest free id from 1, so ids stay small however often the link reconnects ([wire §4](link-context-wire.md#4-binding-rules-zone-security-ids)). Late frames from the old session do not land on a new id: on secured links they fail the new keys' tag, and on stream faces the old connection is gone. That fixes R5. The residual is only on `INSECURE` datagram links, which accept anyone's frames anyway. *(Revised after verification finding DND-R7 F1: the earlier rule carried `nextRoute` across sessions, so ids grew past 127 after about 13 reconnects and DATA frames grew to 5 B.)* |
 | Announce/Bind of current intents and interests | the remote endpoint and its linker close (as today) | `Container.reconcile` registers every current route again (as today); on v2 that is Announce, then Bind |
 | Application handles (`Producer`, `Consumer`, `Caller`) | unchanged, kept by the local Router | `Send` returns `ErrNoInterest` while the link is down, then works again once the remote interest is bound |
 | In-flight messages | dropped. Latest routes lose nothing they would keep anyway; buffered routes repair across the gap by `seq`, which is per route, not per session | DND-006 decides buffered/history behaviour |
@@ -92,7 +92,7 @@ All in-process. Pipes or loopback only, nothing beyond 127.0.0.1. Each has a dea
 | `TestMesh_CloseDuringHandshakeReturns`: close the endpoint while a dial and a handshake are in flight | `endpoint/mesh` | measure (hang or leaked goroutines suspected; goroutine count before and after) | returns within the deadline; goroutine count back to baseline |
 | `TestMesh_LateCloseDoesNotEndNewSession` (v2 only, after link-context code) | link codec | n/a | a `Close` carrying the old session id is ignored |
 | `TestLink_LateFrameFromOldSessionDropped` (v2, datagram fake face, secured profile) | link codec | n/a | a frame from the old session, carrying an id that the new session has reused, fails the new keys' tag. It is dropped and counted, never delivered on the new route |
-| `TestLink_IdsStaySmallAcrossReconnects` (v2) | link codec | n/a | after 50 reconnects with 10 routes, every id is ≤ 10, so DATA frames stay at 4 B + payload (verify DND-R7 F1) |
+| `TestLink_IdsStaySmallAcrossReconnects` (v2) | link codec | n/a | after 50 reconnects with 10 routes, every id is ≤ 10, so DATA frames stay at 4 B + payload (verification finding DND-R7 F1) |
 
 The first two are expected to fail on today's code and are the core of the DND-008 item. The third pins the redial behaviour.
 

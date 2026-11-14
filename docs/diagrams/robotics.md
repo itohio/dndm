@@ -1,6 +1,6 @@
 # Robotics scenarios
 
-Scenarios S1–S9 from ideation's [research-2](../research/ideation/2026-11-08-ndn-delivery-auth-2.md) §9. All of them are **target designs (not built yet)**: today's dndm has no zones, link profiles, history or broadcast. Frame sizes follow the [link-context wire design](../design/link-context-wire.md): a data frame is 4 B plus the payload, and a secured one about 15 B. The rest are estimates from research-2 §6. Legend and glossary: [README](README.md#legend).
+Scenarios S1–S9 from [research-2](../research/ideation/2026-11-08-ndn-delivery-auth-2.md) §9. All of them are **target designs (not built yet)**: today's dndm has no zones, link profiles, history or broadcast. Frame sizes follow the [link-context wire design](../design/link-context-wire.md): a data frame is 4 B plus the payload, and a secured one about 15 B. The rest are estimates from research-2 §6. Legend and glossary: [README](README.md#legend).
 
 ## S1. Lidar to planner across three devices
 

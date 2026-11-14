@@ -5,22 +5,21 @@ scope: "local-only planning and implementation"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-002"
 status: "done"
-owner: "dndm"
 priority: "P0"
 milestone: "M0 decisions"
 kind: "research / fundamental tradeoff"
 dependencies: []
-implementation_evidence: ["evidence/dnd-r4/dnd002-probe.txt", "evidence/dnd-r4/dnd003-after.txt"]
+implementation_evidence: ["x/bus/ownership_test.go", "commit 3907a77"]
 ---
 
 # DND-002 — Choose local shared-message ownership
 
 ## State and permission
 
-Status: **done** (DND-R4: decision taken, contract written into godoc, aliasing test added; verified, reviewed, committed locally as 3907a77). Owner: **dndm**. Kind: **research / fundamental tradeoff**, now decided.
+Status: **done** (DND-R4: decision taken, contract written into godoc, aliasing test added; verified, reviewed, committed locally as 3907a77). Kind: **research / fundamental tradeoff**, now decided.
 Milestone: **M0 decisions**. Priority: **P0**.
 
-**Owner decision, 2026-11-08 (verbatim, from the roster):** "DND-002: **Accept** (immutable after Send, written contract)."
+**Decision (2026-11-08):** accept Option A — messages are immutable after Send, with a written contract.
 
 Dependencies: none.
 
@@ -48,7 +47,7 @@ No implementation, claimed zero-copy network path, new shared-memory allocator o
 
 ## Pinned evidence
 
-Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the [canonical report](../../../docs/notes/2026-11-08-dndm-babyai-reuse.md), sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
+Revision: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`. Evidence below is inherited from the 2026-11-08 canonical static report, sections 1–2, 4–5 and Limits and review; two independent **static** reviews complete. This handoff did not repeat the source audit. Relative source links open the checkout; line numbers refer to the pin, not guaranteed future HEAD.
 
 - [intent.go](../../intent.go) lines 99–117,192–210 — Local fan-out forwards the same protobuf object.
 - [interest.go](../../interest.go) lines 280–289 — Subscribers receive shared objects.
@@ -62,7 +61,7 @@ Can existing callers promise immutability, and do any payloads reference recycle
 
 Draw the timeline for publish → two subscribers → one retained message → publisher mutation/reuse. Repeat with one cancelled subscriber and remote serialization. For each candidate policy assign every read, mutation and release to one owner.
 
-## Decision memo (2026-11-08, for the owner)
+## Decision memo (2026-11-08)
 
 **Question.** Once `Send(ctx, msg)` returns, who may read, change, keep or release `msg` and any buffer it points to?
 
@@ -116,7 +115,7 @@ Draw the timeline for publish → two subscribers → one retained message → p
 
 - [x] Decision records aliasing/lifetime invariants and rejected alternatives (memo above; contract section).
 - [x] Every timeline has a valid owner: sender until `Send`, then shared read-only; a modifying receiver must clone first.
-- [x] Compatibility: no API, wire or runtime change (godoc only). Verification: `x/bus/ownership_test.go` `TestLocalSubscribersShareTheSentMessage` shows two local subscribers receive the sender's object (`assert.Same`), ×20 with `-race` (after (evidence: `~/src/docs/evidence/dnd-r4/dnd003-after.txt`, outside the repo)). A throwaway probe shows that modifying after Send is a data race the receiver can observe: `-race` reports it and the receiver saw the new value "v2" (probe (evidence: `~/src/docs/evidence/dnd-r4/dnd002-probe.txt`, outside the repo)). No performance claim.
+- [x] Compatibility: no API, wire or runtime change (godoc only). Verification: `x/bus/ownership_test.go` `TestLocalSubscribersShareTheSentMessage` shows two local subscribers receive the sender's object (`assert.Same`), ×20 with `-race`. A throwaway probe shows that modifying after Send is a data race the receiver can observe: `-race` reports it and the receiver saw the new value "v2". No performance claim.
 
 ## Verification procedure — future, not executed
 
@@ -132,9 +131,9 @@ Small research decision: one local ownership model; implementation size remains 
 
 ## Dated log
 
-- 2026-11-08 — Created local planning ticket from the final canonical static report and owner amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
-- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending with the owner; status unchanged.
-- 2026-11-08: DND-R4. Owner accepted A (immutable after Send). Contract written into godoc and this ticket; aliasing test added; mutate-after-send race probe recorded. Status → **in review**.
-- 2026-11-09: status → **done**. Verify accepted it and it is committed locally: 3907a77 `docs(api): message ownership contract for Send and C` (DND-commit).
+- 2026-11-08 — Created local planning ticket from the final canonical static report and the 2026-11-08 scope amendment §5. No code changes, reproduction, tests or runtime measurement performed. Acceptance remains unchecked; implementation evidence is empty.
+- 2026-11-08: DND-R2. Decision memo added (options, recommendation). Decision pending; status unchanged.
+- 2026-11-08: DND-R4. Option A (immutable after Send) accepted. Contract written into godoc and this ticket; aliasing test added; mutate-after-send race probe recorded. Status → **in review**.
+- 2026-11-09: status → **done**. Accepted after independent verification and committed locally: 3907a77 `docs(api): message ownership contract for Send and C` (DND-commit).
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [Knowledge map](../research/known-unknowns.md)

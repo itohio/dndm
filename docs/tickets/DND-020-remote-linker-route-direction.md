@@ -5,19 +5,17 @@ scope: "local-only planning; implementation not started"
 source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 id: "DND-020"
 status: "backlog"
-owner: "dndm"
 priority: "P1"
 milestone: "M1 remote correctness"
 kind: "implementation / fixable defect, runtime-observed"
 dependencies: ["DND-003", "DND-006"]
-implementation_evidence: []
 ---
 
 # DND-020 — Key the remote linker by route and direction
 
 ## State and permission
 
-Status: **backlog** (no code). Owner: **dndm**. Opened in DND-R5 on the owner's decision for F21: "**Yes, open a ticket**" (2026-11-08, [decisions](../../../docs/decisions.md)). The DND-R5 instructions say: open it with acceptance and a failing-test sketch, and do not implement it yet, because it may touch [DND-006](DND-006-delivery-and-overload-classes.md).
+Status: **backlog** (no code). Opened in DND-R5 on the 2026-11-08 decision for F21 to open a ticket. The DND-R5 task scope: open it with acceptance and a failing-test sketch, and do not implement it yet, because it may touch [DND-006](DND-006-delivery-and-overload-classes.md).
 
 Dependencies: [DND-003](DND-003-single-owner-remote-forwarding.md) (single reader per remote interest, in review). Also [DND-006](DND-006-delivery-and-overload-classes.md), for the delivery class a two-way route gets. It is a soft dependency: the linker change can be designed without it, but it should not ship a delivery policy of its own.
 
@@ -42,7 +40,7 @@ One remote link carries any route in both directions. Each direction is linked o
 - Key the remote endpoint's linker by (route, direction), or keep two linkers (local→remote, remote→local). Decide in the design; the second may need no change to `dndm.Linker`.
 - Unregister messages (`Register: false`) close only the remote-side object of their direction (`handleUnregisterIntent`/`handleUnregisterInterest` today look up by route only).
 - Echo prevention: a message that arrives from A on route R must not be forwarded back to A through B's local intent for R. [INFERENCE] The router's fan-out currently has no source tag, so the design must say how echo is prevented, for example by not linking a remote intent's messages into the same link's local interest.
-- Wire format: unchanged if possible (the direction is implied by who sent the intent or interest). Any change needs the wire probe and an owner decision. The v2 link-context schema ([design](../design/link-context-wire.md#2-schema-draft)) already gives each sending side its own route ids, so a route used in both directions gets two ids.
+- Wire format: unchanged if possible (the direction is implied by who sent the intent or interest). Any change needs the wire probe and explicit approval. The v2 link-context schema ([design](../design/link-context-wire.md#2-schema-draft)) already gives each sending side its own route ids, so a route used in both directions gets two ids.
 
 ## Non-goals
 
@@ -73,6 +71,6 @@ Open question for the design: should a local subscriber also receive the message
 
 ## Dated log
 
-- 2026-11-08: DND-R5. Opened from F21 (DND-003, DND-R4) on the owner's decision. No code.
+- 2026-11-08: DND-R5. Opened from F21 (DND-003, DND-R4) on the 2026-11-08 decision. No code.
 
 [Ticket index](index.md) · [Roadmap](../roadmap.md) · [DND-003](DND-003-single-owner-remote-forwarding.md)
