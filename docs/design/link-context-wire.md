@@ -22,12 +22,12 @@ Diagrams: [link flows](../diagrams/link-flows.md), [core](../diagrams/core.md).
 
 ## 1. Problem in numbers
 
-Today every message frame is preamble (16 B: magic, total size, header size, message size), then a `types.core.Header` (timestamp, type, **route as text**), then the message. EasyRobot's real routes, as measured during independent verification (DND-research):
+Today every message frame is preamble (16 B: magic, total size, header size, message size), then a `types.core.Header` (timestamp, type, **route as text**), then the message. The real routes of a robotics library that uses dndm, as measured during independent verification (DND-research):
 
 | Route | Payload | Frame today | Overhead |
 |---|---|---|---|
-| `types.control.ManipulatorState@easyrobot.manipulator.raw` | 62 B | 148 B | **86 B** |
-| `types.control.ManipulatorTarget@easyrobot.manipulator.raw.target` | 26 B | 120 B | **94 B** |
+| `types.control.ManipulatorState@acmerobot.manipulator.raw` | 62 B | 148 B | **86 B** |
+| `types.control.ManipulatorTarget@acmerobot.manipulator.raw.target` | 26 B | 120 B | **94 B** |
 | same state route, hashed (27-char id) | 62 B | 119 B | 57 B |
 
 Most of it is the route name, which contains the fully qualified protobuf type name, repeated in every frame. The link-context model sends the name **once per link** (BIND) and then only a small number.
@@ -101,7 +101,7 @@ enum Role {
 
 message Announce {         // replaces types.core Intent/Interest on v2 links
   Role   role     = 1;
-  string path     = 2;     // zone-local path, e.g. "easyrobot.manipulator.raw"
+  string path     = 2;     // zone-local path, e.g. "acmerobot.manipulator.raw"
   string type     = 3;     // full protobuf message name, e.g. "types.control.ManipulatorState"
   bool   register = 4;     // false = withdraw
 }
@@ -159,7 +159,7 @@ Protobuf wire arithmetic (tag = 1 B for fields 1–15; varint length 1 B below 1
 | CAN (route id in the CAN identifier) | `payload` tag+len only | 2 B: 6 B of data left in a classic CAN frame (8 B) | — | — |
 | CAN command, authenticated, 3 B MAC | `ctr` (0–2, low 7 bits on classic CAN) + `sealed` tag+len (2) + 3 B MAC | at most 7 B: **1 B of data left** in classic CAN, always, because `ctr` never exceeds 127 there; about 51 B in CAN FD (64 B) with an 8 B tag | — | — |
 
-So a data frame is **4 B of protobuf overhead plus the payload**, against 86–94 B today, about 95 % less for EasyRobot's routes. The id and counter rules in §4 keep it at 4 B across reconnects. The CAN and boundary rows were measured with generated code from the draft schema; at the boundaries, route_id 127 gives +4 and 128 gives +5, and ctr 127 fits a classic CAN command while ctr 128 needs 9 B. With protobuf framing, an authenticated command on classic CAN carries only 1 B of data, so authenticated commands need CAN FD in practice. The CAN rule decided by the owner (authenticate command routes only; authenticated data goes on CAN FD) still holds; it bites harder than research-2's binary-framing estimate of 4 B of data.
+So a data frame is **4 B of protobuf overhead plus the payload**, against 86–94 B today, about 95 % less for the robotics library's routes. The id and counter rules in §4 keep it at 4 B across reconnects. The CAN and boundary rows were measured with generated code from the draft schema; at the boundaries, route_id 127 gives +4 and 128 gives +5, and ctr 127 fits a classic CAN command while ctr 128 needs 9 B. With protobuf framing, an authenticated command on classic CAN carries only 1 B of data, so authenticated commands need CAN FD in practice. The CAN rule decided by the owner (authenticate command routes only; authenticated data goes on CAN FD) still holds; it bites harder than research-2's binary-framing estimate of 4 B of data.
 
 ### 3.1 The ~2 B option (decided: not used)
 
@@ -271,7 +271,7 @@ State after DND-R9-tools (2026-11-09, owner approved the download; commits 0bb46
 
 | Item | Before DND-R9 | Now |
 |---|---|---|
-| Go runtime | `google.golang.org/protobuf v1.36.10` (go.mod) | **v1.36.12**, the latest stable (`@latest` on 2026-11-09). EasyRobot must raise its own requirement to match (one go.mod line) |
+| Go runtime | `google.golang.org/protobuf v1.36.10` (go.mod) | **v1.36.12**, the latest stable (`@latest` on 2026-11-09). Downstream users must raise protobuf to v1.36.12 (one go.mod line) |
 | Generated code | `protoc-gen-go v1.36.5`, protoc "(unknown)" | **protoc-gen-go v1.36.12**, same as the runtime; raw descriptors byte-identical to before |
 | buf config | `proto/buf.yaml` v1, `proto/buf.gen.yaml` v1, `buf.lock` pinning the WKT module | **v2 at the repo root**: `buf.yaml` (`modules: [{path: proto}]`, no deps, no lock), `buf.gen.yaml` (managed `go_package_prefix`, local plugin via `go tool`). The embedded example has its own v2 module |
 | Well-known types dep | listed, never imported | removed |
@@ -292,7 +292,7 @@ Why two tool modules: buf v1.75.0 requires an unreleased protobuf (`v1.36.13-0.2
 
 The tests live in `codec/link_frame_test.go` (frame bytes, DND-R9) and `network/linkctx/linkctx_test.go` (link core, after DND-R9; plus A1/A3/A8 tests). Each failed first as a build failure for the missing API, and a mutation run shows that each fails by assertion against a wrong implementation (commits 9e34601, 63df1c4):
 
-- **TestLinkFrameOverhead**: encode DATA for payloads of 26 B and 62 B (the sizes of EasyRobot's ManipulatorTarget and ManipulatorState above) and 127/128/16 383/16 384 B (varint boundaries), and assert:
+- **TestLinkFrameOverhead**: encode DATA for payloads of 26 B and 62 B (the sizes of the robotics library's ManipulatorTarget and ManipulatorState above) and 127/128/16 383/16 384 B (varint boundaries), and assert:
   - overhead = 4 B below 128 B, 5 B up to 16 383 B, 6 B above (UDP/serial framing);
   - the TCP length prefix: 1 B for frames below 128 B, 2 B below 16 384 B, 3 B above (so a 127 B payload already needs 2 B: its frame is 131 B);
   - the v1 frame for the same route names is 86/94 B, so the saving is measured in the same test.
@@ -302,7 +302,7 @@ The tests live in `codec/link_frame_test.go` (frame bytes, DND-R9) and `network/
 - **TestCounterLowBits**: classic CAN profile with `ctr` at 7 bits, counters 127, 128, 255 and 256. The command frame is ≤ 8 B with 1 B of data every time (measured: a raw ctr 128 would need 9 B). The receiver rebuilds the full counter across the 127→128 wrap, and after a gap of 64 frames or more the rebuilt counter is wrong, so the tag fails (the link resyncs with a new handshake).
 - **TestLinkFrameRoundTrip**: DATA, DATA+seq, sealed, and every control message decode back equal. Decoding DATA with `protowire` and with generated `proto.Unmarshal` gives the same fields; this guards against a second, hand-written contract.
 - **TestLinkFrameNoCopy**: the decoded payload aliases the frame buffer (pointer range check).
-- A scratch cross-check with real EasyRobot messages (read-only `replace`, as in the DND-research verification) reports the exact frames. EasyRobot can't be imported by dndm tests, because the dependency points the other way.
+- A scratch cross-check with the robotics library's real messages (read-only `replace`, as in the DND-research verification) reports the exact frames. The robotics library can't be imported by dndm tests, because the dependency points the other way.
 
 ## 9. Open questions
 

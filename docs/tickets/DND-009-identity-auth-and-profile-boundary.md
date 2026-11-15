@@ -90,12 +90,12 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 **Option A: trusted-local only, no cross-zone path in dndm.** Raw dndm is declared unauthenticated and limited to loopback, unix sockets, serial or an isolated segment. Each profile gets its own router/process. Apps that need to cross zones use NATS themselves.
 - Code: docs, plus DND-017 enforcement: refuse non-loopback listen unless an explicit trusted-LAN option is set; exact path-segment matching where an empty path matches nothing (`peer.go:77`); a default-deny route allowlist through `beforeLink` and the registration handlers. Cost: small.
 - Risk: any host on a "trusted" LAN can impersonate a peer. Safe only while that assumption holds.
-- Compatibility: no wire change; additive options. Behaviour change: binding `0.0.0.0` (`examples/embedded/embedded/main.go:209`) needs the opt-in. EasyRobot's dot-separated paths (peer `easyrobot.manipulator`, route `easyrobot.manipulator.raw`; `EasyRobot/cmd/manipulator/main.go:240,258`) still match if `.` is a segment separator.
+- Compatibility: no wire change; additive options. Behaviour change: binding `0.0.0.0` (`examples/embedded/embedded/main.go:209`) needs the opt-in. A robotics library that uses dndm has dot-separated paths (peer `acmerobot.manipulator`, route `acmerobot.manipulator.raw`); they still match if `.` is a segment separator.
 
 **Option B: authenticated dndm links.** mTLS over `net.Conn`, or Noise with static keys, binding the handshake `Me` to the authenticated key, plus a route ACL per peer.
 - Code: `network/net/net.go`, `endpoint/mesh/handshake.go`, `endpoint/remote/messages.go`, credential configuration, and a key issuance/revocation authority. Cost: large.
 - Risk: home-made protocol mistakes if Noise is hand-wired. Serial links need a non-TLS scheme [INFERENCE]. Embedded CPU/RAM cost is unmeasured.
-- Compatibility: wire change, because TLS wraps the stream and authenticated peers cannot talk to old ones. New public options. EasyRobot serial links would need keys or an exemption.
+- Compatibility: wire change, because TLS wraps the stream and authenticated peers cannot talk to old ones. New public options. The robotics library's serial links would need keys or an exemption.
 
 **Option C: A inside each zone, plus a NATS-terminating gateway across zones.** Same local rules as A. The only sanctioned crossing is a gateway process (the [DND-014](DND-014-scoped-nats-bridge.md) bridge) that authenticates to NATS with credentials per profile (operator/account/user JWTs, accounts as the isolation boundary) and forwards only an exact allowlist of routes.
 - Code: A's DND-017 work, plus allowlist enforcement in the bridge. Cost: medium, most of it in DND-014.
@@ -111,7 +111,7 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 | Cross-zone traffic | outside dndm | direct | through the gateway |
 | Size | small | large | medium |
 
-**Recommendation: C.** NATS is already the first orchestration transport, and its account/JWT model provides authenticated, revocable isolation without dndm carrying keys or crypto. C keeps the wire format and EasyRobot's serial setup unchanged and makes DND-017 a small, testable set of allow/deny rules. Exact-segment matching and the default-deny allowlist fix real routing gaps whichever option is chosen. Defer B until something must link dndm peers directly across an untrusted network; until then leave `public_key` and `signature` reserved and unused rather than half-implemented.
+**Recommendation: C.** NATS is already the first orchestration transport, and its account/JWT model provides authenticated, revocable isolation without dndm carrying keys or crypto. C keeps the wire format and the robotics library's serial setup unchanged and makes DND-017 a small, testable set of allow/deny rules. Exact-segment matching and the default-deny allowlist fix real routing gaps whichever option is chosen. Defer B until something must link dndm peers directly across an untrusted network; until then leave `public_key` and `signature` reserved and unused rather than half-implemented.
 
 **What it unblocks.** These tickets list DND-009 in their frontmatter `dependencies:`: [DND-010](DND-010-packet-broadcast-decision.md), [DND-012](DND-012-durability-and-command-boundary.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-017](DND-017-enforce-profile-gateway-boundary.md). Transitively: DND-011, DND-014 and DND-015.
 
@@ -120,7 +120,7 @@ Construct paper cases for profile.a versus profile.ab, spoofed URI, forged route
 - The accepted adversary set: untrusted LAN hosts, hostile profiles, compromised local processes.
 - Whether serial/USB links count as trusted.
 - The segment separator (`.` or `/`) and the migration of existing paths.
-- Whether Abugaga needs dndm directly across hosts. That would force B.
+- Whether an orchestration service (it uses NATS accounts) needs dndm directly across hosts. That would force B.
 - NATS credential revocation latency and who operates the NATS operator key.
 - Enforcement reliability depends on the lifecycle races (F14) and on DND-008.
 

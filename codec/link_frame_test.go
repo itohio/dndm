@@ -32,8 +32,8 @@ func TestLinkFrameOverhead(t *testing.T) {
 		overhead int // UDP / COBS serial: the face delimits the frame
 		prefix   int // TCP: varint length prefix on top
 	}{
-		{26, 4, 1},    // EasyRobot ManipulatorTarget
-		{62, 4, 1},    // EasyRobot ManipulatorState
+		{26, 4, 1},    // a robotics library's ManipulatorTarget
+		{62, 4, 1},    // a robotics library's ManipulatorState
 		{127, 4, 2},   // frame 131 B: the length prefix needs 2 B
 		{128, 5, 2},   // payload length needs 2 B
 		{16383, 5, 3}, // frame 16 388 B: the length prefix needs 3 B
@@ -48,15 +48,15 @@ func TestLinkFrameOverhead(t *testing.T) {
 		assert.Equal(t, c.prefix, len(s), "payload %d B: TCP length prefix", c.payload)
 	}
 
-	// The same EasyRobot routes as v1 frames (preamble + Header with the route as text),
+	// The same robotics routes as v1 frames (preamble + Header with the route as text),
 	// so the saving is measured here, not quoted (design §1: 86 and 94 B).
 	routes := []struct {
 		route    string
 		payload  int
 		overhead int
 	}{
-		{"types.control.ManipulatorState@easyrobot.manipulator.raw", 62, 86},
-		{"types.control.ManipulatorTarget@easyrobot.manipulator.raw.target", 26, 94},
+		{"types.control.ManipulatorState@acmerobot.manipulator.raw", 62, 86},
+		{"types.control.ManipulatorTarget@acmerobot.manipulator.raw.target", 26, 94},
 	}
 	for _, r := range routes {
 		msg := fooOfSize(t, r.payload)
@@ -134,8 +134,8 @@ func TestLinkFrameRoundTrip(t *testing.T) {
 	controls := map[string]*linktypes.LinkFrame{
 		"hello":      {Control: &linktypes.LinkFrame_Hello{Hello: &linktypes.Hello{Version: 2, Profile: linktypes.Profile_PROFILE_ZONE_PSK, Nonce: []byte{1, 2, 3}, MaxFrame: 1500, MaxRoutes: 64, Session: 1 << 40}}},
 		"handshake":  {Control: &linktypes.LinkFrame_Handshake{Handshake: &linktypes.Handshake{Step: 1, Data: bytes.Repeat([]byte{7}, 32)}}},
-		"announce":   {Control: &linktypes.LinkFrame_Announce{Announce: &linktypes.Announce{Role: linktypes.Role_ROLE_INTEREST, Path: "easyrobot.manipulator.raw", Type: "types.control.ManipulatorState", Register: true}}},
-		"bind":       {Control: &linktypes.LinkFrame_Bind{Bind: &linktypes.Bind{RouteId: 1, Path: "easyrobot.manipulator.raw", Type: "types.control.ManipulatorState", Stages: 1, Policy: []byte{4}}}},
+		"announce":   {Control: &linktypes.LinkFrame_Announce{Announce: &linktypes.Announce{Role: linktypes.Role_ROLE_INTEREST, Path: "acmerobot.manipulator.raw", Type: "types.control.ManipulatorState", Register: true}}},
+		"bind":       {Control: &linktypes.LinkFrame_Bind{Bind: &linktypes.Bind{RouteId: 1, Path: "acmerobot.manipulator.raw", Type: "types.control.ManipulatorState", Stages: 1, Policy: []byte{4}}}},
 		"bind_ack":   {Control: &linktypes.LinkFrame_BindAck{BindAck: &linktypes.BindAck{RouteId: 1, Status: linktypes.BindStatus_BIND_STATUS_TABLE_FULL}}},
 		"unbind":     {Control: &linktypes.LinkFrame_Unbind{Unbind: &linktypes.Unbind{RouteId: 1}}},
 		"unbind_ack": {Control: &linktypes.LinkFrame_UnbindAck{UnbindAck: &linktypes.UnbindAck{RouteId: 1}}},

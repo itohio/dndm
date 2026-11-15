@@ -45,11 +45,11 @@ Follow-up to [the first research note](2026-11-08-ndn-delivery-auth.md). It answ
 - The `Header` carries `receive_timestamp` (local-only, not sent), `timestamp`, `type`, `want_result`, an unused `bytes signature`, and `string route` (`proto/types/core/header.proto:24-31`). So **every message repeats the full route string** (`Type@path`).
 - **Measured during independent verification** (scratch encoder over the dndm working tree, offline). This replaces my earlier ~70 B estimate, which was low:
 
-  | EasyRobot route | Route id | Payload | Frame | Overhead |
+  | Robotics-library route | Route id | Payload | Frame | Overhead |
   |---|---|---|---|---|
-  | `types.control.ManipulatorState@easyrobot.manipulator.raw` | 56 chars | 62 B | 148 B | **86 B** |
-  | `types.control.ManipulatorTarget@easyrobot.manipulator.raw.target` | 64 | 26 B | 120 B | **94 B** |
-  | `types.control.ManipulatorConfig@easyrobot.manipulator.dh.config` | 63 | 0 B | 93 B | **93 B** |
+  | `types.control.ManipulatorState@acmerobot.manipulator.raw` | 56 chars | 62 B | 148 B | **86 B** |
+  | `types.control.ManipulatorTarget@acmerobot.manipulator.raw.target` | 64 | 26 B | 120 B | **94 B** |
+  | `types.control.ManipulatorConfig@acmerobot.manipulator.dh.config` | 63 | 0 B | 93 B | **93 B** |
   | the state route with `NewHashedRoute` | 27 | 62 B | 119 B | 57 B |
 
   The reason: the plain route id includes the **fully qualified protobuf type name** (`types.control.ManipulatorState@…`). Removing that per-message name is the same change that removes any zone bytes.
@@ -148,7 +148,7 @@ There, the cost moves to an **end-to-end layer** (per-producer signatures or AEA
 | secured link, tag *t* | `route_id` (2) + `ctr` (0–3: absent when its low bits are 0; it carries only 7 or 14 low bits, design §4 "Counter rules") + `sealed` tag + length (2) + *t* | 4–7 B + *t* (12–15 B with an 8 B tag, 14 B typical; design §3) |
 | CAN, route id in the CAN identifier | `payload` tag + length | 2 B |
 
-Against today's measured 86–94 B, that is about 95 % less for EasyRobot's routes. It is 2–3 B more than the withdrawn binary layout. dndm's design §3.1 records the decision to accept those bytes rather than leave protobuf.
+Against today's measured 86–94 B, that is about 95 % less for the robotics library's routes. It is 2–3 B more than the withdrawn binary layout. dndm's design §3.1 records the decision to accept those bytes rather than leave protobuf.
 
 ### 4.3 Route layers (examples)
 
@@ -257,7 +257,7 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 
 | Item | Wire per message | Wire per link setup | RAM per link | RAM per route | Flash | CPU | Call depth | Copies |
 |---|---|---|---|---|---|---|---|---|
-| Current dndm frame | **86–94 B** measured for EasyRobot's plain routes; 57 B hashed (§1) | handshake strings | buffers per conn | route strings | Go runtime + protobuf | protobuf marshal of header | many (channels, goroutines) | encode per remote |
+| Current dndm frame | **86–94 B** measured for the robotics library's plain routes; 57 B hashed (§1) | handshake strings | buffers per conn | route strings | Go runtime + protobuf | protobuf marshal of header | many (channels, goroutines) | encode per remote |
 | Core DATA (`LinkFrame`) | **4 B** (5 B for payloads ≥ 128 B; 2 B on CAN) | 0 | table header ~16 B + ids | entry ~16 B (id, type ref, flags/ptr) `#verify` | generated code + core ~2–4 KB C++ `#verify` (nanopb size per design §6) | id lookup (array index); `protowire` parse, no copy | +1 (dispatcher) | 0 (encode the payload into the frame buffer) |
 | `Bind` | — | ~10 B + path + full type name per route per link (once) | — | — | generated | full-name compare | — | — |
 | Face serial (COBS + CRC16) | +~3 B (delimiter, COBS 1 per 254, CRC 2) | 0 | 1 rx frame buffer | — | ~0.5 KB `#verify` | ~1 pass | +1 | 1 (COBS) |
@@ -278,8 +278,8 @@ All numbers are `#verify` unless a source is given. "Inferred" values are arithm
 | **CAN FD** (64 B) | 64 B | Z-c PSK + 8 B tag | route id in the CAN identifier: `ctr` 0–3 (14 low bits) + `sealed` 2 + 8 B tag = 10–13 B → about 51 B data (design §3) | |
 | **I²C** | transaction-sized | Z-b only (on-board) | 4 B `LinkFrame`; whether to lift the route id into the register/command byte, as on CAN, is open `#verify` (DND-015) | Master-polled; crypto on a probe-able on-board bus buys little (inferred) |
 | **SPI** | transaction-sized | Z-b only | as I²C | Same as I²C |
-| **ELRS/CRSF** | 60 B payload, 64 B frame (observed in fpv-arena's CRSF codec) | Z-c PSK, tag 4 B; `latest` only | `route_id` 2 + `ctr` 0–2 (7 low bits) + `sealed` 2 + 4 B tag = 8–10 B → 50–52 B app data | **RC channels stay native CRSF under the rig's failsafe watchdog (fpv-arena ADR 0022);** dndm carries telemetry/aux only. ELRS's own link protection is outside dndm (`#verify` what ELRS provides) |
-| **UART/USB serial** | any | Z-b on-board, else Z-c | 4 B + ~3 B COBS/CRC (or the AEAD tag instead of the CRC) | Today's EasyRobot serial drivers |
+| **ELRS/CRSF** | 60 B payload, 64 B frame (observed in an FPV simulator's CRSF codec) | Z-c PSK, tag 4 B; `latest` only | `route_id` 2 + `ctr` 0–2 (7 low bits) + `sealed` 2 + 4 B tag = 8–10 B → 50–52 B app data | **RC channels stay native CRSF under the FPV simulator's rig failsafe watchdog;** dndm carries telemetry/aux only. ELRS's own link protection is outside dndm (`#verify` what ELRS provides) |
+| **UART/USB serial** | any | Z-b on-board, else Z-c | 4 B + ~3 B COBS/CRC (or the AEAD tag instead of the CRC) | Today's robotics-library serial drivers |
 | **UDP/Wi-Fi** (ESP32-C5) | ~1400 B `#verify` | Z-d (+ Z-f for broadcast) | 4–7 B + 8–16 B tag (14 B typical with 8 B) | ESP32-C5 has AES, SHA, HMAC, ECC and ECDSA accelerators (datasheet/TRM search excerpts, reported). Which curves the ECC unit supports is `#verify`; P-256 may be the HW-friendly choice there |
 | **TCP (host)** | stream | Z-d; optionally E2E | 4–7 B + length prefix (1–2 B) + 16 B tag | Hosts can enable every layer: Z3's "1 GB hello world" side |
 
@@ -363,7 +363,7 @@ Added after the verification review:
 | # | Scenario | Diagram type | What it must show |
 |---|---|---|---|
 | S1 | **Lidar → SLAM → planner → motor controller** across RP2040 (lidar, serial), SBC (SLAM/planner), host (map viewer over Wi-Fi) | flowchart LR with subgraphs per device | Links and faces (UART on-board Z-b; Wi-Fi Z-d); one zone `robot1`; route layers per arrow (scan: latest; pose: history; target: buffered); the local motor failsafe outside dndm; per-hop overhead labels (UART 4 B + COBS/CRC; Wi-Fi 12–15 B, 14 B typical, with an 8 B tag) |
-| S2 | **Teleop over ELRS with failsafe** | flowchart + small timing note | Pilot → gateway → rig → ELRS TX module → RX → drive controller as native CRSF RC (not dndm); dndm carrying telemetry/aux in CRSF frames (60 B payload, Z-c, latest). **The failsafe watchdog sits on the rig, before the ELRS TX module** (150 ms stale + 100 ms hold, then neutral frames with drive-enable low, or no RC frames in `stop` mode; fpv-arena rig drive API docs, ADR 0022), **not on the robot**. The robot's receiver has its own failsafe, which applies when RC frames stop (`stop` mode, rig panic, radio loss). What happens when dndm telemetry stops: nothing unsafe |
+| S2 | **Teleop over ELRS with failsafe** | flowchart + small timing note | Pilot → gateway → rig → ELRS TX module → RX → drive controller as native CRSF RC (not dndm); dndm carrying telemetry/aux in CRSF frames (60 B payload, Z-c, latest). **The failsafe watchdog sits on the rig, before the ELRS TX module** (150 ms stale + 100 ms hold, then neutral frames with drive-enable low, or no RC frames in `stop` mode; the FPV simulator's rig), **not on the robot**. The robot's receiver has its own failsafe, which applies when RC frames stop (`stop` mode, rig panic, radio loss). What happens when dndm telemetry stops: nothing unsafe |
 | S3 | **Multi-robot zones with a bridge** | flowchart with three zone subgraphs | Zones `r1`, `r2`, `base`; a bridge node with explicit grants (`r1:pose → base:robots/r1/pose`); a denied crossing attempt (`r2:arm/target` from `base` without a grant) drawn as a blocked edge; the NATS gateway at `base` |
 | S4 | **Sensor history replay** | sequenceDiagram | Producer ring on the MCU, near-consumer history store on the SBC, consumer joining late: fetch range → partial hit → missing part from another holder → producer fallback; E2E signature check on copies served by non-producers |
 | S5 | **Link bring-up** | sequenceDiagram | `Hello` → `Handshake` (PSK or static-DH) → keys → `Bind` for each route (path + full type name → id, grant check) → DATA as `LinkFrame{route_id, payload}`; frames other than hello/handshake before the handshake completes are dropped (§8.1 A1); failure branches: wrong zone (handshake proof fails, link closes before any Bind), unknown route (`BindAck` denied), profile mismatch (`Close`) |
@@ -390,7 +390,7 @@ Mechanism: §4.2; schema of record dndm docs/design/link-context-wire.md §2 (Li
   protobuf-es).
 Reuse/prior art: MAVLink 2 link IDs, SecOC, EDHOC connection identifiers, HPACK-like
   indexing (inferred analogy).
-Evidence: independently measured 86–94 B overhead per frame for EasyRobot's plain routes (57 B
+Evidence: independently measured 86–94 B overhead per frame for a robotics library's plain routes (57 B
   hashed), because the route id includes the fully qualified proto type name; protobuf
   wire arithmetic gives 4 B for LinkFrame DATA (design §3).
 Must be true: every face can carry link control (route_id 0); reconnect rebinds (ids
@@ -476,9 +476,9 @@ Decision: pending (owner).
 | Fact | Evidence |
 |---|---|
 | Today's frame: 16 B preamble + protobuf header with the route string per message | observed `codec/codec.go:3-5,37-40`; `header.proto:24-31` |
-| Today's overhead for EasyRobot's routes: 86–94 B plain, 57 B hashed (route id includes the fully qualified proto type name) | measured during independent verification |
+| Today's overhead for a robotics library's routes: 86–94 B plain, 57 B hashed (route id includes the fully qualified proto type name) | measured during independent verification |
 | LinkFrame DATA = 4 B + payload in protobuf | protobuf wire arithmetic; dndm `docs/design/link-context-wire.md` §3 |
-| CRSF frame ≤ 64 B, payload ≤ 60 B | observed in fpv-arena's CRSF codec |
+| CRSF frame ≤ 64 B, payload ≤ 60 B | observed in an FPV simulator's CRSF codec |
 | MAVLink 2 signing: 13 B (link id 1, timestamp 6, truncated SHA-256 6), persistent timestamp rules, explicit unsigned-acceptance rules | mavlink.io, read 2026-11-08 |
 | EDHOC static-DH kid handshake = 37 + 45 + 19 = 101 B | RFC 9528 §1.2 Table 1 |
 | X25519 on Cortex-M0: 3,589,850 cycles per scalar mult | Düll et al. 2015 |
@@ -507,7 +507,7 @@ Decision: pending (owner).
 - **"Zones must be cryptographic to be enforced."** No: on on-board wires, enforcement is the core's table/handle structure (Z-b). Crypto defends against devices on the wire, which on I²C/SPI means someone with a probe on the board. → DND-009.
 - **"Route ids could be secret capabilities."** They are 1-byte public handles; capability comes from link keys and grants. The old hashed-route capability claim is withdrawn (unkeyed hash, first note). → DND-009.
 - **"One nonce generator for everything."** Correlation nonces and AEAD nonces have opposite needs (unpredictable vs unique). → DND-005, DND-009.
-- **fpv-arena already has a 64-byte-frame codec with zero allocations** (CRSF) and **EasyRobot has its own CRSF library**. A dndm CRSF face should reuse one of them, not a third. → new face ticket.
+- **An FPV simulator already has a 64-byte-frame codec with zero allocations** (CRSF) and **a robotics library has its own CRSF library**. A dndm CRSF face should reuse one of them, not a third. → new face ticket.
 - **MAVLink and SecOC are robotics/automotive-proven patterns** for exactly this link-context security. Use their rules (persistent freshness, explicit unsigned policy) rather than inventing. → DND-009/010.
 
 ### Unknown unknowns (probes, proposed)
@@ -554,5 +554,5 @@ Local:
 - `codec/codec.go`, `proto/types/core/{header,intents}.proto`, [ticket index](../../tickets/index.md)
 - [`docs/design/link-context-wire.md`](../../design/link-context-wire.md) (DND-R7: protobuf schema of record, costs, binding rules)
 - the independent verification of this note (measured frame sizes, attack table A1–A8)
-- fpv-arena: rig drive API docs and ADR 0022 (failsafe watchdog on the rig); CRSF codec
+- An FPV simulator: failsafe watchdog on the rig; CRSF codec
 - [first research note](2026-11-08-ndn-delivery-auth.md)

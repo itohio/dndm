@@ -108,7 +108,7 @@ The key difference (inferred): NATS trusts the **broker connection**. NDN trusts
 
 | NDN / prior-art concept | dndm today | Mapping |
 |---|---|---|
-| Name prefix | route path (`easyrobot.manipulator.raw`, EasyRobot `cmd/manipulator/main.go:240`, `getIntentPath`; cited by the DND-009 memo) | Keep it. Segment separator is still open (DND-009 residual). Exact-segment match is required regardless. |
+| Name prefix | route path (`acmerobot.manipulator.raw` in a robotics library; cited by the DND-009 memo) | Keep it. Segment separator is still open (DND-009 residual). Exact-segment match is required regardless. |
 | Data type | protobuf type in `Type@path` | Keep. NDN carries type in the content; dndm's typed routes are stronger. |
 | Data packet (named, signed, immutable) | message on a route with no per-message name | **Add a message name:** `route + producer + epoch + seq` (card A). |
 | Interest (pull one Data) | none; dndm Interest is a long-lived subscription | Add **fetch-by-name** for history and repair only (cards B, C). Live traffic stays push. |
@@ -133,7 +133,7 @@ The key difference (inferred): NATS trusts the **broker connection**. NDN trusts
 6. **Authentication**: link proof-of-possession now or soon; per-message signatures later. Needed by R5 and R7.
 7. **Module boundaries**: core vs optional packages; compile-time exclusion. Needed by R6.
 
-**Constraints:** additive wire changes only, unless the owner accepts a break (proto3 additive fields are ignored by old peers; inferred from proto3 semantics, not tested on dndm); EasyRobot importers must still build (DND-R2 rule); bounded memory in every class (DND-006 acceptance); no hidden durable command semantics (DND-012).
+**Constraints:** additive wire changes only, unless the owner accepts a break (proto3 additive fields are ignored by old peers; inferred from proto3 semantics, not tested on dndm); downstream importers must still build (DND-R2 rule); bounded memory in every class (DND-006 acceptance); no hidden durable command semantics (DND-012).
 
 **Assumptions to challenge:**
 
@@ -189,7 +189,7 @@ Next test (proposed, needs dndm code permission): add fields behind a version
   flag; round-trip old<->new peers over the existing TCP remote endpoint in an
   in-memory test; measure encoded size delta. ~0.5 day #verify. Pass: old peer
   decodes, new peer detects an injected gap.
-Unknowns: does any EasyRobot importer depend on Header layout? (check the
+Unknowns: does any downstream importer depend on Header layout? (check the
   importers); route-scoped vs producer-scoped seq when one producer has many routes.
 Recommendation: do this first; it unblocks B, C, D-step-2 and DND-010.
 Decision: pending (owner).
@@ -214,11 +214,11 @@ Reuse/prior art: ROS 2/DDS QoS (history, reliability, durability, lifespan,
   compatibility); DTN "hold until contact, expire by lifetime" for bursty links;
   SVS for broadcast repair.
 Evidence: observed: options.go per-route options are empty (DND-006 memo).
-  Reported: DDS semantics. Hypothesis: three classes cover EasyRobot's state
+  Reported: DDS semantics. Hypothesis: three classes cover a robotics library's state
   (100 ms) and command routes.
 Must be true: the policy fits in a few bytes on the wire for DND-013;
   repair traffic stays bounded (one outstanding repair per gap, suppression).
-Falsifier: a real EasyRobot route needs semantics outside the three (e.g.
+Falsifier: a real robotics-library route needs semantics outside the three (e.g.
   ordered-exactly-once effects) -> that belongs to DND-012/NATS, not here.
 Next test (proposed): paper transition table per class for loss, burst, link
   drop 5 s, reconnect, slow consumer, producer restart (epoch change); then a
@@ -300,7 +300,7 @@ Mechanism, staged:
 Reuse/prior art: NATS accounts, nonce proof, scoped signing keys, revocation;
   NDN signature/KeyLocator; LVS compiled binary model; DeftT domain id =
   schema-cert thumbprint, subscriber-side validation; key-fingerprint peer ids
-  as used in fpv-arena (reported).
+  as used in an FPV simulator (reported).
 Evidence: observed: public_key and signature fields exist unused
   (peering.proto:22, header.proto:29); handshake trusts `me` (DND-009 memo).
   Reported: Ed25519 sig 64 B, P-256 <=72 B, HMAC 32 B (NDN spec); DeftT ~300 B per
@@ -411,7 +411,7 @@ Suggested order: A → (B, D step 0) → DND-010 broadcast face (trusted segment
 - **Hidden assumption: reliable = acks.** Receiver-driven repair (SVS/syncps) avoids producer ack state on MCUs. → DND-006.
 - **Hidden assumption: the producer id is `me`.** Until step 1, `me` is self-declared; history and dedup keyed on it can be poisoned in a mixed-trust zone. → DND-009.
 - **Hidden assumption: clocks agree.** Lifespan, replay windows and epoch need a time source; MCUs without RTC need boot counters. → DND-006 / DND-015.
-- **Existing knowledge in related projects:** fpv-arena already uses P-256 device keys with SPKI-fingerprint ids and pinned links. Abugaga uses NATS accounts (ABU-050). One identity convention could serve all three. → DND-009 (cross-project note).
+- **Existing knowledge in related projects:** an FPV simulator already uses P-256 device keys with SPKI-fingerprint ids and pinned links. An orchestration service uses NATS accounts. One identity convention could serve all three. → DND-009 (cross-project note).
 
 ### Unknown unknowns (probes)
 
@@ -428,7 +428,7 @@ Coverage limit: I read the specs, docs and papers listed in section 3. I didn't 
 ## 10. Handoff
 
 - **Owner:** accept or park cards A–E, and confirm the durable split (history data vs commands) and the auth staging (step 0 now, step 1 when ready).
-- **dndm:** turn accepted cards into designs in DND-006/009/010 and a new history ticket (allocate its ID). Check whether the EasyRobot importers depend on the Header layout. Fix the segment separator.
+- **dndm:** turn accepted cards into designs in DND-006/009/010 and a new history ticket (allocate its ID). Check whether downstream importers depend on the Header layout. Fix the segment separator.
 - **Nothing here authorises code, network tests or board work.**
 
 ## Sources

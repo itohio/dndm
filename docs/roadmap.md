@@ -9,7 +9,7 @@ source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 
 Planning authority: §5 of the 2026-11-08 owner amendment. Evidence: the 2026-11-08 canonical static report. Pin: `c7b5b61f79ea07d3359d8963ac81b967e3e544ec`.
 
-Current authority: DND-R2, requirement (2026-11-08): dndm supports missing features and hardens existing ones; this authorises source and test changes in the working tree. It follows R1-04 (2026-11-08): update dndm and EasyRobot so they can be improved on. Work starts per ticket once its gates and dependencies are met. Commits, pushes, broker startup, dependency installation, credentials, board tests and public posting still need explicit owner approval. Approving a design does not approve executing it. Runtime evidence: [baseline 2026-11-08](baseline-2026-11-08.md).
+Current authority: DND-R2, requirement (2026-11-08): dndm supports missing features and hardens existing ones; this authorises source and test changes in the working tree. It follows R1-04 (2026-11-08): update dndm so it can be improved on. Work starts per ticket once its gates and dependencies are met. Commits, pushes, broker startup, dependency installation, credentials, board tests and public posting still need explicit owner approval. Approving a design does not approve executing it. Runtime evidence: [baseline 2026-11-08](baseline-2026-11-08.md).
 
 ## Milestones and exit gates
 
@@ -124,7 +124,7 @@ These checks establish document consistency only. They do not validate source be
 - 2026-11-09: DND-R8 and its fix round committed as 9 commits (1e38ecc..0062746). DND-R9-tools and its fix round committed: 0bb4604 (tools), e160c3c (protobuf bump), 954bc81 (codec), then the docs commit.
   - buf v1.75.0 and protoc-gen-go are pinned Go tools in `tools/` (owner-approved download);
   - buf config moved to v2 at the repo root, with the unused WKT dep dropped;
-  - protobuf bumped to v1.36.12. EasyRobot makes the same one-line bump in parallel; it was not yet committed when dndm's commit landed;
+  - protobuf bumped to v1.36.12; downstream users must raise protobuf to v1.36.12;
   - DND-022's `link.proto` (control `oneof`) and DATA codec added, with 4 byte-count tests (they failed first as a build failure: no API yet).
 - 2026-11-09: DND-022 link core committed: 9e34601 (code as accepted after independent verification), then 63df1c4 (fixes for findings R-DND-022 L1–L6). New package `network/linkctx`:
   - Hello-gated link state machine, ONBOARD profile only, with session rules (no Hello ping-pong; stale Close dropped);

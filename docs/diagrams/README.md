@@ -32,7 +32,7 @@ One word, one meaning, the same as in the design documents.
 
 | Word | Meaning |
 |---|---|
-| **route** | a message type plus a path, e.g. `ManipulatorState` on `easyrobot.manipulator.raw` |
+| **route** | a message type plus a path, e.g. `ManipulatorState` on `acmerobot.manipulator.raw` |
 | **intent**, **interest** | "I can send this route", "I want this route" |
 | **match** | today's pairing of an intent with an interest inside one process, done by a `Linker` |
 | **face** | the transport a link runs over: UART, I²C, SPI, CAN, UDP, TCP, CRSF |

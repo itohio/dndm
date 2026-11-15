@@ -106,7 +106,7 @@ Caption: each side mirrors the other's announcements as Remote objects, and each
 title: "As is vs Target: bytes around each message"
 ---
 flowchart TB
-    subgraph asis["As is: 86–94 B for EasyRobot's routes"]
+    subgraph asis["As is: 86–94 B for a robotics library's routes"]
         direction LR
         m1["magic<br/>4 B"]:::core ~~~ s1["sizes<br/>4 + 4 + 4 B"]:::core ~~~ h1["Header protobuf<br/>timestamp, type, route name text<br/>70–78 B"]:::core ~~~ p1["message protobuf"]:::field
     end
@@ -127,7 +127,7 @@ flowchart TB
     class tgt groupT
 ```
 
-Caption: today each EasyRobot message carries 86–94 B around it, mostly the route name. In the target it carries 4 B of protobuf (route id plus the payload's tag and length, for payloads under 128 B), because the name was bound once, when the link started. Secured links add a counter and an 8 B tag (about 15 B in total); on CAN the route id moves into the CAN identifier.
+Caption: today each message of a robotics library that uses dndm carries 86–94 B around it, mostly the route name. In the target it carries 4 B of protobuf (route id plus the payload's tag and length, for payloads under 128 B), because the name was bound once, when the link started. Secured links add a counter and an 8 B tag (about 15 B in total); on CAN the route id moves into the CAN identifier.
 
 ## 6. Link context (target)
 

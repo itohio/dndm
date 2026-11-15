@@ -45,7 +45,7 @@ RC5 (`contextRW.Close` closing `request` while `Request` sends, `network/stream/
 
 ## Public API
 
-Additive only. `Base` gains an unexported field; exported signatures are unchanged. Observable behaviour changes: `Close` now returns after callbacks finish (it used to return immediately); callbacks run in registration order instead of concurrently. EasyRobot uses none of `Base`, `Linker` or `codec` directly (checked during DND-R2).
+Additive only. `Base` gains an unexported field; exported signatures are unchanged. Observable behaviour changes: `Close` now returns after callbacks finish (it used to return immediately); callbacks run in registration order instead of concurrently. The downstream robotics library calls none of `Base`, `Linker` or `codec` directly (checked during DND-R2).
 
 ## Tests (failing first, kept)
 

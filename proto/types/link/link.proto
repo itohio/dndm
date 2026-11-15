@@ -116,7 +116,7 @@ enum Role {
 message Announce {
   // Intent or interest.
   Role role = 1;
-  // Zone-local path, e.g. "easyrobot.manipulator.raw".
+  // Zone-local path, e.g. "acmerobot.manipulator.raw".
   string path = 2;
   // Full protobuf message name, e.g. "types.control.ManipulatorState".
   string type = 3;

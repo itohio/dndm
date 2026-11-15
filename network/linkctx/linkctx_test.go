@@ -95,7 +95,7 @@ func (p *pair) open() {
 }
 
 func routeName(i int) (string, string) {
-	return fmt.Sprintf("easyrobot.route.%d", i), "types.control.ManipulatorState"
+	return fmt.Sprintf("acmerobot.route.%d", i), "types.control.ManipulatorState"
 }
 
 // Verify DND-R7 F1: with ids carried across sessions they pass 127 after about 13

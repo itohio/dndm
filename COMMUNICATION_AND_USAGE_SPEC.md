@@ -372,8 +372,8 @@ Peer paths use prefix matching:
    - How to handle configuration validation?
 
 ### Integration
-4. **EasyRobot Integration**:
-   - How to migrate from EasyRobot?
+4. **Integration with existing robotics code**:
+   - How to migrate an existing robotics codebase?
    - What compatibility should be maintained?
    - How to handle breaking changes?
 

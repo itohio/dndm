@@ -7,7 +7,7 @@ source_revision: "c7b5b61f79ea07d3359d8963ac81b967e3e544ec"
 
 # dndm planning handoff
 
-Local planning and working-tree implementation, 2026-11-08. Requirements: R1-04 (2026-11-08): update dndm and EasyRobot so they can be improved on. DND-R2 (2026-11-08): dndm supports missing features and hardens existing ones; this authorises source and test changes in the working tree. Commits, pushes, broker/network connectivity, credentials and hardware still need explicit owner approval.
+Local planning and working-tree implementation, 2026-11-08. Requirements: R1-04 (2026-11-08): update dndm so it can be improved on. DND-R2 (2026-11-08): dndm supports missing features and hardens existing ones; this authorises source and test changes in the working tree. Commits, pushes, broker/network connectivity, credentials and hardware still need explicit owner approval.
 
 ## Read first
 

@@ -672,7 +672,7 @@ type Announce struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Intent or interest.
 	Role Role `protobuf:"varint,1,opt,name=role,proto3,enum=types.link.Role" json:"role,omitempty"`
-	// Zone-local path, e.g. "easyrobot.manipulator.raw".
+	// Zone-local path, e.g. "acmerobot.manipulator.raw".
 	Path string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 	// Full protobuf message name, e.g. "types.control.ManipulatorState".
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`

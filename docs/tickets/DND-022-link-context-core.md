@@ -44,7 +44,7 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
 - [x] A3: rebind of a live id → `BIND_STATUS_DENIED`; a late frame after unbind and rebind → dropped, not delivered on the new route (`TestBindRetargetRefused`, `TestRouteIdReuseQuarantine`).
 - [ ] A5: a frame from an ONBOARD link to a trusted-origin route → refused; a v1 peer on a secure-configured link without `Insecure` → refused.
 - [ ] A8: BIND flood → `BIND_STATUS_TABLE_FULL` at the cap (**done**, `TestBindTableFull`), rate-limited (**not yet**).
-- [ ] Bytes per message measured on EasyRobot's routes (design §8 scratch cross-check).
+- [ ] Bytes per message measured on a robotics library's routes (design §8 scratch cross-check).
 - [ ] Wire probe for v1 stays byte-identical; the full `-race` suite passes.
 
 ## Dated log
@@ -55,7 +55,7 @@ Crypto primitives and key management (DND-009), broadcast group mode (DND-010/01
   - `buf lint` is clean; `buf breaking` against the step-3 image is clean.
   - DATA codec in `codec/link_frame.go`, on protowire: `AppendLinkData`, `AppendLinkMessage`, `DecodeLinkData`, `AppendLinkLength`, `LinkDataSize`. 0 allocations per frame with a preallocated buffer; the decoded payload aliases the frame.
   - The four byte-count tests failed first (encoder undefined) and pass ×10 with `-race`.
-  - Measured in the test: EasyRobot's state route 148 → 66 B, target route 120 → 30 B.
+  - Measured in the test: the robotics library's state route 148 → 66 B, target route 120 → 30 B.
   - Design §8 corrected: the TCP prefix is 3 B for frames of 16 384 B or more.
 - 2026-11-09: DND-R9-fix (finding set R-DND-R9).
   - L1: `DecodeLinkData` rejects payload together with sealed.

@@ -44,7 +44,7 @@ Caption: one zone spans all three devices, and each route picks its own delivery
 title: "Target (not built yet): S2 RC control stays outside dndm"
 ---
 flowchart LR
-    subgraph ground["Ground (fpv-arena rig)"]
+    subgraph ground["Ground (FPV simulator rig)"]
         pilot(["pilot input"]):::outside --> wd["failsafe watchdog<br/>fresh up to 150 ms, hold 100 ms more,<br/>then neutral values"]:::outside
         wd --> tx{{"ELRS TX module<br/>CRSF RC channels"}}:::outside
         tel(["telemetry view"]):::appT
@@ -64,7 +64,7 @@ flowchart LR
     class ground,robot groupT
 ```
 
-Caption: steering and throttle never go through dndm, so if dndm telemetry stops, only the view goes stale and nothing moves. The watchdog numbers are fpv-arena's settings (`drive-stale-ms` 150, `drive-hold-ms` 100, ADR 0022), and that watchdog runs on the rig, before the TX module, not on the robot.
+Caption: steering and throttle never go through dndm, so if dndm telemetry stops, only the view goes stale and nothing moves. The watchdog numbers are an FPV simulator's settings (`drive-stale-ms` 150, `drive-hold-ms` 100), and that watchdog runs on the rig, before the TX module, not on the robot.
 
 ## S3. Three zones with a bridge
 

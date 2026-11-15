@@ -72,13 +72,13 @@ Draw the timeline for publish → two subscribers → one retained message → p
 - A remote subscriber's goroutine marshals that shared object for its connection (`endpoint/remote/wrappers.go:220–221` → `network/stream/stream.go:361–362`), possibly while local subscribers are reading it.
 - The receiver decodes into a new object (`codec/codec.go:136,164,172`) and returns the pooled frame buffer right after decoding (`network/stream/stream.go:83–90,321–328`). [INFERENCE] By default protobuf-go `Unmarshal` copies bytes fields, so decoded messages do not alias pooled memory.
 - No doc comment states any contract (`intent.go:36–37`, `interest.go:33–35`). The docs claim "zero-copy" (`README.md:12`, `DESIGN.md:73`). `codec.Release` is exported (`codec/codec.go:21–23`). `SubOptStruct`/`PubOptStruct` exist but are empty (`options.go:96–104`).
-- The two EasyRobot publishers sampled (EasyRobot HEAD `abb5c9c`, not a full audit) build a new message for each `Send` (`EasyRobot/drivers/manipulator/main.go:361–373`, `EasyRobot/drivers/lidar/main.go:314–320`).
+- Two publishers sampled in a robotics library that uses dndm (not a full audit) build a new message for each `Send`.
 
 **Option A: immutable after Send (a documented contract).** The publisher does not change or reuse `msg` after `Send`. Subscribers treat received messages as read-only and may keep them. `codec.Release` takes only buffers that came from `codec`.
 - Code: doc comments in `intent.go` and `interest.go`, corrected README/DESIGN wording, and one `-race` fixture where a publisher mutates after `Send`.
 - Behaviour: unchanged. Cost: small.
 - Risk: nothing enforces it. A caller who breaks it causes a data race that shows up only under `-race` or as corrupted data.
-- Compatibility: no API or wire change, so EasyRobot is unaffected.
+- Compatibility: no API or wire change, so downstream users are unaffected.
 
 **Option B: clone at fan-out.** Call `proto.Clone` for each subscriber in `routeMsg` (`interest.go`) and for each endpoint in `FanOutIntent.Send` (`intent.go`).
 - Behaviour: subscribers may mutate, and the publisher may reuse the message once `Send` returns.
@@ -89,7 +89,7 @@ Draw the timeline for publish → two subscribers → one retained message → p
 **Option C: explicit leases.** Messages travel in an envelope with `Release()`, reference counts and pooled payload buffers.
 - Code: `intent.go`, `interest.go`, `codec/`, `x/bus/` and every endpoint. Cost: large.
 - Risk: leaks and double releases across the concurrent fan-out goroutines.
-- Compatibility: breaks `Interest.C() <-chan proto.Message` (`interest.go:35`) and `Intent.Send` (`intent.go:37`). EasyRobot (`replace => ../dndm`) and `x/bus` callers must change.
+- Compatibility: breaks `Interest.C() <-chan proto.Message` (`interest.go:35`) and `Intent.Send` (`intent.go:37`). Downstream users and `x/bus` callers must change.
 
 | | A immutable | B clone | C leases |
 |---|---|---|---|
@@ -100,13 +100,13 @@ Draw the timeline for publish → two subscribers → one retained message → p
 | Enforcement | convention + `-race` | structural | structural, error-prone |
 | DND-003/007 can build on it | now | now | after redesign |
 
-**Recommendation: A.** Add a per-subscription copy option later only if a real consumer needs to mutate; it fits in the empty `SubOptStruct` (`options.go:97–99`) without breaking callers. A writes down what the code already does. It costs nothing at runtime, changes neither API nor wire format, and the sampled EasyRobot callers already follow it. Because the remote marshaller and local subscribers would all be readers, A also makes the current marshal-during-local-read pattern correct by contract. B charges every subscriber for a need nobody has shown. C is a new allocator, which this ticket's non-goals exclude, and it breaks the public API.
+**Recommendation: A.** Add a per-subscription copy option later only if a real consumer needs to mutate; it fits in the empty `SubOptStruct` (`options.go:97–99`) without breaking callers. A writes down what the code already does. It costs nothing at runtime, changes neither API nor wire format, and the sampled robotics-library callers already follow it. Because the remote marshaller and local subscribers would all be readers, A also makes the current marshal-during-local-read pattern correct by contract. B charges every subscriber for a need nobody has shown. C is a new allocator, which this ticket's non-goals exclude, and it breaks the public API.
 
 **What it unblocks.** These tickets list DND-002 in their frontmatter `dependencies:`: [DND-003](DND-003-single-owner-remote-forwarding.md), [DND-007](DND-007-bounded-dispatch-and-closure.md), [DND-011](DND-011-bounded-packet-transport.md), [DND-013](DND-013-capability-negotiation-contract.md), [DND-015](DND-015-embedded-target-feasibility.md). Transitively: DND-008 (via DND-007) and DND-014.
 
 **Residual unknowns.**
 
-- Whether any caller mutates or reuses a message after `Send`. Only two EasyRobot call sites were sampled; Abugaga and the `x/bus` helpers were not audited.
+- Whether any caller mutates or reuses a message after `Send`. Only two call sites in the robotics library were sampled; other downstream users and the `x/bus` helpers were not audited.
 - Whether `x/bus` keeps messages after delivery. `x/bus/caller.go` was not read for retention.
 - The protobuf no-aliasing assumption above is unverified in this repo.
 - A future packet path (DND-011) with zero-copy receive needs its own buffer rule. A covers decoded messages only.

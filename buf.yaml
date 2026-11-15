@@ -17,7 +17,7 @@ lint:
     - PACKAGE_VERSION_SUFFIX
   disallow_comment_ignores: true
   # Legacy v1 wire files: renaming their enum values or packages would change the
-  # generated Go API that EasyRobot uses. New files (types/link) get every rule.
+  # generated Go API that downstream users import. New files (types/link) get every rule.
   ignore_only:
     COMMENT_ENUM_VALUE:
       - proto/types/core/header.proto
